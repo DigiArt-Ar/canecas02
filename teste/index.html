@@ -5,17 +5,14 @@
     <script src="https://aframe.io/releases/1.5.0/aframe.min.js"></script>
     <script src="https://cdn.jsdelivr.net/npm/mind-ar@1.2.5/dist/mindar-image-aframe.prod.js"></script>
     <style>
-      body { margin: 0; overflow: hidden; background-color: #000; }
-      #ui { 
-        position: fixed; bottom: 40px; left: 50%; 
-        transform: translateX(-50%); z-index: 1000; 
-        width: 80%; text-align: center; 
-      }
-      button { 
-        padding: 18px 35px; border-radius: 40px; border: none; 
-        background: #e91e63; color: white; font-weight: bold; 
-        font-family: sans-serif; cursor: pointer; 
-        box-shadow: 0 4px 20px rgba(0,0,0,…
+      :root { --azul-digiart: #003366; --branco: #ffffff; --detalhe-ar: #00aaff; }
+      body { margin: 0; overflow: hidden; font-family: 'Segoe UI', Roboto, Helvetica, Arial, sans-serif; background: #000; }
+      
+      .interface {
+        position: fixed; top: 0; left: 0; width: 100%; height: 100%;
+        display: flex; flex-direction: column; align-items: center;
+        justify-content: center; z-index: 9999; text-align: center;
+        padding: 20px; box-sizi…
 [20:19, 03/03/2026] Maurício: <!DOCTYPE html>
 <html>
   <head>
@@ -98,6 +95,68 @@
         document.querySelector('#video-screen').setAttribute('src', '#vid');
         
         const sceneEl = document.querySelector('a-scene');
+        sceneEl.addEventListener('targetFound', () => v.play());
+        sceneEl.addEventListener('targetLost', () => v.pause());
+      }
+    </script>
+  </body>
+</html>
+[20:23, 03/03/2026] Maurício: <!DOCTYPE html>
+<html>
+  <head>
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <script src="https://aframe.io/releases/1.5.0/aframe.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/mind-ar@1.2.5/dist/mindar-image-aframe.prod.js"></script>
+    <style>
+      body { margin: 0; overflow: hidden; font-family: Arial, sans-serif; background-color: #ff69b4; }
+      
+      #tela-tutorial {
+        position: fixed; top: 0; left: 0; width: 100vw; height: 100vh;
+        background-color: #ff69b4; /* Rosa Vibrante */
+        display: flex; flex-direction: column; align-items: center;
+        justify-content: center; z-index: 9999; text-align: center;
+      }
+
+      .marca { font-size: 38px; font-weight: bold; color: white; margin-bottom: 5px; }
+      .subtitulo { font-size: 16px; color: white; opacity: 0.9; margin-bottom: 40px; text-transform: uppercase; }
+
+      .btn {
+        padding: 20px 45px; border-radius: 50px; border: none;
+        background: white; color: #ff1493;
+        font-weight: bold; font-size: 20px; cursor: pointer;
+        box-shadow: 0 10px 20px rgba(0,0,0,0.2);
+      }
+      
+      p { color: white; font-size: 18px; margin-bottom: 30px; padding: 0 20px; }
+      .a-enter-vr { display: none !important; }
+    </style>
+  </head>
+  <body>
+
+    <div id="tela-tutorial">
+      <div style="font-size: 50px; margin-bottom: 10px;">💖</div>
+      <div class="marca">DigiArt AR</div>
+      <div class="subtitulo">Edição Especial</div>
+      <p>Aponte para a caneca e toque abaixo para abrir sua surpresa.</p>
+      <button class="btn" onclick="iniciarMagia()">ABRIR PRESENTE ✨</button>
+    </div>
+
+    <a-scene mindar-image="imageTargetSrc: ./targets.mind; autoStart: false; uiLoading: no; uiScanning: no;" vr-mode-ui="enabled: false">
+      <a-assets>
+        <video id="vid" src="1.mp4" loop="true" crossorigin="anonymous" playsinline webkit-playsinline></video>
+      </a-assets>
+      <a-camera position="0 0 0" look-controls="enabled: false"></a-camera>
+      <a-entity mindar-image-target="targetIndex: 0">
+        <a-video src="#vid" position="0 0 0" width="1" height="1.77" scale="1.5 1.5 1.5"></a-video>
+      </a-entity>
+    </a-scene>
+
+    <script>
+      function iniciarMagia() {
+        document.getElementById('tela-tutorial').style.display = 'none';
+        const sceneEl = document.querySelector('a-scene');
+        sceneEl.systems["mindar-image-system"].start();
+        const v = document.querySelector("#vid");
         sceneEl.addEventListener('targetFound', () => v.play());
         sceneEl.addEventListener('targetLost', () => v.pause());
       }
