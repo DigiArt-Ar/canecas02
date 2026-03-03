@@ -5,25 +5,27 @@
     <script src="https://aframe.io/releases/1.5.0/aframe.min.js"></script>
     <script src="https://cdn.jsdelivr.net/npm/mind-ar@1.2.5/dist/mindar-image-aframe.prod.js"></script>
     <style>
-      body { margin: 0; overflow: hidden; }
+      body { margin: 0; overflow: hidden; background-color: #000; }
       #ui { 
-        position: fixed; bottom: 30px; left: 50%; 
+        position: fixed; bottom: 40px; left: 50%; 
         transform: translateX(-50%); z-index: 1000; 
         width: 80%; text-align: center; 
       }
       button { 
-        padding: 15px 30px; border-radius: 30px; border: none; 
-        background: #27ae60; color: white; font-weight: bold; 
+        padding: 18px 35px; border-radius: 40px; border: none; 
+        background: #e91e63; color: white; font-weight: bold; 
         font-family: sans-serif; cursor: pointer; 
-        box-shadow: 0 4px 15px rgba(0,0,0,0.5); 
-        width: 100%; max-width: 250px; font-size: 18px;
+        box-shadow: 0 4px 20px rgba(0,0,0,0.6); 
+        width: 100%; max-width: 280px; font-size: 20px;
+        transition: 0.3s;
       }
+      button:active { transform: scale(0.9); }
       .a-enter-vr { display: none !important; }
     </style>
   </head>
   <body>
     <div id="ui">
-      <button id="play-btn">ATIVAR MÁGICA ✨</button>
+      <button id="play-btn">VER HOMENAGEM ✨</button>
     </div>
     
     <a-scene 
@@ -34,11 +36,10 @@
       device-orientation-permission-ui="enabled: false">
       
       <a-assets id="assets-folder"></a-assets>
-
       <a-camera position="0 0 0" look-controls="enabled: false"></a-camera>
 
       <a-entity mindar-image-target="targetIndex: 0">
-        <a-video id="video-screen" position="0 0 0" width="1" height="1.77" scale="1.5 1.5 1.5" rotation="0 0 0"></a-video>
+        <a-video id="video-screen" position="0 0 0" width="1" height="1.77" scale="1.5 1.5 1.5"></a-video>
       </a-entity>
     </a-scene>
 
@@ -49,21 +50,31 @@
       let videoElement = null;
       let autorizado = false;
 
+      // Criar o elemento de vídeo assim que a página carrega, mas sem fonte ainda
+      videoElement = document.createElement('video');
+      videoElement.setAttribute('id', 'vid');
+      videoElement.setAttribute('loop', 'true');
+      videoElement.setAttribute('crossorigin', 'anonymous');
+      videoElement.setAttribute('playsinline', 'true');
+      videoElement.setAttribute('webkit-playsinline', 'true');
+
       btn.addEventListener('click', () => {
-        videoElement = document.createElement('video');
-        videoElement.setAttribute('id', 'vid');
+        // Define o nome do vídeo aqui - Certifique-se que o arquivo chama magica.mp4
         videoElement.setAttribute('src', 'magica.mp4'); 
-        videoElement.setAttribute('loop', 'true');
-        videoElement.setAttribute('crossorigin', 'anonymous');
-        videoElement.setAttribute('playsinline', 'true');
-        videoElement.setAttribute('webkit-playsinline', 'true');
         
         assets.appendChild(videoElement);
         videoScreen.setAttribute('src', '#vid');
 
-        videoElement.muted = false;
-        autorizado = true; 
-        btn.style.display = 'none';
+        // Truque para liberar o som em dispositivos móveis
+        videoElement.play().then(() => {
+          videoElement.pause(); // Dá play e pause rápido só para o sistema liberar o áudio
+          autorizado = true;
+          btn.style.display = 'none';
+        }).catch(err => {
+          console.log("Erro ao liberar áudio:", err);
+          autorizado = true; // Força a autorização mesmo se o play falhar de início
+          btn.style.display = 'none';
+        });
       });
 
       document.querySelector('a-scene').addEventListener('targetFound', () => {
