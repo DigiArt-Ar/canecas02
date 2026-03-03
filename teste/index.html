@@ -6,27 +6,21 @@
     <script src="https://cdn.jsdelivr.net/npm/mind-ar@1.2.5/dist/mindar-image-aframe.prod.js"></script>
     <style>
       body { margin: 0; overflow: hidden; font-family: Arial, sans-serif; background-color: #000; }
-      
       #tela-tutorial {
         position: fixed; top: 0; left: 0; width: 100vw; height: 100vh;
         background-color: #ff69b4; 
         display: flex; flex-direction: column; align-items: center;
         justify-content: center; z-index: 9999; text-align: center;
-        transition: opacity 0.5s ease;
       }
-
       .marca { font-size: 38px; font-weight: bold; color: white; margin-bottom: 5px; }
-      .subtitulo { font-size: 16px; color: white; opacity: 0.9; margin-bottom: 40px; text-transform: uppercase; letter-spacing: 2px; }
-
+      .subtitulo { font-size: 16px; color: white; opacity: 0.9; margin-bottom: 40px; text-transform: uppercase; }
       .btn {
         padding: 20px 45px; border-radius: 50px; border: none;
         background: white; color: #ff1493;
         font-weight: bold; font-size: 20px; cursor: pointer;
         box-shadow: 0 10px 20px rgba(0,0,0,0.2);
-        -webkit-tap-highlight-color: transparent;
       }
-      
-      p { color: white; font-size: 18px; margin-bottom: 30px; padding: 0 20px; max-width: 300px; line-height: 1.4; }
+      p { color: white; font-size: 18px; margin-bottom: 30px; padding: 0 20px; max-width: 300px; }
       .a-enter-vr { display: none !important; }
     </style>
   </head>
@@ -42,56 +36,54 @@
 
     <a-scene 
       mindar-image="imageTargetSrc: ./targets.mind; autoStart: false; uiLoading: no; uiScanning: no;" 
-      vr-mode-ui="enabled: false" 
-      device-orientation-permission-ui="enabled: false">
+      vr-mode-ui="enabled: false">
       
-      <a-assets>
-        <video id="vid" src="1.mp4" preload="auto" loop="true" crossorigin="anonymous" playsinline webkit-playsinline muted></video>
-      </a-assets>
+      <a-assets id="assets-folder"></a-assets>
 
       <a-camera position="0 0 0" look-controls="enabled: false"></a-camera>
 
       <a-entity mindar-image-target="targetIndex: 0">
-        <a-video src="#vid" position="0 0 0" width="1" height="1.77" scale="1.5 1.5 1.5"></a-video>
+        <a-video id="video-obj" position="0 0 0" width="1" height="1.77" scale="1.5 1.5 1.5"></a-video>
       </a-entity>
     </a-scene>
 
     <script>
       function iniciarMagia() {
         const tela = document.getElementById('tela-tutorial');
+        const assets = document.getElementById('assets-folder');
+        const videoObj = document.getElementById('video-obj');
         const sceneEl = document.querySelector('a-scene');
-        const v = document.querySelector("#vid");
 
-        // Tenta destravar o vídeo (mesmo que comece mudo)
+        // 1. Criar o elemento de vídeo do zero para forçar o navegador a aceitar
+        const v = document.createElement('video');
+        v.id = 'meuVideo';
+        v.src = '1.mp4'; // Certifique-se que o nome é exatamente esse
+        v.setAttribute('crossorigin', 'anonymous');
+        v.setAttribute('playsinline', 'true');
+        v.setAttribute('webkit-playsinline', 'true');
+        v.loop = true;
+        v.muted = false; // Queremos som!
+
+        // 2. Adicionar ao HTML e conectar ao objeto 3D
+        assets.appendChild(v);
+        videoObj.setAttribute('src', '#meuVideo');
+
+        // 3. Tentar tocar o vídeo imediatamente (interação do usuário necessária)
         v.play().then(() => {
-          v.pause();
-          v.muted = false; // Tenta liberar o som
-        }).catch(e => {
-          v.muted = true; // Se o navegador travar, mantém mudo para garantir o play
+          v.pause(); // Sucesso, o navegador liberou o play para depois
+        }).catch(() => {
+          console.log("Vídeo precisa iniciar mudo");
+          v.muted = true;
+          v.play().then(() => v.pause());
         });
 
-        tela.style.opacity = "0";
-        
-        setTimeout(() => {
-          tela.style.display = 'none';
-          
-          if (sceneEl.systems["mindar-image-system"]) {
-            sceneEl.systems["mindar-image-system"].start();
-          }
+        // 4. Iniciar AR e esconder tela
+        tela.style.display = 'none';
+        sceneEl.systems["mindar-image-system"].start();
 
-          sceneEl.addEventListener('targetFound', () => {
-            // Se o vídeo não tocar com som, ele toca mudo (evita o quadrado preto)
-            v.play().catch(() => {
-              v.muted = true;
-              v.play();
-            });
-          });
-          
-          sceneEl.addEventListener('targetLost', () => {
-            v.pause();
-          });
-
-        }, 500);
+        // 5. Eventos de detecção
+        sceneEl.addEventListener('targetFound', () => v.play());
+        sceneEl.addEventListener('targetLost', () => v.pause());
       }
     </script>
   </body>
