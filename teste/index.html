@@ -15,77 +15,92 @@
         padding: 18px 35px; border-radius: 40px; border: none; 
         background: #e91e63; color: white; font-weight: bold; 
         font-family: sans-serif; cursor: pointer; 
-        box-shadow: 0 4px 20px rgba(0,0,0,0.6); 
-        width: 100%; max-width: 280px; font-size: 20px;
+        box-shadow: 0 4px 20px rgba(0,0,0,…
+[20:19, 03/03/2026] Maurício: <!DOCTYPE html>
+<html>
+  <head>
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <script src="https://aframe.io/releases/1.5.0/aframe.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/mind-ar@1.2.5/dist/mindar-image-aframe.prod.js"></script>
+    <style>
+      /* CORES EDIÇÃO ESPECIAL: ROSA E BRANCO */
+      :root { --cor-fundo: #ff69b4; --branco: #ffffff; --detalhe: #fff0f5; }
+      
+      body { margin: 0; overflow: hidden; font-family: 'Segoe UI', Arial, sans-serif; background: #000; }
+      
+      .interface {
+        position: fixed; top: 0; left: 0; width: 100%; height: 100%;
+        display: flex; flex-direction: column; align-items: center;
+        justify-content: center; z-index: 9999; text-align: center;
+        padding: 20px; box-sizing: border-box; backdrop-filter: blur(10px);
+        color: var(--branco); 
+        /* Fundo Rosa Vibrante com transparência */
+        background: rgba(255, 105, 180, 0.85);
+      }
+
+      .marca { font-size: 42px; font-weight: bold; letter-spacing: 2px; margin-bottom: 5px; text-shadow: 2px 2px 4px rgba(0,0,0,0.2); }
+      .subtitulo { font-size: 16px; opacity: 0.9; margin-bottom: 30px; text-transform: uppercase; letter-spacing: 2px; }
+
+      .btn {
+        padding: 18px 40px; border-radius: 50px; border: none;
+        background: var(--branco); color: #ff1493;
+        font-weight: bold; font-size: 18px; cursor: pointer;
+        box-shadow: 0 4px 15px rgba(0,0,0,0.2);
         transition: 0.3s;
       }
-      button:active { transform: scale(0.9); }
+      .btn:active { transform: scale(0.9); }
+      
+      p { font-size: 18px; margin-bottom: 25px; max-width: 280px; }
       .a-enter-vr { display: none !important; }
     </style>
   </head>
   <body>
-    <div id="ui">
-      <button id="play-btn">VER HOMENAGEM ✨</button>
+
+    <div id="tela-tutorial" class="interface">
+      <div class="marca">DigiArt AR</div>
+      <div class="subtitulo">Edição Especial ❤️</div>
+      <p>Prepare-se para uma surpresa emocionante. Toque abaixo para começar.</p>
+      <button class="btn" onclick="iniciarMagia()">ABRIR PRESENTE ✨</button>
     </div>
-    
-    <a-scene 
-      mindar-image="imageTargetSrc: ./targets.mind; autoStart: true; uiLoading: no; uiScanning: no;" 
-      color-space="sRGB" 
-      renderer="colorManagement: true, physicallyCorrectLights" 
-      vr-mode-ui="enabled: false" 
-      device-orientation-permission-ui="enabled: false">
-      
+
+    <a-scene mindar-image="imageTargetSrc: ./targets.mind; autoStart: false; uiLoading: no; uiScanning: no;" vr-mode-ui="enabled: false">
       <a-assets id="assets-folder"></a-assets>
       <a-camera position="0 0 0" look-controls="enabled: false"></a-camera>
-
       <a-entity mindar-image-target="targetIndex: 0">
         <a-video id="video-screen" position="0 0 0" width="1" height="1.77" scale="1.5 1.5 1.5"></a-video>
       </a-entity>
     </a-scene>
 
     <script>
-      const btn = document.querySelector('#play-btn');
-      const assets = document.querySelector('#assets-folder');
-      const videoScreen = document.querySelector('#video-screen');
-      let videoElement = null;
-      let autorizado = false;
-
-      // Criar o elemento de vídeo assim que a página carrega, mas sem fonte ainda
-      videoElement = document.createElement('video');
-      videoElement.setAttribute('id', 'vid');
-      videoElement.setAttribute('loop', 'true');
-      videoElement.setAttribute('crossorigin', 'anonymous');
-      videoElement.setAttribute('playsinline', 'true');
-      videoElement.setAttribute('webkit-playsinline', 'true');
-
-      btn.addEventListener('click', () => {
-        // Define o nome do vídeo aqui - Certifique-se que o arquivo chama magica.mp4
-        videoElement.setAttribute('src', 'magica.mp4'); 
+      function iniciarMagia() {
+        // Esconde a tela rosa
+        document.getElementById('tela-tutorial').style.display = 'none';
         
-        assets.appendChild(videoElement);
-        videoScreen.setAttribute('src', '#vid');
+        // Inicia o sistema de AR
+        const sceneEl = document.querySelector('a-scene');
+        sceneEl.systems["mindar-image-system"].start();
+        
+        // Configura o vídeo (Sempre o 1.mp4 para esta edição)
+        configurarVideo("1.mp4");
+      }
 
-        // Truque para liberar o som em dispositivos móveis
-        videoElement.play().then(() => {
-          videoElement.pause(); // Dá play e pause rápido só para o sistema liberar o áudio
-          autorizado = true;
-          btn.style.display = 'none';
-        }).catch(err => {
-          console.log("Erro ao liberar áudio:", err);
-          autorizado = true; // Força a autorização mesmo se o play falhar de início
-          btn.style.display = 'none';
-        });
-      });
-
-      document.querySelector('a-scene').addEventListener('targetFound', () => {
-        if (autorizado && videoElement) {
-          videoElement.play();
-        }
-      });
-
-      document.querySelector('a-scene').addEventListener('targetLost', () => {
-        if (videoElement) videoElement.pause();
-      });
+      function configurarVideo(src) {
+        const assets = document.querySelector('#assets-folder');
+        const v = document.createElement('video');
+        v.id = 'vid'; 
+        v.src = src; 
+        v.loop = true; 
+        v.setAttribute('crossorigin', 'anonymous');
+        v.setAttribute('playsinline', 'true');
+        v.setAttribute('webkit-playsinline', 'true');
+        
+        assets.appendChild(v);
+        document.querySelector('#video-screen').setAttribute('src', '#vid');
+        
+        const sceneEl = document.querySelector('a-scene');
+        sceneEl.addEventListener('targetFound', () => v.play());
+        sceneEl.addEventListener('targetLost', () => v.pause());
+      }
     </script>
   </body>
 </html>
