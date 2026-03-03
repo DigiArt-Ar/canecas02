@@ -7,13 +7,12 @@
     <style>
       body { margin: 0; overflow: hidden; font-family: Arial, sans-serif; background-color: #000; }
       
-      /* TELA DE ENTRADA ROSA */
       #tela-tutorial {
         position: fixed; top: 0; left: 0; width: 100vw; height: 100vh;
-        background-color: #ff69b4; /* Rosa Vibrante */
+        background-color: #ff69b4; 
         display: flex; flex-direction: column; align-items: center;
         justify-content: center; z-index: 9999; text-align: center;
-        transition: opacity 0.5s ease; /* Efeito de sumir suave */
+        transition: opacity 0.5s ease;
       }
 
       .marca { font-size: 38px; font-weight: bold; color: white; margin-bottom: 5px; }
@@ -37,7 +36,7 @@
       <div style="font-size: 60px; margin-bottom: 10px;">💖</div>
       <div class="marca">DigiArt AR</div>
       <div class="subtitulo">Edição Especial</div>
-      <p>Toque no botão abaixo e aponte para a caneca para ver a mágica!</p>
+      <p>Toque no botão e aponte para a caneca para ver a mágica!</p>
       <button class="btn" onclick="iniciarMagia()">ABRIR PRESENTE ✨</button>
     </div>
 
@@ -47,7 +46,7 @@
       device-orientation-permission-ui="enabled: false">
       
       <a-assets>
-        <video id="vid" src="1.mp4" loop="true" crossorigin="anonymous" playsinline webkit-playsinline></video>
+        <video id="vid" src="1.mp4" preload="auto" loop="true" crossorigin="anonymous" playsinline webkit-playsinline muted></video>
       </a-assets>
 
       <a-camera position="0 0 0" look-controls="enabled: false"></a-camera>
@@ -63,33 +62,36 @@
         const sceneEl = document.querySelector('a-scene');
         const v = document.querySelector("#vid");
 
-        // 1. Tenta destravar o áudio do vídeo imediatamente no clique
+        // Tenta destravar o vídeo (mesmo que comece mudo)
         v.play().then(() => {
           v.pause();
-        }).catch(e => console.log("Audio ready"));
+          v.muted = false; // Tenta liberar o som
+        }).catch(e => {
+          v.muted = true; // Se o navegador travar, mantém mudo para garantir o play
+        });
 
-        // 2. Faz a tela rosa sumir suavemente
         tela.style.opacity = "0";
         
-        // 3. Aguarda a transição e liga a câmera
         setTimeout(() => {
           tela.style.display = 'none';
           
-          // Inicia o motor da Realidade Aumentada
           if (sceneEl.systems["mindar-image-system"]) {
             sceneEl.systems["mindar-image-system"].start();
           }
 
-          // Configura o Play/Pause ao detectar a imagem
           sceneEl.addEventListener('targetFound', () => {
-            v.play();
+            // Se o vídeo não tocar com som, ele toca mudo (evita o quadrado preto)
+            v.play().catch(() => {
+              v.muted = true;
+              v.play();
+            });
           });
           
           sceneEl.addEventListener('targetLost', () => {
             v.pause();
           });
 
-        }, 500); // Meio segundo de delay para o celular processar
+        }, 500);
       }
     </script>
   </body>
