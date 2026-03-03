@@ -5,44 +5,53 @@
     <script src="https://aframe.io/releases/1.5.0/aframe.min.js"></script>
     <script src="https://cdn.jsdelivr.net/npm/mind-ar@1.2.5/dist/mindar-image-aframe.prod.js"></script>
     <style>
-      body { margin: 0; overflow: hidden; font-family: Arial, sans-serif; background-color: #ff69b4; }
+      body { margin: 0; overflow: hidden; font-family: Arial, sans-serif; background-color: #000; }
       
+      /* TELA DE ENTRADA ROSA */
       #tela-tutorial {
         position: fixed; top: 0; left: 0; width: 100vw; height: 100vh;
         background-color: #ff69b4; /* Rosa Vibrante */
         display: flex; flex-direction: column; align-items: center;
         justify-content: center; z-index: 9999; text-align: center;
+        transition: opacity 0.5s ease; /* Efeito de sumir suave */
       }
 
       .marca { font-size: 38px; font-weight: bold; color: white; margin-bottom: 5px; }
-      .subtitulo { font-size: 16px; color: white; opacity: 0.9; margin-bottom: 40px; text-transform: uppercase; }
+      .subtitulo { font-size: 16px; color: white; opacity: 0.9; margin-bottom: 40px; text-transform: uppercase; letter-spacing: 2px; }
 
       .btn {
         padding: 20px 45px; border-radius: 50px; border: none;
         background: white; color: #ff1493;
         font-weight: bold; font-size: 20px; cursor: pointer;
         box-shadow: 0 10px 20px rgba(0,0,0,0.2);
+        -webkit-tap-highlight-color: transparent;
       }
       
-      p { color: white; font-size: 18px; margin-bottom: 30px; padding: 0 20px; }
+      p { color: white; font-size: 18px; margin-bottom: 30px; padding: 0 20px; max-width: 300px; line-height: 1.4; }
       .a-enter-vr { display: none !important; }
     </style>
   </head>
   <body>
 
     <div id="tela-tutorial">
-      <div style="font-size: 50px; margin-bottom: 10px;">💖</div>
+      <div style="font-size: 60px; margin-bottom: 10px;">💖</div>
       <div class="marca">DigiArt AR</div>
       <div class="subtitulo">Edição Especial</div>
-      <p>Aponte para a caneca e toque abaixo para abrir sua surpresa.</p>
+      <p>Toque no botão abaixo e aponte para a caneca para ver a mágica!</p>
       <button class="btn" onclick="iniciarMagia()">ABRIR PRESENTE ✨</button>
     </div>
 
-    <a-scene mindar-image="imageTargetSrc: ./targets.mind; autoStart: false; uiLoading: no; uiScanning: no;" vr-mode-ui="enabled: false">
+    <a-scene 
+      mindar-image="imageTargetSrc: ./targets.mind; autoStart: false; uiLoading: no; uiScanning: no;" 
+      vr-mode-ui="enabled: false" 
+      device-orientation-permission-ui="enabled: false">
+      
       <a-assets>
         <video id="vid" src="1.mp4" loop="true" crossorigin="anonymous" playsinline webkit-playsinline></video>
       </a-assets>
+
       <a-camera position="0 0 0" look-controls="enabled: false"></a-camera>
+
       <a-entity mindar-image-target="targetIndex: 0">
         <a-video src="#vid" position="0 0 0" width="1" height="1.77" scale="1.5 1.5 1.5"></a-video>
       </a-entity>
@@ -50,37 +59,38 @@
 
     <script>
       function iniciarMagia() {
-        document.getElementById('tela-tutorial').style.display = 'none';
+        const tela = document.getElementById('tela-tutorial');
         const sceneEl = document.querySelector('a-scene');
-        sceneEl.systems["mindar-image-system"].start();
         const v = document.querySelector("#vid");
-        sceneEl.addEventListener('targetFound', () => v.play());
-        sceneEl.addEventListener('targetLost', () => v.pause());
+
+        // 1. Tenta destravar o áudio do vídeo imediatamente no clique
+        v.play().then(() => {
+          v.pause();
+        }).catch(e => console.log("Audio ready"));
+
+        // 2. Faz a tela rosa sumir suavemente
+        tela.style.opacity = "0";
+        
+        // 3. Aguarda a transição e liga a câmera
+        setTimeout(() => {
+          tela.style.display = 'none';
+          
+          // Inicia o motor da Realidade Aumentada
+          if (sceneEl.systems["mindar-image-system"]) {
+            sceneEl.systems["mindar-image-system"].start();
+          }
+
+          // Configura o Play/Pause ao detectar a imagem
+          sceneEl.addEventListener('targetFound', () => {
+            v.play();
+          });
+          
+          sceneEl.addEventListener('targetLost', () => {
+            v.pause();
+          });
+
+        }, 500); // Meio segundo de delay para o celular processar
       }
     </script>
   </body>
 </html>
-[20:27, 03/03/2026] Maurício: <script>
-      function iniciarMagia() {
-        // 1. Esconde a tela rosa imediatamente
-        document.getElementById('tela-tutorial').style.display = 'none';
-        
-        // 2. Localiza a cena e o vídeo
-        const sceneEl = document.querySelector('a-scene');
-        const v = document.querySelector("#vid");
-
-        // 3. Tenta dar play no vídeo (mesmo antes de aparecer) para o navegador liberar o som
-        v.play().then(() => {
-            v.pause(); // Pausa logo em seguida, só para "destravar" o áudio
-        }).catch(e => console.log("Áudio aguardando target"));
-
-        // 4. Liga a Realidade Aumentada
-        if (sceneEl.systems["mindar-image-system"]) {
-            sceneEl.systems["mindar-image-system"].start();
-        }
-
-        // 5. Garante o Play/Pause quando encontrar a caneca
-        sceneEl.addEventListener('targetFound', () => { v.play(); });
-        sceneEl.addEventListener('targetLost', () => { v.pause(); });
-      }
-    </script>
