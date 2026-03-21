@@ -23,7 +23,6 @@
       .marca span { color: var(--detalhe-ar); }
       .subtitulo { font-size: 14px; opacity: 0.8; margin-bottom: 30px; text-transform: uppercase; letter-spacing: 3px; }
 
-      /* Estilo do Campo de Token */
       .input-token {
         width: 80%; max-width: 250px; padding: 15px; border-radius: 10px;
         border: none; font-size: 20px; text-align: center; margin-bottom: 15px;
@@ -72,16 +71,14 @@
       <a-assets id="assets-folder"></a-assets>
       <a-camera position="0 0 0" look-controls="enabled: false"></a-camera>
       <a-entity mindar-image-target="targetIndex: 0">
-        <a-video id="video-screen" position="0 0 0" width="1" height="1.77" scale="1.5 1.5 1.5"></a-video>
+        <a-video id="video-screen" position="0 0 0" width="1" height="1.77" scale="1.1 1.1 1.1"></a-video>
       </a-entity>
     </a-scene>
 
     <script>
-      // CONFIGURAÇÕES GERAIS
       const TOTAL_VIDEOS_NA_PASTA = 26; 
       const VALIDADE_DIAS = 365;
 
-      // CONFIGURAÇÃO FIREBASE
       const firebaseConfig = {
         apiKey: "AIzaSyDG-0ErUD35BZTHb9RZ21fFnXcMkX-IlZY",
         authDomain: "digiart-ar-sistema.firebaseapp.com",
@@ -95,7 +92,6 @@
       firebase.initializeApp(firebaseConfig);
       const database = firebase.database();
 
-      // FUNÇÃO DE VALIDAÇÃO DO TOKEN
       function validarAcesso() {
         const token = document.getElementById('tokenInput').value.trim().toLowerCase();
         const msg = document.getElementById('status-msg');
@@ -109,7 +105,6 @@
         msg.innerText = "⏳ Verificando...";
         msg.style.color = "#fff";
 
-        // Busca direta no Firebase pela CHAVE do token
         database.ref('/' + token).once('value').then((snapshot) => {
           if (snapshot.exists()) {
             const dados = snapshot.val();
@@ -118,12 +113,9 @@
               msg.innerText = "⚠️ Este código já foi utilizado.";
               msg.style.color = "#ffca28";
             } else {
-              // MARCA COMO USADO NO ATO DA VALIDAÇÃO
               database.ref('/' + token).update({ status: "usado" }).then(() => {
-                // LIBERA O ACESSO NA INTERFACE
                 document.getElementById('tela-bloqueio').style.display = 'none';
                 document.getElementById('tela-tutorial').style.display = 'flex';
-                // Salva no navegador que este dispositivo já validou
                 localStorage.setItem('digiart_acesso_validado', 'true');
               });
             }
@@ -136,7 +128,6 @@
         });
       }
 
-      // FUNÇÃO PARA INICIAR A AR (MAGIA)
       function iniciarMagia() {
         const hoje = new Date();
         let dataInicio = localStorage.getItem('digiart_data_venda');
@@ -182,7 +173,6 @@
         scene.addEventListener('targetLost', () => v.pause());
       }
 
-      // AUTO-VALIDAÇÃO (Para o cliente não ter que digitar o token toda vez no mesmo celular)
       window.onload = () => {
         if (localStorage.getItem('digiart_acesso_validado') === 'true') {
           document.getElementById('tela-bloqueio').style.display = 'none';
