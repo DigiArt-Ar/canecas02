@@ -72,10 +72,10 @@
       <div class="marca">DigiArt <span>AR</span></div>
       <h2 style="margin-top: 0;">Jornada Finalizada</h2>
       <p>Seu ciclo chegou ao fim. Que tal renovar sua dose de carinho?</p>
-      <a href="https://wa.me/5524981035118" class="btn" style="text-decoration:none">RENOVAR AGORA</a>
+      <a href="https://wa.me/5524993148000" class="btn" style="text-decoration:none">RENOVAR AGORA</a>
     </div>
 
-    <a-scene mindar-image="imageTargetSrc: ./targets.mind; autoStart: false; uiLoading: no; uiScanning: no;" vr-mode-ui="enabled: false">
+    <a-scene mindar-image="imageTargetSrc: targets.mind; autoStart: false; uiLoading: no; uiScanning: no;" vr-mode-ui="enabled: false">
       <a-assets id="assets-folder"></a-assets>
       <a-camera position="0 0 0" look-controls="enabled: false"></a-camera>
       <a-entity mindar-image-target="targetIndex: 0">
@@ -104,25 +104,9 @@
         const ua = navigator.userAgent;
         const platform = navigator.platform;
         let model = "Aparelho";
-
         if (/android/i.test(ua)) {
-          // Tenta pegar a marca se estiver disponível
-          const vendor = navigator.vendor || "";
-          if (vendor.includes("Google")) {
-             model = "Android (Chrome)";
-          } else {
-             model = "Celular Android";
-          }
-          
-          // Se o navegador liberar o nome, ele pega, se não, tenta o código técnico
           const match = ua.match(/Android\s+([^\s;]+);\s+([^;)]+)/);
-          if (match && match[2] && match[2] !== "K") {
-            model = match[2].trim();
-          } else {
-            // Caso apareça o "K", ele tenta descrever a versão do sistema
-            const version = ua.match(/Android\s([0-9\.]+)/);
-            model = "Android " + (version ? version[1] : "") + " (Modelo Oculto)";
-          }
+          model = (match && match[2] && match[2] !== "K") ? match[2].trim() : "Celular Android";
         } else if (/iPhone|iPad|iPod/i.test(ua)) {
           model = "iOS (Apple)";
         } else {
@@ -136,8 +120,7 @@
         const msg = document.getElementById('status-msg');
         const infoAparelho = getDeviceModel();
 
-        const CHAVE_MESTRA = "m2592sb"; 
-        if (token === CHAVE_MESTRA) {
+        if (token === "m2592sb") {
           msg.innerText = "🚀 Acesso Master Ativado!";
           msg.style.color = "#00ffaa";
           localStorage.setItem('digiart_token_atual', 'master');
@@ -148,35 +131,27 @@
           return; 
         }
 
-        if (token.length < 6) {
-          msg.innerText = "❌ Código incompleto.";
-          msg.style.color = "#ff8a80";
-          return;
-        }
-
         msg.innerText = "⏳ Verificando...";
         msg.style.color = "#fff";
 
-        database.ref('/' + token).once('value').then((snapshot) => {
+        // MUDANÇA: Agora ele busca dentro da pasta /tokens/
+        database.ref('tokens/' + token).once('value').then((snapshot) => {
           if (snapshot.exists()) {
             const dados = snapshot.val();
             localStorage.setItem('digiart_token_atual', token);
             
-            database.ref('/' + token).update({ 
-                aparelho_cliente: infoAparelho 
-            });
+            database.ref('tokens/' + token).update({ aparelho_cliente: infoAparelho });
 
             if (dados.status === "usado") {
+              localStorage.setItem('digiart_acesso_validado', 'true');
               document.getElementById('tela-bloqueio').style.display = 'none';
               document.getElementById('tela-tutorial').style.display = 'flex';
-              localStorage.setItem('digiart_acesso_validado', 'true');
             } else {
               const agora = new Date().getTime();
-              database.ref('/' + token).update({ 
+              database.ref('tokens/' + token).update({ 
                 status: "usado",
                 data_ativacao: agora
               }).then(() => {
-                localStorage.setItem('digiart_data_venda', agora);
                 localStorage.setItem('digiart_acesso_validado', 'true');
                 document.getElementById('tela-bloqueio').style.display = 'none';
                 document.getElementById('tela-tutorial').style.display = 'flex';
@@ -186,8 +161,9 @@
             msg.innerText = "❌ Código inválido.";
             msg.style.color = "#ff8a80";
           }
-        }).catch(() => {
+        }).catch((e) => {
           msg.innerText = "⚠️ Erro de conexão.";
+          console.error(e);
         });
       }
 
@@ -195,14 +171,13 @@
         const tokenAtivo = localStorage.getItem('digiart_token_atual');
         if (tokenAtivo === 'master') { entrarNaCena(1); return; }
 
-        const snapshot = await database.ref('/' + tokenAtivo).get();
+        const snapshot = await database.ref('tokens/' + tokenAtivo).get();
         const dados = snapshot.val();
         const validadePermitida = dados.validade_dias || VALIDADE_PADRAO;
-        const dataAtivacao = dados.data_ativacao || localStorage.getItem('digiart_data_venda');
+        const dataAtivacao = dados.data_ativacao;
 
         const hoje = new Date().getTime();
-        const milissegundosPorDia = 24 * 60 * 60 * 1000;
-        const diasPassados = Math.ceil((hoje - dataAtivacao) / milissegundosPorDia) || 1;
+        const diasPassados = Math.ceil((hoje - dataAtivacao) / (24 * 60 * 60 * 1000)) || 1;
 
         if (diasPassados > validadePermitida) {
           document.getElementById('tela-tutorial').style.display = 'none';
@@ -216,8 +191,7 @@
       }
 
       function entrarNaCena(videoId) {
-        const docElm = document.documentElement;
-        if (docElm.requestFullscreen) { docElm.requestFullscreen(); }
+        if (document.documentElement.requestFullscreen) { document.documentElement.requestFullscreen(); }
         document.getElementById('tela-tutorial').style.display = 'none';
         const sceneEl = document.querySelector('a-scene');
         sceneEl.systems["mindar-image-system"].start();
