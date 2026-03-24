@@ -7,7 +7,6 @@
     <style>
       :root { --azul-digiart: #0047AB; --azul-claro: #00BFFF; --branco: #ffffff; }
       body { margin: 0; overflow: hidden; font-family: 'Segoe UI', sans-serif; background: #000; width: 100vw; height: 100vh; }
-      
       .interface {
         position: fixed; top: 0; left: 0; width: 100%; height: 100%;
         display: flex; flex-direction: column; align-items: center;
@@ -18,14 +17,12 @@
       .marca { font-size: 42px; font-weight: bold; letter-spacing: 2px; }
       .marca span { color: var(--azul-claro); }
       .subtitulo { font-size: 14px; opacity: 0.9; margin-bottom: 30px; letter-spacing: 2px; text-transform: uppercase; }
-      
       .btn-magia {
         padding: 18px 40px; border-radius: 50px; border: none;
         background: var(--branco); color: var(--azul-digiart);
         font-weight: bold; font-size: 18px; cursor: pointer; transition: 0.3s;
         box-shadow: 0 10px 20px rgba(0,0,0,0.3);
       }
-
       #btn-contato {
         display: none; position: fixed; bottom: 40px; left: 50%;
         transform: translateX(-50%); z-index: 1000;
@@ -35,9 +32,7 @@
         white-space: nowrap; font-size: 16px; text-transform: uppercase;
       }
       @keyframes pulse { 0% {transform: translateX(-50%) scale(1);} 50% {transform: translateX(-50%) scale(1.05);} 100% {transform: translateX(-50%) scale(1);} }
-      
-      /* BLOQUEIO TOTAL DO BOTÃO VR POR CSS */
-      .a-enter-vr, .a-enter-ar, .a-orientation-modal { display: none !important; visibility: hidden !important; }
+      .a-enter-vr, .a-enter-ar { display: none !important; }
     </style>
   </head>
   <body>
@@ -50,24 +45,17 @@
       <button class="btn-magia" id="btn-start" onclick="verificarEntrarFullScreenEIniciar()">INICIAR MÁGICA ✨</button>
     </div>
 
-    <a href="https://wa.me/5524981035118?text=Olá+DigiArt+AR!+Vi+a+sua+demonstração+e+quero+saber+mais+sobre+os+seus+personalizados!" id="btn-contato" target="_blank">
+    <a href="https://wa.me/5524981035118?text=Olá+DigiArt+AR!+Vi+a+sua+demonstração+interativa+e+quero+saber+mais+sobre+os+seus+personalizados!" id="btn-contato" target="_blank">
         QUERO UM PERSONALIZADO ASSIM! 🚀
     </a>
 
-    <a-scene 
-      mindar-image="imageTargetSrc: ./targets.mind; autoStart: false; uiLoading: no; uiScanning: yes;" 
-      vr-mode-ui="enabled: false" 
-      device-orientation-permission-ui="enabled: false"
-      embedded>
-      
+    <a-scene mindar-image="imageTargetSrc: ./targets.mind; autoStart: false; uiLoading: no; uiScanning: yes;" vr-mode-ui="enabled: false" device-orientation-permission-ui="enabled: false" embedded>
       <a-assets>
         <video id="vid1" src="1.mp4" loop="true" playsinline crossorigin="anonymous"></video>
       </a-assets>
-      
-      <a-camera position="0 0 0" look-controls="enabled: false" wasd-controls="enabled: false"></a-camera>
-
+      <a-camera position="0 0 0" look-controls="enabled: false"></a-camera>
       <a-entity mindar-image-target="targetIndex: 0">
-        <a-video src="#vid1" position="0 0 0" width="1" height="1.77" scale="1.1 1.1 1.1"></a-video>
+        <a-video id="objVideo" src="#vid1" position="0 0 0" width="1" height="1"></a-video>
       </a-entity>
     </a-scene>
 
@@ -77,7 +65,7 @@
       function verificarEntrarFullScreenEIniciar() {
         const hoje = new Date();
         if (hoje > dataExpiracao) {
-          document.getElementById('msg-status').innerHTML = "⚠️ Esta promoção expirou.<br>Fale com a DigiArt AR para ver as novidades!";
+          document.getElementById('msg-status').innerHTML = "⚠️ Esta promoção expirou.<br>Fale com a DigiArt AR!";
           document.getElementById('btn-start').style.display = "none";
           return;
         }
@@ -93,6 +81,15 @@
         sceneEl.systems["mindar-image-system"].start();
         
         const v1 = document.querySelector('#vid1');
+        const objVideo = document.querySelector('#objVideo');
+
+        // LÓGICA UNIVERSAL: Ajusta a proporção baseada no arquivo de vídeo
+        v1.addEventListener('loadedmetadata', function() {
+          const proporcao = v1.videoHeight / v1.videoWidth;
+          objVideo.setAttribute('height', proporcao);
+          objVideo.setAttribute('width', 1);
+        });
+
         v1.volume = 1.0;
         const target = document.querySelector("a-entity[mindar-image-target]");
         target.addEventListener("targetFound", () => { v1.muted = false; v1.play(); });
