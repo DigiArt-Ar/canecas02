@@ -32,7 +32,7 @@
         white-space: nowrap; font-size: 16px; text-transform: uppercase;
       }
       @keyframes pulse { 0% {transform: translateX(-50%) scale(1);} 50% {transform: translateX(-50%) scale(1.05);} 100% {transform: translateX(-50%) scale(1);} }
-      .a-enter-vr, .a-enter-ar { display: none !important; }
+      .a-enter-vr, .a-enter-ar, .a-orientation-modal { display: none !important; }
     </style>
   </head>
   <body>
@@ -42,7 +42,7 @@
       <div class="marca">DigiArt <span>AR</span></div>
       <div class="subtitulo">Tecnologia e Personalização</div>
       <p id="msg-status">Toque para iniciar a experiência interativa em tela cheia.</p>
-      <button class="btn-magia" id="btn-start" onclick="verificarEntrarFullScreenEIniciar()">INICIAR MÁGICA ✨</button>
+      <button class="btn-magia" id="btn-start" onclick="iniciarExperiencia()">INICIAR MÁGICA ✨</button>
     </div>
 
     <a href="https://wa.me/5524981035118?text=Olá+DigiArt+AR!+Vi+a+sua+demonstração+interativa+e+quero+saber+mais+sobre+os+seus+personalizados!" id="btn-contato" target="_blank">
@@ -60,19 +60,11 @@
     </a-scene>
 
     <script>
-      const dataExpiracao = new Date(2026, 3, 30); 
-
-      function verificarEntrarFullScreenEIniciar() {
-        const hoje = new Date();
-        if (hoje > dataExpiracao) {
-          document.getElementById('msg-status').innerHTML = "⚠️ Esta promoção expirou.<br>Fale com a DigiArt AR!";
-          document.getElementById('btn-start').style.display = "none";
-          return;
-        }
-
-        const docElm = document.documentElement;
-        if (docElm.requestFullscreen) { docElm.requestFullscreen(); }
-        else if (docElm.webkitRequestFullscreen) { docElm.webkitRequestFullscreen(); }
+      function iniciarExperiencia() {
+        // Tenta entrar em tela cheia de forma mais agressiva
+        const el = document.documentElement;
+        const rfs = el.requestFullscreen || el.webkitRequestFullScreen || el.mozRequestFullScreen || el.msRequestFullscreen;
+        if(rfs) rfs.call(el);
 
         document.getElementById('tela-boas-vindas').style.display = 'none';
         document.getElementById('btn-contato').style.display = 'block';
@@ -83,11 +75,10 @@
         const v1 = document.querySelector('#vid1');
         const objVideo = document.querySelector('#objVideo');
 
-        // LÓGICA UNIVERSAL: Ajusta a proporção baseada no arquivo de vídeo
+        // Ajuste automático de proporção
         v1.addEventListener('loadedmetadata', function() {
           const proporcao = v1.videoHeight / v1.videoWidth;
           objVideo.setAttribute('height', proporcao);
-          objVideo.setAttribute('width', 1);
         });
 
         v1.volume = 1.0;
