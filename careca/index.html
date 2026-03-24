@@ -1,16 +1,12 @@
 <!DOCTYPE html>
 <html>
   <head>
-    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <meta name="viewport" content="width=device-width, initial-scale=1, user-scalable=no" />
     <script src="https://aframe.io/releases/1.5.0/aframe.min.js"></script>
     <script src="https://cdn.jsdelivr.net/npm/mind-ar@1.2.5/dist/mindar-image-aframe.prod.js"></script>
     <style>
-      :root { 
-        --azul-digiart: #0047AB; 
-        --azul-claro: #00BFFF; 
-        --branco: #ffffff; 
-      }
-      body { margin: 0; overflow: hidden; font-family: 'Segoe UI', sans-serif; background: #000; }
+      :root { --azul-digiart: #0047AB; --azul-claro: #00BFFF; --branco: #ffffff; }
+      body { margin: 0; overflow: hidden; font-family: 'Segoe UI', sans-serif; background: #000; width: 100vw; height: 100vh; }
       
       .interface {
         position: fixed; top: 0; left: 0; width: 100%; height: 100%;
@@ -31,12 +27,12 @@
       }
 
       #btn-contato {
-        display: none; position: fixed; bottom: 20px; left: 50%;
+        display: none; position: fixed; bottom: 40px; left: 50%;
         transform: translateX(-50%); z-index: 1000;
         padding: 15px 30px; background: #25D366; color: white;
         text-decoration: none; border-radius: 30px; font-weight: bold;
         box-shadow: 0 4px 15px rgba(0,0,0,0.5); animation: pulse 2s infinite;
-        white-space: nowrap;
+        white-space: nowrap; font-size: 16px; text-transform: uppercase;
       }
       @keyframes pulse { 0% {transform: translateX(-50%) scale(1);} 50% {transform: translateX(-50%) scale(1.05);} 100% {transform: translateX(-50%) scale(1);} }
     </style>
@@ -46,16 +42,16 @@
     <div id="tela-boas-vindas" class="interface">
       <div style="font-size: 60px; margin-bottom: 10px;">⚡</div>
       <div class="marca">DigiArt <span>AR</span></div>
-      <div class="subtitulo">EXPERIÊNCIA INTERATIVA</div>
-      <p id="msg-status">Toque no botão para ver a mágica acontecer no quadro!</p>
-      <button class="btn-magia" id="btn-start" onclick="verificarEIniciar()">VER AGORA ✨</button>
+      <div class="subtitulo">TRANSFORMANDO PRODUTOS EM EXPERIÊNCIAS</div>
+      <p id="msg-status">Toque para iniciar a experiência DigiArt AR em tela cheia.</p>
+      <button class="btn-magia" id="btn-start" onclick="verificarEntrarFullScreenEIniciar()">INICIAR MÁGICA ✨</button>
     </div>
 
-    <a href="https://wa.me/5524981035118?text=Olá+Maumau!+Vi+o+quadro+interativo+e+quero+um+orçamento!" id="btn-contato" target="_blank">
-        QUERO UM QUADRO ASSIM! 🚀
+    <a href="https://wa.me/5524981035118?text=Olá+DigiArt+AR!+Vi+a+sua+demonstração+e+quero+saber+mais+sobre+os+seus+personalizados!" id="btn-contato" target="_blank">
+        QUERO UM PERSONALIZADO ASSIM! 🚀
     </a>
 
-    <a-scene mindar-image="imageTargetSrc: ./targets.mind; autoStart: false; uiLoading: no; uiScanning: yes;" vr-mode-ui="enabled: false">
+    <a-scene mindar-image="imageTargetSrc: ./targets.mind; autoStart: false; uiLoading: no; uiScanning: yes;" vr-mode-ui="enabled: false" embedded>
       <a-assets>
         <video id="vid1" src="1.mp4" loop="true" playsinline crossorigin="anonymous"></video>
       </a-assets>
@@ -68,15 +64,21 @@
     </a-scene>
 
     <script>
-      const dataExpiracao = new Date(2026, 3, 10); 
+      // VALIDADE DA DEMONSTRAÇÃO (Ano, Mês-1, Dia)
+      const dataExpiracao = new Date(2026, 3, 30); 
 
-      function verificarEIniciar() {
+      function verificarEntrarFullScreenEIniciar() {
         const hoje = new Date();
         if (hoje > dataExpiracao) {
-          document.getElementById('msg-status').innerHTML = "⚠️ Esta demonstração expirou.<br>Entre em contato para renovar!";
+          document.getElementById('msg-status').innerHTML = "⚠️ Esta promoção expirou.<br>Fale com a DigiArt AR para ver as novidades!";
           document.getElementById('btn-start').style.display = "none";
           return;
         }
+
+        // ATIVA TELA CHEIA
+        const docElm = document.documentElement;
+        if (docElm.requestFullscreen) { docElm.requestFullscreen(); }
+        else if (docElm.webkitRequestFullscreen) { docElm.webkitRequestFullscreen(); }
 
         document.getElementById('tela-boas-vindas').style.display = 'none';
         document.getElementById('btn-contato').style.display = 'block';
