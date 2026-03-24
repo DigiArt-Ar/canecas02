@@ -35,6 +35,9 @@
         white-space: nowrap; font-size: 16px; text-transform: uppercase;
       }
       @keyframes pulse { 0% {transform: translateX(-50%) scale(1);} 50% {transform: translateX(-50%) scale(1.05);} 100% {transform: translateX(-50%) scale(1);} }
+      
+      /* Força a ocultação de qualquer botão de VR residual */
+      .a-enter-vr { display: none !important; }
     </style>
   </head>
   <body>
@@ -42,8 +45,8 @@
     <div id="tela-boas-vindas" class="interface">
       <div style="font-size: 60px; margin-bottom: 10px;">⚡</div>
       <div class="marca">DigiArt <span>AR</span></div>
-      <div class="subtitulo">TRANSFORMANDO PRODUTOS EM EXPERIÊNCIAS</div>
-      <p id="msg-status">Toque para iniciar a experiência DigiArt AR em tela cheia.</p>
+      <div class="subtitulo">TECNOLOGIA E PERSONALIZAÇÃO</div>
+      <p id="msg-status">Toque para iniciar a experiência interativa em tela cheia.</p>
       <button class="btn-magia" id="btn-start" onclick="verificarEntrarFullScreenEIniciar()">INICIAR MÁGICA ✨</button>
     </div>
 
@@ -51,7 +54,12 @@
         QUERO UM PERSONALIZADO ASSIM! 🚀
     </a>
 
-    <a-scene mindar-image="imageTargetSrc: ./targets.mind; autoStart: false; uiLoading: no; uiScanning: yes;" vr-mode-ui="enabled: false" embedded>
+    <a-scene 
+      mindar-image="imageTargetSrc: ./targets.mind; autoStart: false; uiLoading: no; uiScanning: yes;" 
+      vr-mode-ui="enabled: false" 
+      device-orientation-permission-ui="enabled: false"
+      embedded>
+      
       <a-assets>
         <video id="vid1" src="1.mp4" loop="true" playsinline crossorigin="anonymous"></video>
       </a-assets>
@@ -64,7 +72,6 @@
     </a-scene>
 
     <script>
-      // VALIDADE DA DEMONSTRAÇÃO (Ano, Mês-1, Dia)
       const dataExpiracao = new Date(2026, 3, 30); 
 
       function verificarEntrarFullScreenEIniciar() {
@@ -75,14 +82,16 @@
           return;
         }
 
-        // ATIVA TELA CHEIA
         const docElm = document.documentElement;
         if (docElm.requestFullscreen) { docElm.requestFullscreen(); }
         else if (docElm.webkitRequestFullscreen) { docElm.webkitRequestFullscreen(); }
 
         document.getElementById('tela-boas-vindas').style.display = 'none';
         document.getElementById('btn-contato').style.display = 'block';
-        document.querySelector('a-scene').systems["mindar-image-system"].start();
+        
+        // Garante que o sistema AR comece
+        const sceneEl = document.querySelector('a-scene');
+        sceneEl.systems["mindar-image-system"].start();
         
         const v1 = document.querySelector('#vid1');
         v1.volume = 1.0;
