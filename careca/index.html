@@ -17,7 +17,7 @@
       }
       .marca { font-size: 42px; font-weight: bold; letter-spacing: 2px; }
       .marca span { color: var(--azul-claro); }
-      .subtitulo { font-size: 14px; opacity: 0.9; margin-bottom: 30px; letter-spacing: 2px; }
+      .subtitulo { font-size: 14px; opacity: 0.9; margin-bottom: 30px; letter-spacing: 2px; text-transform: uppercase; }
       
       .btn-magia {
         padding: 18px 40px; border-radius: 50px; border: none;
@@ -36,8 +36,8 @@
       }
       @keyframes pulse { 0% {transform: translateX(-50%) scale(1);} 50% {transform: translateX(-50%) scale(1.05);} 100% {transform: translateX(-50%) scale(1);} }
       
-      /* Força a ocultação de qualquer botão de VR residual */
-      .a-enter-vr { display: none !important; }
+      /* BLOQUEIO TOTAL DO BOTÃO VR POR CSS */
+      .a-enter-vr, .a-enter-ar, .a-orientation-modal { display: none !important; visibility: hidden !important; }
     </style>
   </head>
   <body>
@@ -45,7 +45,7 @@
     <div id="tela-boas-vindas" class="interface">
       <div style="font-size: 60px; margin-bottom: 10px;">⚡</div>
       <div class="marca">DigiArt <span>AR</span></div>
-      <div class="subtitulo">TECNOLOGIA E PERSONALIZAÇÃO</div>
+      <div class="subtitulo">Tecnologia e Personalização</div>
       <p id="msg-status">Toque para iniciar a experiência interativa em tela cheia.</p>
       <button class="btn-magia" id="btn-start" onclick="verificarEntrarFullScreenEIniciar()">INICIAR MÁGICA ✨</button>
     </div>
@@ -64,7 +64,7 @@
         <video id="vid1" src="1.mp4" loop="true" playsinline crossorigin="anonymous"></video>
       </a-assets>
       
-      <a-camera position="0 0 0" look-controls="enabled: false"></a-camera>
+      <a-camera position="0 0 0" look-controls="enabled: false" wasd-controls="enabled: false"></a-camera>
 
       <a-entity mindar-image-target="targetIndex: 0">
         <a-video src="#vid1" position="0 0 0" width="1" height="1.77" scale="1.1 1.1 1.1"></a-video>
@@ -89,7 +89,6 @@
         document.getElementById('tela-boas-vindas').style.display = 'none';
         document.getElementById('btn-contato').style.display = 'block';
         
-        // Garante que o sistema AR comece
         const sceneEl = document.querySelector('a-scene');
         sceneEl.systems["mindar-image-system"].start();
         
