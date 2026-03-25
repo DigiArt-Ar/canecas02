@@ -32,8 +32,7 @@
         white-space: nowrap; font-size: 16px; text-transform: uppercase;
       }
       @keyframes pulse { 0% {transform: translateX(-50%) scale(1);} 50% {transform: translateX(-50%) scale(1.05);} 100% {transform: translateX(-50%) scale(1);} }
-      /* BLOQUEIO TOTAL DE VR/AR E MODAIS DO NAVEGADOR */
-      .a-enter-vr, .a-enter-ar, .a-orientation-modal, .mindar-ui-overlay { display: none !important; visibility: hidden !important; }
+      .a-enter-vr, .a-enter-ar, .a-orientation-modal, .mindar-ui-overlay { display: none !important; }
     </style>
   </head>
   <body>
@@ -42,11 +41,11 @@
       <div style="font-size: 60px; margin-bottom: 10px;">⚡</div>
       <div class="marca">DigiArt <span>AR</span></div>
       <div class="subtitulo">Tecnologia e Personalização</div>
-      <p id="msg-status">Toque para iniciar a experiência interativa em tela cheia.</p>
+      <p>Toque para iniciar a experiência interativa.</p>
       <button class="btn-magia" id="btn-start" onclick="iniciarExperiencia()">INICIAR MÁGICA ✨</button>
     </div>
 
-    <a href="https://wa.me/5524981035118?text=Olá+DigiArt+AR!+Vi+a+sua+demonstração+interativa+e+quero+saber+mais+sobre+os+seus+personalizados!" id="btn-contato" target="_blank">
+    <a href="https://wa.me/5524981035118" id="btn-contato" target="_blank">
         QUERO UM PERSONALIZADO ASSIM! 🚀
     </a>
 
@@ -57,20 +56,33 @@
       embedded>
       
       <a-assets>
-        <video id="vid1" src="1.mp4" loop="true" playsinline crossorigin="anonymous"></video>
+        <video id="vid1" src="1.mp4" loop="true" playsinline crossorigin="anonymous" muted></video>
       </a-assets>
-      <a-camera position="0 0 0" look-controls="enabled: false" wasd-controls="enabled: false"></a-camera>
       
-      <a-entity mindar-image-target="targetIndex: 0">
+      <a-camera position="0 0 0" look-controls="enabled: false"></a-camera>
+      
+      <a-entity mindar-image-target="targetIndex: 0" id="meuTarget">
         <a-video id="objVideo" src="#vid1" position="0 0 0" width="1" height="1"></a-video>
       </a-entity>
     </a-scene>
 
     <script>
+      const v1 = document.querySelector('#vid1');
+      const objVideo = document.querySelector('#objVideo');
+
+      // AJUSTE DE PROPORÇÃO AUTOMÁTICO (A MÁGICA UNIVERSAL)
+      v1.addEventListener('loadedmetadata', function() {
+          // Calcula a proporção real do vídeo (Ex: 1920 / 1080 = 1.77)
+          const ratio = v1.videoHeight / v1.videoWidth;
+          // Aplica a altura proporcional mantendo a largura 1
+          objVideo.setAttribute('height', ratio);
+          console.log("Proporção ajustada para: " + ratio);
+      });
+
       function iniciarExperiencia() {
+        // Entrar em tela cheia (opcional, melhora a imersão)
         const el = document.documentElement;
-        const rfs = el.requestFullscreen || el.webkitRequestFullScreen || el.mozRequestFullScreen || el.msRequestFullscreen;
-        if(rfs) rfs.call(el);
+        if (el.requestFullscreen) el.requestFullscreen();
 
         document.getElementById('tela-boas-vindas').style.display = 'none';
         document.getElementById('btn-contato').style.display = 'block';
@@ -78,19 +90,16 @@
         const sceneEl = document.querySelector('a-scene');
         sceneEl.systems["mindar-image-system"].start();
         
-        const v1 = document.querySelector('#vid1');
-        const objVideo = document.querySelector('#objVideo');
+        const target = document.querySelector("#meuTarget");
 
-        // AJUSTE AUTOMÁTICO DE PROPORÇÃO UNIVERSAL
-        v1.addEventListener('loadedmetadata', function() {
-          const proporcao = v1.videoHeight / v1.videoWidth;
-          objVideo.setAttribute('height', proporcao);
+        target.addEventListener("targetFound", () => { 
+            v1.muted = false; 
+            v1.play(); 
         });
 
-        v1.volume = 1.0;
-        const target = document.querySelector("a-entity[mindar-image-target]");
-        target.addEventListener("targetFound", () => { v1.muted = false; v1.play(); });
-        target.addEventListener("targetLost", () => v1.pause());
+        target.addEventListener("targetLost", () => { 
+            v1.pause(); 
+        });
       }
     </script>
   </body>
