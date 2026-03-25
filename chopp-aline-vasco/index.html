@@ -41,7 +41,7 @@
       <div style="font-size: 60px; margin-bottom: 10px;">⚡</div>
       <div class="marca">DigiArt <span>AR</span></div>
       <div class="subtitulo">Tecnologia e Personalização</div>
-      <p>Toque para iniciar a experiência interativa.</p>
+      <p id="texto-aviso">Toque para iniciar a experiência interativa.</p>
       <button class="btn-magia" id="btn-start" onclick="iniciarExperiencia()">INICIAR MÁGICA ✨</button>
     </div>
 
@@ -67,20 +67,35 @@
     </a-scene>
 
     <script>
+      // ==========================================
+      // CONFIGURAÇÃO DA DATA DE EXPIRAÇÃO
+      // Formato: ANO-MES-DIA (Mantenha os hífens)
+      const dataLimite = "2026-04-15"; 
+      // ==========================================
+
       const v1 = document.querySelector('#vid1');
       const objVideo = document.querySelector('#objVideo');
+      const btnStart = document.getElementById('btn-start');
+      const textoAviso = document.getElementById('texto-aviso');
 
-      // AJUSTE DE PROPORÇÃO AUTOMÁTICO (A MÁGICA UNIVERSAL)
+      // VERIFICAÇÃO DE DATA AO CARREGAR O SITE
+      window.onload = function() {
+          const hoje = new Date();
+          const limite = new Date(dataLimite + "T23:59:59"); // Garante que vale até o fim do dia
+
+          if (hoje > limite) {
+              btnStart.style.display = "none";
+              textoAviso.innerHTML = "<b style='color:#ffca28'>ESTE LINK EXPIROU!</b><br>Essa promoção não está mais ativa.";
+          }
+      };
+
+      // AJUSTE DE PROPORÇÃO AUTOMÁTICO
       v1.addEventListener('loadedmetadata', function() {
-          // Calcula a proporção real do vídeo (Ex: 1920 / 1080 = 1.77)
           const ratio = v1.videoHeight / v1.videoWidth;
-          // Aplica a altura proporcional mantendo a largura 1
           objVideo.setAttribute('height', ratio);
-          console.log("Proporção ajustada para: " + ratio);
       });
 
       function iniciarExperiencia() {
-        // Entrar em tela cheia (opcional, melhora a imersão)
         const el = document.documentElement;
         if (el.requestFullscreen) el.requestFullscreen();
 
@@ -91,15 +106,8 @@
         sceneEl.systems["mindar-image-system"].start();
         
         const target = document.querySelector("#meuTarget");
-
-        target.addEventListener("targetFound", () => { 
-            v1.muted = false; 
-            v1.play(); 
-        });
-
-        target.addEventListener("targetLost", () => { 
-            v1.pause(); 
-        });
+        target.addEventListener("targetFound", () => { v1.muted = false; v1.play(); });
+        target.addEventListener("targetLost", () => { v1.pause(); });
       }
     </script>
   </body>
