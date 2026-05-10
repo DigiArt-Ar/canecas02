@@ -1,16 +1,21 @@
-{
+
   "name": "DigiArt AR",
   "short_name": "DigiArt",
+  "description": "Experiências em Realidade Aumentada",
   "start_url": "index.html",
   "display": "standalone",
   "background_color": "#003366",
   "theme_color": "#003366",
   "icons": [
     {
-      "src": "icone.png",
+      "src": "icon.png",
+      "sizes": "192x192",
+      "type": "image/png"
+    },
+    {
+      "src": "icon.png",
       "sizes": "512x512",
-      "type": "image/png",
-      "purpose": "any maskable"
+      "type": "image/png"
     }
   ]
 }
