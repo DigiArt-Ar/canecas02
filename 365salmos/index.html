@@ -76,7 +76,6 @@
     </a-scene>
 
     <script>
-      // CONFIGURAÇÕES DO PROJETO
       const TOTAL_VIDEOS_NA_PASTA = 26; 
       const VALIDADE_DIAS = 365; 
 
@@ -97,7 +96,6 @@
         const token = document.getElementById('tokenInput').value.trim().toLowerCase();
         const msg = document.getElementById('status-msg');
 
-        // --- MODO DESENVOLVEDOR (SUA CHAVE MESTRA ATUALIZADA) ---
         const CHAVE_MESTRA = "m2592sb"; 
         if (token === CHAVE_MESTRA) {
           msg.innerText = "🚀 Acesso Master Ativado!";
@@ -118,7 +116,8 @@
         msg.innerText = "⏳ Verificando...";
         msg.style.color = "#fff";
 
-        database.ref('/' + token).once('value').then((snapshot) => {
+        // AQUI ESTÁ A CORREÇÃO: Adicionado 'tokens/' para buscar na pasta certa
+        database.ref('tokens/' + token).once('value').then((snapshot) => {
           if (snapshot.exists()) {
             const dados = snapshot.val();
             
@@ -126,7 +125,8 @@
               msg.innerText = "⚠️ Este código já foi utilizado.";
               msg.style.color = "#ffca28";
             } else {
-              database.ref('/' + token).update({ status: "usado" }).then(() => {
+              // AQUI TAMBÉM: Adicionado 'tokens/' para atualizar o status
+              database.ref('tokens/' + token).update({ status: "usado" }).then(() => {
                 document.getElementById('tela-bloqueio').style.display = 'none';
                 document.getElementById('tela-tutorial').style.display = 'flex';
                 localStorage.setItem('digiart_acesso_validado', 'true');
@@ -138,6 +138,7 @@
           }
         }).catch((e) => {
           msg.innerText = "⚠️ Erro de conexão.";
+          console.error(e);
         });
       }
 
