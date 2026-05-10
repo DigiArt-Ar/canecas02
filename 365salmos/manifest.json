@@ -1,6 +1,6 @@
-
-  "name": "DigiArt AR",
-  "short_name": "DigiArt",
+{
+  "name": "DigiArt Realidade Aumentada",
+  "short_name": "DigiArt AR",
   "description": "Experiências em Realidade Aumentada",
   "start_url": "index.html",
   "display": "standalone",
