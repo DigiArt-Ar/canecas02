@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Tabela Interativa - Copa do Mundo</title>
+    <title>Tabela Interativa - Copa do Mundo 2026</title>
     <style>
         :root {
             --bg-principal: #0f1115;
@@ -15,6 +15,7 @@
             --verde-sucesso: #00e676;
             --texto-claro: #f1f3f5;
             --texto-escuro: #9ea7b3;
+            --trava-vermelha: #ff3838;
         }
 
         * {
@@ -50,9 +51,22 @@
             margin-top: 5px;
         }
 
+        .secao-titulo {
+            text-align: center;
+            font-size: 1.3rem;
+            color: var(--laranja-copa);
+            text-transform: uppercase;
+            margin: 30px 0 20px 0;
+            padding: 10px;
+            background-color: rgba(255, 107, 0, 0.05);
+            border-radius: 6px;
+            border: 1px solid rgba(255, 107, 0, 0.15);
+            letter-spacing: 1px;
+        }
+
         .container-grupos {
             display: grid;
-            grid-template-columns: repeat(auto-fit, minmax(340px, 1fr));
+            grid-template-columns: repeat(auto-fit, minmax(350px, 1fr));
             gap: 25px;
             max-width: 1400px;
             margin: 0 auto;
@@ -76,12 +90,11 @@
             text-transform: uppercase;
         }
 
-        /* Estilização da tabela de classificação interna */
         .tabela-classificacao {
             width: 100%;
             border-collapse: collapse;
             margin-bottom: 15px;
-            font-size: 0.85rem;
+            font-size: 0.82rem;
             text-align: center;
         }
 
@@ -105,267 +118,4 @@
 
         .col-ponto {
             font-weight: bold;
-            color: var(--verde-sucesso);
-        }
-
-        /* Container de jogos */
-        .bloco-jogos {
-            display: flex;
-            flex-direction: column;
-            gap: 8px;
-            border-top: 1px dashed var(--cor-borda);
-            padding-top: 12px;
-        }
-
-        .linha-confronto {
-            display: flex;
-            align-items: center;
-            justify-content: space-between;
-            background-color: rgba(30, 34, 43, 0.4);
-            padding: 8px 10px;
-            border-radius: 6px;
-            font-size: 0.85rem;
-        }
-
-        .time-confronto {
-            flex: 1;
-            white-space: nowrap;
-            overflow: hidden;
-            text-overflow: ellipsis;
-        }
-
-        .time-direita {
-            text-align: right;
-        }
-
-        .area-placar {
-            display: flex;
-            align-items: center;
-            gap: 5px;
-            padding: 0 10px;
-        }
-
-        .input-placar {
-            width: 32px;
-            height: 28px;
-            background-color: var(--bg-input);
-            border: 1px solid var(--cor-borda);
-            color: white;
-            text-align: center;
-            font-weight: bold;
-            font-size: 0.95rem;
-            border-radius: 4px;
-        }
-
-        .input-placar:focus {
-            border-color: var(--laranja-copa);
-            outline: none;
-            background-color: rgba(255, 107, 0, 0.05);
-        }
-
-        .vs-separador {
-            color: var(--texto-escuro);
-            font-size: 0.75rem;
-        }
-
-        .btn-reset-sistema {
-            display: block;
-            width: 220px;
-            margin: 30px auto 10px auto;
-            background: none;
-            border: 1px dashed var(--texto-escuro);
-            color: var(--texto-escuro);
-            padding: 10px;
-            border-radius: 6px;
-            font-size: 0.8rem;
-            cursor: pointer;
-            font-weight: bold;
-            transition: all 0.2s;
-        }
-
-        .btn-reset-sistema:hover {
-            border-color: var(--laranja-copa);
-            color: var(--laranja-copa);
-        }
-    </style>
-</head>
-<body>
-
-    <header>
-        <h1>Tabela Digital - Copa do Mundo 2026</h1>
-        <p>Preencha os placares dos jogos abaixo para atualizar as classificações automaticamente</p>
-    </header>
-
-    <div class="container-grupos" id="wrapper-fase-grupos"></div>
-
-    <button class="btn-reset-sistema" onclick="resetarTabelaGeral()">⚠️ Resetar Todos os Placares</button>
-
-    <script>
-        // Banco de dados mapeando rigorosamente a estrutura da sua imagem
-        const estruturaCopa = {
-            "A": { times: ["MEX", "AFS", "COR", "TCH"], jogos: [{t1:"MEX", t2:"AFS"}, {t1:"COR", t2:"TCH"}, {t1:"TCH", t2:"AFS"}, {t1:"MEX", t2:"COR"}, {t1:"AFS", t2:"COR"}, {t1:"TCH", t2:"MEX"}] },
-            "B": { times: ["CAN", "BOS", "CAT", "SUI"], jogos: [{t1:"CAN", t2:"BOS"}, {t1:"CAT", t2:"SUI"}, {t1:"SUI", t2:"BOS"}, {t1:"CAN", t2:"CAT"}, {t1:"BOS", t2:"CAT"}, {t1:"SUI", t2:"CAN"}] },
-            "C": { times: ["BRA", "MAR", "HAI", "SCO"], jogos: [{t1:"BRA", t2:"MAR"}, {t1:"HAI", t2:"SCO"}, {t1:"SCO", t2:"MAR"}, {t1:"BRA", t2:"HAI"}, {t1:"SCO", t2:"BRA"}, {t1:"MAR", t2:"HAI"}] },
-            "D": { times: ["USA", "PAR", "AUS", "TUR"], jogos: [{t1:"USA", t2:"PAR"}, {t1:"AUS", t2:"TUR"}, {t1:"USA", t2:"AUS"}, {t1:"TUR", t2:"PAR"}, {t1:"PAR", t2:"AUS"}, {t1:"TUR", t2:"USA"}] },
-            "E": { times: ["ALE", "CUR", "CDI", "EQU"], jogos: [{t1:"ALE", t2:"CUR"}, {t1:"CDI", t2:"EQU"}, {t1:"ALE", t2:"CDI"}, {t1:"EQU", t2:"CUR"}, {t1:"CUR", t2:"CDI"}, {t1:"EQU", t2:"ALE"}] },
-            "F": { times: ["HOL", "JAP", "SUE", "TUN"], jogos: [{t1:"HOL", t2:"JAP"}, {t1:"SUE", t2:"TUN"}, {t1:"HOL", t2:"SUE"}, {t1:"TUN", t2:"JAP"}, {t1:"JAP", t2:"SUE"}, {t1:"TUN", t2:"HOL"}] },
-            "G": { times: ["BEL", "EGT", "IRA", "NZE"], jogos: [{t1:"BEL", t2:"EGT"}, {t1:"IRA", t2:"NZE"}, {t1:"BEL", t2:"IRA"}, {t1:"NZE", t2:"EGT"}, {t1:"NZE", t2:"BEL"}, {t1:"EGT", t2:"IRA"}] },
-            "H": { times: ["ESP", "CAB", "SAU", "URU"], jogos: [{t1:"ESP", t2:"CAB"}, {t1:"SAU", t2:"URU"}, {t1:"ESP", t2:"SAU"}, {t1:"URU", t2:"CAB"}, {t1:"CAB", t2:"SAU"}, {t1:"URU", t2:"ESP"}] },
-            "I": { times: ["FRA", "SNG", "IRQ", "NOR"], jogos: [{t1:"FRA", t2:"SNG"}, {t1:"IRQ", t2:"NOR"}, {t1:"FRA", t2:"IRQ"}, {t1:"NOR", t2:"SNG"}, {t1:"NOR", t2:"IRQ"}, {t1:"SNG", t2:"FRA"}] },
-            "J": { times: ["ARG", "AGL", "AST", "JRD"], jogos: [{t1:"ARG", t2:"AGL"}, {t1:"AST", t2:"JRD"}, {t1:"ARG", t2:"AST"}, {t1:"JRD", t2:"AGL"}, {t1:"AGL", t2:"AST"}, {t1:"JRD", t2:"ARG"}] },
-            "K": { times: ["POR", "RDC", "UZB", "COL"], jogos: [{t1:"POR", t2:"RDC"}, {t1:"UZB", t2:"COL"}, {t1:"POR", t2:"UZB"}, {t1:"COL", t2:"RDC"}, {t1:"RDC", t2:"UZB"}, {t1:"COL", t2:"POR"}] },
-            "L": { times: ["ING", "CRO", "GHA", "PAN"], jogos: [{t1:"ING", t2:"CRO"}, {t1:"GHA", t2:"PAN"}, {t1:"ING", t2:"GHA"}, {t1:"PAN", t2:"CRO"}, {t1:"CRO", t2:"GHA"}, {t1:"PAN", t2:"ING"}] }
-        };
-
-        let placaresSalvos = {};
-
-        function carregarMemoriaLocal() {
-            const dados = localStorage.getItem('placares_copa_2026');
-            if (dados) {
-                placaresSalvos = JSON.parse(dados);
-            }
-        }
-
-        function salvarPlacar(grupoId, jogoIdx, campo, valor) {
-            const chave = `${grupoId}_${jogoIdx}`;
-            if (!placaresSalvos[chave]) placaresSalvos[chave] = { p1: "", p2: "" };
-            
-            placaresSalvos[chave][campo] = valor !== "" ? parseInt(valor) : "";
-            localStorage.setItem('placares_copa_2026', JSON.stringify(placaresSalvos));
-            
-            processarGrupo(grupoId);
-        }
-
-        function processarGrupo(grupoId) {
-            const dadosGrupo = estruturaCopa[grupoId];
-            let stats = {};
-
-            dadosGrupo.times.forEach(t => {
-                stats[t] = { pts: 0, v: 0, e: 0, d: 0, gp: 0, gc: 0, sg: 0 };
-            });
-
-            dadosGrupo.jogos.forEach((j, idx) => {
-                const chave = `${grupoId}_${idx}`;
-                const placar = placaresSalvos[chave];
-
-                if (placar && placar.p1 !== "" && placar.p2 !== "") {
-                    const g1 = placar.p1;
-                    const g2 = placar.p2;
-
-                    stats[j.t1].gp += g1;
-                    stats[j.t1].gc += g2;
-                    stats[j.t2].gp += g2;
-                    stats[j.t2].gc += g1;
-
-                    if (g1 > g2) {
-                        stats[j.t1].pts += 3; stats[j.t1].v += 1;
-                        stats[j.t2].d += 1;
-                    } else if (g1 < g2) {
-                        stats[j.t2].pts += 3; stats[j.t2].v += 1;
-                        stats[j.t1].d += 1;
-                    } else {
-                        stats[j.t1].pts += 1; stats[j.t1].e += 1;
-                        stats[j.t2].pts += 1; stats[j.t2].e += 1;
-                    }
-                }
-            });
-
-            dadosGrupo.times.forEach(t => {
-                stats[t].sg = stats[t].gp - stats[t].gc;
-            });
-
-            let ranking = [...dadosGrupo.times];
-            ranking.sort((a, b) => {
-                if (stats[b].pts !== stats[a].pts) return stats[b].pts - stats[a].pts;
-                if (stats[b].sg !== stats[a].sg) return stats[b].sg - stats[a].sg;
-                return stats[b].gp - stats[a].gp;
-            });
-
-            const tbody = document.getElementById(`tbody-${grupoId}`);
-            tbody.innerHTML = "";
-
-            ranking.forEach((time, pos) => {
-                const s = stats[time];
-                const tr = document.createElement('tr');
-                tr.innerHTML = `
-                    <td>${pos + 1}º</td>
-                    <td class="align-left">${time}</td>
-                    <td class="col-ponto">${s.pts}</td>
-                    <td>${s.v}</td>
-                    <td>${s.e}</td>
-                    <td>${s.gp}</td>
-                    <td>${s.sg}</td>
-                `;
-                tbody.appendChild(tr);
-            });
-        }
-
-        function construirInterfaceGeral() {
-            const wrapper = document.getElementById('wrapper-fase-grupos');
-            wrapper.innerHTML = "";
-
-            Object.keys(estruturaCopa).forEach(grupoId => {
-                const dadosGrupo = estruturaCopa[grupoId];
-                
-                const card = document.createElement('div');
-                card.className = 'card-grupo';
-                
-                let blocoJogosHtml = '';
-                dadosGrupo.jogos.forEach((j, idx) => {
-                    const chave = `${grupoId}_${idx}`;
-                    const val1 = placaresSalvos[chave]?.p1 ?? "";
-                    const val2 = placaresSalvos[chave]?.p2 ?? "";
-
-                    blocoJogosHtml += `
-                        <div class="linha-confronto">
-                            <span class="time-confronto">${j.t1}</span>
-                            <div class="area-placar">
-                                <input type="number" class="input-placar" value="${val1}" oninput="salvarPlacar('${grupoId}', ${idx}, 'p1', this.value)">
-                                <span class="vs-separador">x</span>
-                                <input type="number" class="input-placar" value="${val2}" oninput="salvarPlacar('${grupoId}', ${idx}, 'p2', this.value)">
-                            </div>
-                            <span class="time-confronto time-direita">${j.t2}</span>
-                        </div>
-                    `;
-                });
-
-                card.innerHTML = `
-                    <div class="titulo-grupo">Grupo ${grupoId}</div>
-                    <table class="tabela-classificacao">
-                        <thead>
-                            <tr>
-                                <th style="width: 10%">P</th>
-                                <th class="align-left" style="width: 35%">Seleção</th>
-                                <th style="width: 11%">PTS</th>
-                                <th style="width: 11%">V</th>
-                                <th style="width: 11%">E</th>
-                                <th style="width: 11%">GP</th>
-                                <th style="width: 11%">SG</th>
-                            </tr>
-                        </thead>
-                        <tbody id="tbody-${grupoId}"></tbody>
-                    </table>
-                    <div class="bloco-jogos">
-                        ${blocoJogosHtml}
-                    </div>
-                `;
-                
-                wrapper.appendChild(card);
-                processarGrupo(grupoId);
-            });
-        }
-
-        function resetarTabelaGeral() {
-            if (confirm("Tem certeza que deseja apagar todos os placares digitados?")) {
-                localStorage.removeItem('placares_copa_2026');
-                placaresSalvos = {};
-                construirInterfaceGeral();
-            }
-        }
-
-        // Inicialização
-        carregarMemoriaLocal();
-        construirInterfaceGeral();
-    </script>
-</body>
-</html>
+            color: var(--
