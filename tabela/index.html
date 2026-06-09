@@ -66,7 +66,7 @@
 
         .container-grupos {
             display: grid;
-            grid-template-columns: repeat(auto-fit, minmax(350px, 1fr));
+            grid-template-columns: repeat(auto-fit, minmax(360px, 1fr));
             gap: 25px;
             max-width: 1400px;
             margin: 0 auto;
@@ -100,13 +100,13 @@
 
         .tabela-classificacao th {
             color: var(--texto-escuro);
-            padding: 6px 4px;
+            padding: 6px 2px;
             font-weight: 600;
             border-bottom: 1px solid var(--cor-borda);
         }
 
         .tabela-classificacao td {
-            padding: 8px 4px;
+            padding: 8px 2px;
             border-bottom: 1px solid rgba(42, 47, 59, 0.4);
         }
 
@@ -114,6 +114,10 @@
             text-align: left;
             font-weight: bold;
             color: var(--amarelo-destaque);
+            white-space: nowrap;
+            overflow: hidden;
+            text-overflow: ellipsis;
+            max-width: 110px; /* Garante que o nome não empurre os números */
         }
 
         .col-ponto {
@@ -250,7 +254,7 @@
 
         .container-matamata {
             display: grid;
-            grid-template-columns: repeat(auto-fit, minmax(320px, 1fr));
+            grid-template-columns: repeat(auto-fit, minmax(360px, 1fr));
             gap: 20px;
             max-width: 1400px;
             margin: 0 auto 50px auto;
@@ -272,18 +276,34 @@
 
     <header>
         <h1>Tabela Digital - Copa do Mundo 2026</h1>
-        <p>Insira os placares e clique no ícone de cadeado no fim da linha para salvar e travar os resultados</p>
+        <p>Preencha os jogos das chaves. A classificação e o mata-mata atualizam tudo automaticamente com os nomes completos!</p>
     </header>
 
     <!-- PRIMEIRA PARTE DA TABELA -->
     <div class="secao-titulo">🏆 Primeira Fase - Grupos</div>
     <div class="container-grupos" id="wrapper-fase-grupos"></div>
 
-    <!-- SEGUNDA PARTE DA TABELA (MATA-MATA) -->
+    <!-- SEGUNDA PARTE DA TABELA -->
     <div class="secao-titulo">⚔️ Segunda Parte - Chaveamento Mata-Mata</div>
     <div class="container-matamata" id="wrapper-mata-mata"></div>
 
     <script>
+        // Dicionário com os nomes tratados e encurtados de forma inteligente para caber na tabela
+        const nomesCompletosSelecoes = {
+            "MEX": "México", "AFS": "África do Sul", "COR": "Coreia do Sul", "TCH": "Rep. Tcheca",
+            "CAN": "Canadá", "BOS": "Bósnia", "CAT": "Catar", "SUI": "Suíça",
+            "BRA": "Brasil", "MAR": "Marrocos", "HAI": "Haiti", "SCO": "Escócia",
+            "USA": "EUA", "PAR": "Paraguai", "AUS": "Austrália", "TUR": "Turquia",
+            "ALE": "Alemanha", "CUR": "Curaçao", "CDI": "C. do Marfim", "EQU": "Equador",
+            "HOL": "Holanda", "JAP": "Japão", "SUE": "Suécia", "TUN": "Tunísia",
+            "BEL": "Bélgica", "EGT": "Egito", "IRA": "Irã", "NZE": "Nova Zelândia",
+            "ESP": "Espanha", "CAB": "Cabo Verde", "SAU": "Arábia Saud.", "URU": "Uruguai",
+            "FRA": "França", "SNG": "Senegal", "IRQ": "Iraque", "NOR": "Noruega",
+            "ARG": "Argentina", "AGL": "Angola", "AST": "Austrália", "JRD": "Jordânia",
+            "POR": "Portugal", "RDC": "RD Congo", "UZB": "Uzbequistão", "COL": "Colômbia",
+            "ING": "Inglaterra", "CRO": "Croácia", "GHA": "Gana", "PAN": "Panamá"
+        };
+
         const estruturaCopa = {
             "A": { times: ["MEX", "AFS", "COR", "TCH"], jogos: [{t1:"MEX", t2:"AFS", d:"11/06 16:00"}, {t1:"COR", t2:"TCH", d:"11/06 23:00"}, {t1:"TCH", t2:"AFS", d:"18/06 13:00"}, {t1:"MEX", t2:"COR", d:"18/06 22:00"}, {t1:"AFS", t2:"COR", d:"24/06 22:00"}, {t1:"TCH", t2:"MEX", d:"24/06 22:00"}] },
             "B": { times: ["CAN", "BOS", "CAT", "SUI"], jogos: [{t1:"CAN", t2:"BOS", d:"12/06 16:00"}, {t1:"CAT", t2:"SUI", d:"13/06 16:00"}, {t1:"SUI", t2:"BOS", d:"18/06 19:00"}, {t1:"CAN", t2:"CAT", d:"18/06 19:00"}, {t1:"BOS", t2:"CAT", d:"24/06 16:00"}, {t1:"SUI", t2:"CAN", d:"24/06 16:00"}] },
@@ -299,16 +319,41 @@
             "L": { times: ["ING", "CRO", "GHA", "PAN"], jogos: [{t1:"ING", t2:"CRO", d:"17/06 17:00"}, {t1:"GHA", t2:"PAN", d:"17/06 20:00"}, {t1:"ING", t2:"GHA", d:"23/06 17:00"}, {t1:"PAN", t2:"CRO", d:"23/06 20:00"}, {t1:"CRO", t2:"GHA", d:"27/06 17:00"}, {t1:"PAN", t2:"ING", d:"27/06 17:00"}] }
         };
 
+        const mapaAutoMata = {
+            "sf1": { t1: "2º A", t2: "2º B" }, "sf2": { t1: "1º A", t2: "" }, "sf3": { t1: "1º B", t2: "" }, "sf4": { t1: "1º C", t2: "" },
+            "sf5": { t1: "2º C", t2: "2º F" }, "sf6": { t1: "1º E", t2: "2º I" }, "sf7": { t1: "1º D", t2: "" }, "sf8": { t1: "1º F", t2: "2º G" },
+            "sf9": { t1: "2º H", t2: "2º J" }, "sf10": { t1: "1º H", t2: "" }, "sf11": { t1: "1º G", t2: "" }, "sf12": { t1: "1º I", t2: "" },
+            "sf13": { t1: "2º D", t2: "2º E" }, "sf14": { t1: "1º K", t2: "2º L" }, "sf15": { t1: "1º J", t2: "" }, "sf16": { t1: "1º L", t2: "2º K" }
+        };
+
         const estruturaMataMata = {
-            "Segundas de Final (1/16)": [{id:"sf1"}, {id:"sf2"}, {id:"sf3"}, {id:"sf4"}, {id:"sf5"}, {id:"sf6"}, {id:"sf7"}, {id:"sf8"}],
-            "Oitavas de Final": [{id:"of1"}, {id:"of2"}, {id:"of3"}, {id:"of4"}],
-            "Quartas de Final": [{id:"qf1"}, {id:"qf2"}],
-            "Semifinal": [{id:"semi1"}, {id:"semi2"}],
-            "Grande Final": [{id:"final1"}]
+            "Dezesseis-avos (1/16)": [
+                {id:"sf1", d:"28/06 17:00"}, {id:"sf2", d:"28/06 21:00"}, {id:"sf3", d:"29/06 16:00"}, {id:"sf4", d:"29/06 20:00"},
+                {id:"sf5", d:"30/06 19:00"}, {id:"sf6", d:"30/06 23:00"}, {id:"sf7", d:"01/07 17:00"}, {id:"sf8", d:"01/07 22:00"},
+                {id:"sf9", d:"02/07 16:00"}, {id:"sf10", d:"02/07 20:00"}, {id:"sf11", d:"03/07 17:00"}, {id:"sf12", d:"03/07 21:00"},
+                {id:"sf13", d:"04/07 15:00"}, {id:"sf14", d:"04/07 19:00"}, {id:"sf15", d:"05/07 17:00"}, {id:"sf16", d:"05/07 21:00"}
+            ],
+            "Oitavas de Final": [
+                {id:"of1", d:"08/07 17:00", orig: ["sf1", "sf2"]}, {id:"of2", d:"08/07 22:00", orig: ["sf3", "sf4"]},
+                {id:"of3", d:"09/07 16:00", orig: ["sf5", "sf6"]}, {id:"of4", d:"09/07 21:00", orig: ["sf7", "sf8"]},
+                {id:"of5", d:"10/07 17:00", orig: ["sf9", "sf10"]}, {id:"of6", d:"10/07 22:00", orig: ["sf11", "sf12"]},
+                {id:"of7", d:"11/07 16:00", orig: ["sf13", "sf14"]}, {id:"of8", d:"11/07 21:00", orig: ["sf16", "sf15"]}
+            ],
+            "Quartas de Final": [
+                {id:"qf1", d:"14/07 17:00", orig: ["of1", "of2"]}, {id:"qf2", d:"14/07 22:00", orig: ["of3", "of4"]},
+                {id:"qf3", d:"15/07 17:00", orig: ["of5", "of6"]}, {id:"qf4", d:"15/07 22:00", orig: ["of7", "of8"]}
+            ],
+            "Semifinal": [
+                {id:"semi1", d:"18/07 21:00", orig: ["qf1", "qf2"]}, {id:"semi2", d:"19/07 21:00", orig: ["qf3", "qf4"]}
+            ],
+            "Grande Final": [
+                {id:"final1", d:"23/07 17:00", orig: ["semi1", "semi2"]}
+            ]
         };
 
         let databaseGrupos = {};
         let databaseMataMata = {};
+        let classificadosGruposGlobal = {}; 
 
         function carregarDados() {
             try {
@@ -316,18 +361,19 @@
                 const memoriaMata = localStorage.getItem('copa_2026_matamata');
                 if (memoriaGrupos) databaseGrupos = JSON.parse(memoriaGrupos);
                 if (memoriaMata) databaseMataMata = JSON.parse(memoriaMata);
-            } catch (e) {
-                console.error("Erro ao carregar dados", e);
-            }
+            } catch (e) { console.error(e); }
         }
 
         function salvarDados() {
             try {
                 localStorage.setItem('copa_2026_grupos', JSON.stringify(databaseGrupos));
                 localStorage.setItem('copa_2026_matamata', JSON.stringify(databaseMataMata));
-            } catch (e) {
-                console.error("Erro ao salvar dados", e);
-            }
+            } catch (e) { console.error(e); }
+        }
+
+        function obterNomeCompleto(sigla) {
+            if (!sigla) return "";
+            return nomesCompletosSelecoes[sigla.toUpperCase()] || sigla;
         }
 
         function toggleTravaGrupo(grupoId, jogoIdx) {
@@ -341,24 +387,24 @@
 
             databaseGrupos[chave].travado = !databaseGrupos[chave].travado;
             salvarDados();
-            
+            atualizarInputsGrupoInterface(grupoId, jogoIdx, databaseGrupos[chave].travado);
+            processarGrupo(grupoId);
+            calcularPassagemAutomaticaFaseGrupos();
+        }
+
+        function atualizarInputsGrupoInterface(grupoId, jogoIdx, travado) {
             const inp1 = document.getElementById(`input-${grupoId}-${jogoIdx}-1`);
             const inp2 = document.getElementById(`input-${grupoId}-${jogoIdx}-2`);
             const btn = document.getElementById(`btn-${grupoId}-${jogoIdx}`);
-
-            if (databaseGrupos[chave].travado) {
-                if(inp1) inp1.disabled = true; 
-                if(inp2) inp2.disabled = true;
-                if(btn) { btn.classList.add('bloqueado'); btn.innerHTML = "🔒"; }
-            } else {
-                if(inp1) inp1.disabled = false; 
-                if(inp2) inp2.disabled = false;
-                if(btn) { btn.classList.remove('bloqueado'); btn.innerHTML = "🔓"; }
+            if (inp1) inp1.disabled = travado;
+            if (inp2) inp2.disabled = travado;
+            if (btn) {
+                btn.className = `btn-trava ${travado ? 'bloqueado' : ''}`;
+                btn.innerHTML = travado ? "🔒" : "🔓";
             }
-            processarGrupo(grupoId);
         }
 
-        function alterarPlacarGrupo(grupoId, jogoIdx, campo, valor) {
+        function abrirJanelaPlacarGrupo(grupoId, jogoIdx, campo, valor) {
             const chave = `${grupoId}_${jogoIdx}`;
             if (!databaseGrupos[chave]) databaseGrupos[chave] = { p1: "", p2: "", travado: false };
             if (databaseGrupos[chave].travado) return;
@@ -366,6 +412,7 @@
             databaseGrupos[chave][campo] = valor !== "" ? parseInt(valor) : "";
             salvarDados();
             processarGrupo(grupoId);
+            calcularPassagemAutomaticaFaseGrupos();
         }
 
         function processarGrupo(grupoId) {
@@ -405,6 +452,8 @@
                 return stats[b].gp - stats[a].gp;
             });
 
+            classificadosGruposGlobal[grupoId] = { primeiro: ranking[0], segundo: ranking[1] };
+
             const tbody = document.getElementById(`tbody-${grupoId}`);
             if (!tbody) return;
             tbody.innerHTML = "";
@@ -412,9 +461,13 @@
             ranking.forEach((time, pos) => {
                 const s = stats[time];
                 const tr = document.createElement('tr');
+                
+                // MÁGICA AQUI: A tabela agora exibe o nome amigável completo em vez da sigla pura
+                const nomeExibicao = obterNomeCompleto(time);
+
                 tr.innerHTML = `
                     <td>${pos + 1}º</td>
-                    <td class="align-left">${time}</td>
+                    <td class="align-left" title="${nomeExibicao}">${nomeExibicao}</td>
                     <td class="col-ponto">${s.pts}</td>
                     <td>${s.v}</td>
                     <td>${s.e}</td>
@@ -423,6 +476,35 @@
                 `;
                 tbody.appendChild(tr);
             });
+        }
+
+        function calcularPassagemAutomaticaFaseGrupos() {
+            Object.keys(mapaAutoMata).forEach(idJogo => {
+                const regra = mapaAutoMata[idJogo];
+                if (!databaseMataMata[idJogo]) databaseMataMata[idJogo] = { t1: "", t2: "", p1: "", p2: "", travado: false };
+                
+                if (!databaseMataMata[idJogo].travado) {
+                    if (regra.t1.includes("1º") || regra.t1.includes("2º")) {
+                        const g = regra.t1.split(" ")[1];
+                        const pos = regra.t1.split(" ")[0];
+                        if (classificadosGruposGlobal[g]) {
+                            const siglaTime = pos === "1º" ? classificadosGruposGlobal[g].primeiro : classificadosGruposGlobal[g].segundo;
+                            databaseMataMata[idJogo].t1 = obterNomeCompleto(siglaTime);
+                            const el = document.getElementById(`m-t1-${idJogo}`); if(el) el.value = databaseMataMata[idJogo].t1;
+                        }
+                    }
+                    if (regra.t2.includes("1º") || regra.t2.includes("2º")) {
+                        const g = regra.t2.split(" ")[1];
+                        const pos = regra.t2.split(" ")[0];
+                        if (classificadosGruposGlobal[g]) {
+                            const siglaTime = pos === "1º" ? classificadosGruposGlobal[g].primeiro : classificadosGruposGlobal[g].segundo;
+                            databaseMataMata[idJogo].t2 = obterNomeCompleto(siglaTime);
+                            const el = document.getElementById(`m-t2-${idJogo}`); if(el) el.value = databaseMataMata[idJogo].t2;
+                        }
+                    }
+                }
+            });
+            salvarDados();
         }
 
         function alterarTextoMata(jogoId, campo, valor) {
@@ -453,21 +535,59 @@
             jogo.travado = !jogo.travado;
             salvarDados();
 
+            atualizarInputsMataInterface(jogoId, jogo.travado);
+            calcularVencedorMataEAvancar(jogoId);
+        }
+
+        function atualizarInputsMataInterface(jogoId, travado) {
             const inTime1 = document.getElementById(`m-t1-${jogoId}`);
             const inTime2 = document.getElementById(`m-t2-${jogoId}`);
             const inPlac1 = document.getElementById(`m-p1-${jogoId}`);
             const inPlac2 = document.getElementById(`m-p2-${jogoId}`);
             const btn = document.getElementById(`btn-m-${jogoId}`);
 
-            if (jogo.travado) {
-                if(inTime1) inTime1.disabled = true; if(inTime2) inTime2.disabled = true;
-                if(inPlac1) inPlac1.disabled = true; if(inPlac2) inPlac2.disabled = true;
-                if(btn) { btn.classList.add('bloqueado'); btn.innerHTML = "🔒"; }
-            } else {
-                if(inTime1) inTime1.disabled = false; if(inTime2) inTime2.disabled = false;
-                if(inPlac1) inPlac1.disabled = false; if(inPlac2) inPlac2.disabled = false;
-                if(btn) { btn.classList.remove('bloqueado'); btn.innerHTML = "🔓"; }
+            if(inTime1) inTime1.disabled = travado; 
+            if(inTime2) inTime2.disabled = travado;
+            if(inPlac1) inPlac1.disabled = travado; 
+            if(inPlac2) inPlac2.disabled = travado;
+            if(btn) {
+                btn.className = `btn-trava ${travado ? 'bloqueado' : ''}`;
+                btn.innerHTML = travado ? "🔒" : "🔓";
             }
+        }
+
+        function calcularVencedorMataEAvancar(jogoId) {
+            const jogo = databaseMataMata[jogoId];
+            if (!jogo || !jogo.travado) return;
+
+            let vencedor = "";
+            if (jogo.p1 > jogo.p2) vencedor = jogo.t1;
+            else if (jogo.p2 > jogo.p1) vencedor = jogo.t2;
+            else {
+                vencedor = prompt(`O jogo terminou empatado!\nDigite 1 para: ${jogo.t1}\nDigite 2 para: ${jogo.t2}`);
+                vencedor = vencedor === "2" ? jogo.t2 : jogo.t1;
+            }
+
+            Object.keys(estruturaMataMata).forEach(fase => {
+                estruturaMataMata[fase].forEach(confronto => {
+                    if (confronto.orig) {
+                        if (confronto.orig[0] === jogoId) {
+                            if (!databaseMataMata[confronto.id]) databaseMataMata[confronto.id] = { t1:"", t2:"", p1:"", p2:"", travado:false };
+                            if (!databaseMataMata[confronto.id].travado) {
+                                databaseMataMata[confronto.id].t1 = vencedor;
+                                const el = document.getElementById(`m-t1-${confronto.id}`); if(el) el.value = vencedor;
+                            }
+                        } else if (confronto.orig[1] === jogoId) {
+                            if (!databaseMataMata[confronto.id]) databaseMataMata[confronto.id] = { t1:"", t2:"", p1:"", p2:"", travado:false };
+                            if (!databaseMataMata[confronto.id].travado) {
+                                databaseMataMata[confronto.id].t2 = vencedor;
+                                const el = document.getElementById(`m-t2-${confronto.id}`); if(el) el.value = vencedor;
+                            }
+                        }
+                    }
+                });
+            });
+            salvarDados();
         }
 
         function renderizarGrupos() {
@@ -490,13 +610,13 @@
                     blocoJogosHtml += `
                         <div class="linha-confronto">
                             <span class="info-data-hora">${j.d}</span>
-                            <span class="time-confronto">${j.t1}</span>
+                            <span class="time-confronto" title="${obterNomeCompleto(j.t1)}">${obterNomeCompleto(j.t1)}</span>
                             <div class="area-placar">
-                                <input type="number" id="input-${grupoId}-${idx}-1" class="input-placar" value="${val1}" ${travado ? 'disabled' : ''} oninput="alterarPlacarGrupo('${grupoId}', ${idx}, 'p1', this.value)">
+                                <input type="number" id="input-${grupoId}-${idx}-1" class="input-placar" value="${val1}" ${travado ? 'disabled' : ''} oninput="abrilJanelaPlacarGrupo('${grupoId}', ${idx}, 'p1', this.value)">
                                 <span class="vs-separador">x</span>
-                                <input type="number" id="input-${grupoId}-${idx}-2" class="input-placar" value="${val2}" ${travado ? 'disabled' : ''} oninput="alterarPlacarGrupo('${grupoId}', ${idx}, 'p2', this.value)">
+                                <input type="number" id="input-${grupoId}-${idx}-2" class="input-placar" value="${val2}" ${travado ? 'disabled' : ''} oninput="abrilJanelaPlacarGrupo('${grupoId}', ${idx}, 'p2', this.value)">
                             </div>
-                            <span class="time-confronto time-direita">${j.t2}</span>
+                            <span class="time-confronto time-direita" title="${obterNomeCompleto(j.t2)}">${obterNomeCompleto(j.t2)}</span>
                             <button id="btn-${grupoId}-${idx}" class="btn-trava ${travado ? 'bloqueado' : ''}" onclick="toggleTravaGrupo('${grupoId}', ${idx})">
                                 ${travado ? '🔒' : '🔓'}
                             </button>
@@ -509,13 +629,13 @@
                     <table class="tabela-classificacao">
                         <thead>
                             <tr>
-                                <th style="width: 10%">P</th>
-                                <th class="align-left" style="width: 35%">Seleção</th>
+                                <th style="width: 8%">P</th>
+                                <th class="align-left" style="width: 38%">Seleção</th>
                                 <th style="width: 11%">PTS</th>
                                 <th style="width: 11%">V</th>
                                 <th style="width: 11%">E</th>
                                 <th style="width: 11%">GP</th>
-                                <th style="width: 11%">SG</th>
+                                <th style="width: 10%">SG</th>
                             </tr>
                         </thead>
                         <tbody id="tbody-${grupoId}"></tbody>
@@ -552,8 +672,9 @@
 
                     jogosHtml += `
                         <div class="linha-confronto">
+                            <span class="info-data-hora">${c.d}</span>
                             <div class="time-confronto">
-                                <input type="text" id="m-t1-${c.id}" value="${t1}" placeholder="Equipe A" ${travado ? 'disabled' : ''} oninput="alterarTextoMata('${c.id}', 't1', this.value)">
+                                <input type="text" id="m-t1-${c.id}" value="${t1}" placeholder="Selecione" ${travado ? 'disabled' : ''} oninput="alterarTextoMata('${c.id}', 't1', this.value)">
                             </div>
                             <div class="area-placar">
                                 <input type="number" id="m-p1-${c.id}" class="input-placar" value="${p1}" ${travado ? 'disabled' : ''} oninput="alterarPlacarMata('${c.id}', 'p1', this.value)">
@@ -561,7 +682,7 @@
                                 <input type="number" id="m-p2-${c.id}" class="input-placar" value="${p2}" ${travado ? 'disabled' : ''} oninput="alterarPlacarMata('${c.id}', 'p2', this.value)">
                             </div>
                             <div class="time-confronto time-direita">
-                                <input type="text" id="m-t2-${c.id}" value="${t2}" placeholder="Equipe B" ${travado ? 'disabled' : ''} oninput="alterarTextoMata('${c.id}', 't2', this.value)">
+                                <input type="text" id="m-t2-${c.id}" value="${t2}" placeholder="Selecione" ${travado ? 'disabled' : ''} oninput="alterarTextoMata('${c.id}', 't2', this.value)">
                             </div>
                             <button id="btn-m-${c.id}" class="btn-trava ${travado ? 'bloqueado' : ''}" onclick="toggleTravaMata('${c.id}')">
                                 ${travado ? '🔒' : '🔓'}
@@ -575,11 +696,11 @@
             });
         }
 
-        // Inicialização limpa
         window.onload = function() {
             carregarDados();
             renderizarGrupos();
             renderizarMataMata();
+            calcularPassagemAutomaticaFaseGrupos();
         };
     </script>
 </body>
