@@ -4,6 +4,11 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Tabela Interativa - Copa do Mundo 2026</title>
+    
+    <!-- Vinculação do Manifesto PWA -->
+    <link rel="manifest" href="manifest.json">
+    <meta name="theme-color" content="#0f1115">
+
     <style>
         :root {
             --bg-principal: #0f1115;
@@ -366,7 +371,6 @@
             "p87": { t1: "1º K", t2: "3º D-E-I-J-L" }, "p88": { t1: "2º D", t2: "2º G" }
         };
 
-        // ESTRUTURA COMPLETA ALINHADA COM AS TRÊS FOTOS (INCLUINDO 1000581051.JPG)
         const estruturaMataMata = {
             "Segundas de Final": [
                 {id:"p73", d:"Dom 28/06 16:00"}, {id:"p74", d:"Seg 29/06 17:30"}, {id:"p75", d:"Seg 29/06 22:00"}, {id:"p76", d:"Seg 29/06 14:00"},
@@ -391,14 +395,14 @@
                 {id:"p100", d:"Sáb 11/07 22:00", orig: ["p95", "p96"]}
             ],
             "Semifinal": [
-                {id:"p101", d:"Ter 14/07 16:00 / Dallas", orig: ["p97", "p98"]}, // G97 x G98
-                {id:"p102", d:"Qua 15/07 16:00 / Atlanta", orig: ["p99", "p100"]} // G99 x G100
+                {id:"p101", d:"Ter 14/07 16:00 / Dallas", orig: ["p97", "p98"]},
+                {id:"p102", d:"Qua 15/07 16:00 / Atlanta", orig: ["p99", "p100"]}
             ],
             "Decisão do 3º Lugar": [
-                {id:"p103", d:"Sáb 18/07 18:00 / Miami", orig: ["p101", "p102"], tipo: "perdedores"} // P101 x P102
+                {id:"p103", d:"Sáb 18/07 18:00 / Miami", orig: ["p101", "p102"], tipo: "perdedores"}
             ],
             "Grande Final": [
-                {id:"p104", d:"Dom 19/07 16:00 / N. York", orig: ["p101", "p102"], tipo: "vencedores"} // G101 x G102
+                {id:"p104", d:"Dom 19/07 16:00 / N. York", orig: ["p101", "p102"], tipo: "vencedores"}
             ]
         };
 
@@ -435,7 +439,7 @@
             if (jogo.travado) {
                 jogo.travado = false;
                 salvarDados();
-                atualizarInputsGrupoInterface(grupoId, jogoIdx, false);
+                atualizarInputsGrupoInterface(grupoId, logoIdx = jogoIdx, false);
                 processarGrupo(grupoId);
                 calcularPassagemAutomaticaFaseGrupos();
                 return;
@@ -602,7 +606,7 @@
                 return;
             }
 
-            if (jogo.t1 === "" || jogo.t2 === "" || jogo.p1 === "" || jogo.p2 === "") {
+            if (jogo.t1 === "" || font === "" || jogo.t2 === "" || jogo.p1 === "" || jogo.p2 === "") {
                 alert("Preencha as equipes e os placares do mata-mata antes de travar.");
                 return;
             }
@@ -647,13 +651,11 @@
                 else { vencedor = jogo.t1; perdedor = jogo.t2; }
             }
 
-            // SE FOI A GRANDE FINAL, EXIBE O CAMPEÃO
             if (jogoId === "p104") {
                 atualizarPainelCampeao(vencedor);
                 return;
             }
 
-            // MAPEAMENTO DE AVANÇO DE CHAVES (INCLUINDO REGRAS DA FOTO 1000581051.JPG)
             Object.keys(estruturaMataMata).forEach(fase => {
                 estruturaMataMata[fase].forEach(confronto => {
                     if (confronto.orig) {
