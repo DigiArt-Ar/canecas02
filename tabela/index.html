@@ -279,11 +279,9 @@
         <p>Preencha os jogos das chaves. Insira os placares e clique no cadeado (🔓) para atualizar a tabela e definir o mata-mata!</p>
     </header>
 
-    <!-- PRIMEIRA PARTE DA TABELA -->
     <div class="secao-titulo">🏆 Primeira Fase - Grupos</div>
     <div class="container-grupos" id="wrapper-fase-grupos"></div>
 
-    <!-- SEGUNDA PARTE DA TABELA -->
     <div class="secao-titulo">⚔️ Segunda Parte - Chaveamento Mata-Mata</div>
     <div class="container-matamata" id="wrapper-mata-mata"></div>
 
@@ -319,35 +317,48 @@
             "L": { times: ["ING", "CRO", "GHA", "PAN"], jogos: [{t1:"ING", t2:"CRO", d:"17/06 17:00"}, {t1:"GHA", t2:"PAN", d:"17/06 20:00"}, {t1:"ING", t2:"GHA", d:"23/06 17:00"}, {t1:"PAN", t2:"CRO", d:"23/06 20:00"}, {t1:"CRO", t2:"GHA", d:"27/06 17:00"}, {t1:"PAN", t2:"ING", d:"27/06 17:00"}] }
         };
 
+        // MAPEAMENTO CORRIGIDO RIGOROSAMENTE CONFORME A SUA FOTO DE MOLDES (PARTIDAS 73 À 88)
         const mapaAutoMata = {
-            "sf1": { t1: "2º A", t2: "2º B" }, "sf2": { t1: "1º A", t2: "" }, "sf3": { t1: "1º B", t2: "" }, "sf4": { t1: "1º C", t2: "" },
-            "sf5": { t1: "2º C", t2: "2º F" }, "sf6": { t1: "1º E", t2: "2º I" }, "sf7": { t1: "1º D", t2: "" }, "sf8": { t1: "1º F", t2: "2º G" },
-            "sf9": { t1: "2º H", t2: "2º J" }, "sf10": { t1: "1º H", t2: "" }, "sf11": { t1: "1º G", t2: "" }, "sf12": { t1: "1º I", t2: "" },
-            "sf13": { t1: "2º D", t2: "2º E" }, "sf14": { t1: "1º K", t2: "2º L" }, "sf15": { t1: "1º J", t2: "" }, "sf16": { t1: "1º L", t2: "2º K" }
+            "p73": { t1: "2º A", t2: "2º B" },
+            "p74": { t1: "1º E", t2: "3º A-B-C-D" },
+            "p75": { t1: "1º F", t2: "2º C" },
+            "p76": { t1: "1º C", t2: "2º F" },
+            "p77": { t1: "1º I", t2: "3º C-D-E-F-G-H" }, // Representando o 1i do molde
+            "p78": { t1: "2º E", t2: "2º I" },            // Representando o 2i do molde
+            "p79": { t1: "1º A", t2: "3º C-E-F-H" },
+            "p80": { t1: "1º L", t2: "3º E-H-I-J-K" },
+            "p81": { t1: "1º D", t2: "3º B-E-F-I-J" },
+            "p82": { t1: "1º G", t2: "3º A-E-H-I-J" },
+            "p83": { t1: "2º K", t2: "2º L" },
+            "p84": { t1: "1º H", t2: "2º J" },
+            "p85": { t1: "1º B", t2: "3º E-F-G-H-I-J" },
+            "p86": { t1: "1º J", t2: "2º H" },
+            "p87": { t1: "1º K", t2: "3º D-E-I-J-L" },
+            "p88": { t1: "2º D", t2: "2º G" }
         };
 
         const estruturaMataMata = {
-            "Fase de 16 Avos": [
-                {id:"sf1", d:"28/06 17:00"}, {id:"sf2", d:"28/06 21:00"}, {id:"sf3", d:"29/06 16:00"}, {id:"sf4", d:"29/06 20:00"},
-                {id:"sf5", d:"30/06 19:00"}, {id:"sf6", d:"30/06 23:00"}, {id:"sf7", d:"01/07 17:00"}, {id:"sf8", d:"01/07 22:00"},
-                {id:"sf9", d:"02/07 16:00"}, {id:"sf10", d:"02/07 20:00"}, {id:"sf11", d:"03/07 17:00"}, {id:"sf12", d:"03/07 21:00"},
-                {id:"sf13", d:"04/07 15:00"}, {id:"sf14", d:"04/07 19:00"}, {id:"sf15", d:"05/07 17:00"}, {id:"sf16", d:"05/07 21:00"}
+            "Segundas de Final": [
+                {id:"p73", d:"Dom 28/06 16:00"}, {id:"p74", d:"Seg 29/06 17:30"}, {id:"p75", d:"Seg 29/06 22:00"}, {id:"p76", d:"Seg 29/06 14:00"},
+                {id:"p77", d:"Ter 30/06 18:00"}, {id:"p78", d:"Ter 30/06 14:00"}, {id:"p79", d:"Ter 30/06 22:00"}, {id:"p80", d:"Qua 01/07 13:00"},
+                {id:"p81", d:"Qua 01/07 21:00"}, {id:"p82", d:"Qua 01/07 17:00"}, {id:"p83", d:"Qui 02/07 20:00"}, {id:"p84", d:"Qui 02/07 16:00"},
+                {id:"p85", d:"Sex 03/07 00:00"}, {id:"p86", d:"Sex 03/07 19:00"}, {id:"p87", d:"Sex 03/07 22:30"}, {id:"p88", d:"Sex 03/07 15:00"}
             ],
             "Oitavas de Final": [
-                {id:"of1", d:"08/07 17:00", orig: ["sf1", "sf2"]}, {id:"of2", d:"08/07 22:00", orig: ["sf3", "sf4"]},
-                {id:"of3", d:"09/07 16:00", orig: ["sf5", "sf6"]}, {id:"of4", d:"09/07 21:00", orig: ["sf7", "sf8"]},
-                {id:"of5", d:"10/07 17:00", orig: ["sf9", "sf10"]}, {id:"of6", d:"10/07 22:00", orig: ["sf11", "sf12"]},
-                {id:"of7", d:"11/07 16:00", orig: ["sf13", "sf14"]}, {id:"of8", d:"11/07 21:00", orig: ["sf16", "sf15"]}
+                {id:"of1", d:"Sáb 04/07 18:00", orig: ["p74", "p77"]}, {id:"of2", d:"Sáb 04/07 14:00", orig: ["p73", "p75"]},
+                {id:"of3", d:"Dom 05/07 17:00", orig: ["p76", "p78"]}, {id:"of4", d:"Dom 05/07 21:00", orig: ["p79", "p80"]},
+                {id:"of5", d:"Seg 06/07 16:00", orig: ["p83", "p84"]}, {id:"of6", d:"Seg 06/07 21:00", orig: ["p81", "p82"]},
+                {id:"of7", d:"Ter 07/07 13:00", orig: ["p86", "p88"]}, {id:"of8", d:"Ter 07/07 17:00", orig: ["p85", "p87"]}
             ],
             "Quartas de Final": [
-                {id:"qf1", d:"14/07 17:00", orig: ["of1", "of2"]}, {id:"qf2", d:"14/07 22:00", orig: ["of3", "of4"]},
-                {id:"qf3", d:"15/07 17:00", orig: ["of5", "of6"]}, {id:"qf4", d:"15/07 22:00", orig: ["of7", "of8"]}
+                {id:"qf1", d:"Qui 09/07 17:00", orig: ["of1", "of2"]}, {id:"qf2", d:"Sex 10/07 16:00", orig: ["of3", "of4"]},
+                {id:"qf3", d:"Sáb 11/07 17:00", orig: ["of5", "of6"]}, {id:"qf4", d:"Sáb 11/07 22:00", orig: ["of7", "of8"]}
             ],
             "Semifinal": [
-                {id:"semi1", d:"18/07 21:00", orig: ["qf1", "qf2"]}, {id:"semi2", d:"19/07 21:00", orig: ["qf3", "qf4"]}
+                {id:"semi1", d:"Ter 14/07 16:00", orig: ["qf1", "qf2"]}, {id:"semi2", d:"Qua 15/07 17:00", orig: ["qf3", "qf4"]}
             ],
             "Grande Final": [
-                {id:"final1", d:"23/07 17:00", orig: ["semi1", "semi2"]}
+                {id:"final1", d:"Dom 19/07 16:00", orig: ["semi1", "semi2"]}
             ]
         };
 
@@ -493,6 +504,7 @@
                 if (!databaseMataMata[idJogo]) databaseMataMata[idJogo] = { t1: "", t2: "", p1: "", p2: "", travado: false };
                 
                 if (!databaseMataMata[idJogo].travado) {
+                    // Trata Time 1
                     if (regra.t1.includes("1º") || regra.t1.includes("2º")) {
                         const g = regra.t1.split(" ")[1];
                         const pos = regra.t1.split(" ")[0];
@@ -511,6 +523,7 @@
                         const el = document.getElementById(`m-t1-${idJogo}`); if(el) el.value = databaseMataMata[idJogo].t1;
                     }
                     
+                    // Trata Time 2
                     if (regra.t2.includes("1º") || regra.t2.includes("2º")) {
                         const g = regra.t2.split(" ")[1];
                         const pos = regra.t2.split(" ")[0];
@@ -692,7 +705,6 @@
                 
                 let jogosHtml = `<div class="titulo-grupo">${faseNome}</div>`;
                 
-                cconfrontosHtml = '';
                 listaConfrontos.forEach(c => {
                     const jogoSalvo = databaseMataMata[c.id];
                     const t1 = jogoSalvo?.t1 ?? "";
@@ -701,11 +713,14 @@
                     const p2 = jogoSalvo?.p2 ?? "";
                     const travado = jogoSalvo?.travado ?? false;
 
+                    // Exibe a marcação amigável do molde ex: (Partida 73)
+                    const labelPartida = c.id.startsWith("p") ? `(P. ${c.id.substring(1)})` : "";
+
                     jogosHtml += `
                         <div class="linha-confronto">
-                            <span class="info-data-hora">${c.d}</span>
+                            <span class="info-data-hora">${c.d} <br/><small style="color:var(--laranja-copa)">${labelPartida}</small></span>
                             <div class="time-confronto">
-                                <input type="text" id="m-t1-${c.id}" value="${t1}" placeholder="Selecione" ${travado ? 'disabled' : ''} oninput="alterarTextoMata('${c.id}', 't1', this.value)">
+                                <input type="text" id="m-t1-${c.id}" value="${t1}" placeholder="Aguardando..." ${travado ? 'disabled' : ''} oninput="alterarTextoMata('${c.id}', 't1', this.value)">
                             </div>
                             <div class="area-placar">
                                 <input type="number" id="m-p1-${c.id}" class="input-placar" value="${p1}" ${travado ? 'disabled' : ''} oninput="alterarPlacarMata('${c.id}', 'p1', this.value)">
@@ -713,7 +728,7 @@
                                 <input type="number" id="m-p2-${c.id}" class="input-placar" value="${p2}" ${travado ? 'disabled' : ''} oninput="alterarPlacarMata('${c.id}', 'p2', this.value)">
                             </div>
                             <div class="time-confronto time-direita">
-                                <input type="text" id="m-t2-${c.id}" value="${t2}" placeholder="Selecione" ${travado ? 'disabled' : ''} oninput="alterarTextoMata('${c.id}', 't2', this.value)">
+                                <input type="text" id="m-t2-${c.id}" value="${t2}" placeholder="Aguardando..." ${travado ? 'disabled' : ''} oninput="alterarTextoMata('${c.id}', 't2', this.value)">
                             </div>
                             <button id="btn-m-${c.id}" class="btn-trava ${travado ? 'bloqueado' : ''}" onclick="toggleTravaMata('${c.id}')">
                                 ${travado ? '🔒' : '🔓'}
@@ -727,7 +742,6 @@
             });
         }
 
-        // AGORA SEGURO: Só executa depois que o HTML estiver pronto na tela!
         document.addEventListener("DOMContentLoaded", function() {
             carregarDados();
             renderizarGrupos();
