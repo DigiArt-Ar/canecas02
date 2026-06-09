@@ -4,8 +4,8 @@
   "description": "Tabela Interativa da Copa do Mundo 2026",
   "icons": [
     {
-      "src": "ico.jpg",
-      "type": "image/jpeg",
+      "src": "ico.png",
+      "type": "image/png",
       "sizes": "512x512"
     }
   ],
