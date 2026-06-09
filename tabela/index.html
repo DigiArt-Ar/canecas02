@@ -147,7 +147,7 @@
             color: var(--texto-escuro);
             font-size: 0.75rem;
             font-weight: 500;
-            min-width: 78px;
+            min-width: 85px;
             white-space: nowrap;
         }
 
@@ -257,7 +257,7 @@
             grid-template-columns: repeat(auto-fit, minmax(360px, 1fr));
             gap: 20px;
             max-width: 1400px;
-            margin: 0 auto 50px auto;
+            margin: 0 auto 30px auto;
         }
 
         .card-fase-mata {
@@ -270,6 +270,37 @@
             flex-direction: column;
             gap: 12px;
         }
+
+        .container-campeao {
+            max-width: 500px;
+            margin: 0 auto 60px auto;
+            background: linear-gradient(135deg, #1e222b 0%, #161920 100%);
+            border: 2px solid var(--laranja-copa);
+            border-radius: 12px;
+            padding: 20px;
+            text-align: center;
+            box-shadow: 0 0 20px rgba(255, 107, 0, 0.2);
+        }
+
+        .titulo-campeao {
+            font-size: 1.4rem;
+            color: #ffd700;
+            font-weight: bold;
+            text-transform: uppercase;
+            letter-spacing: 2px;
+            margin-bottom: 15px;
+        }
+
+        .box-nome-campeao {
+            background-color: var(--bg-principal);
+            border: 1px dashed #ffd700;
+            color: #ffd700;
+            font-size: 1.3rem;
+            font-weight: bold;
+            padding: 12px;
+            border-radius: 8px;
+            text-transform: uppercase;
+        }
     </style>
 </head>
 <body>
@@ -279,14 +310,21 @@
         <p>Preencha os jogos das chaves. Insira os placares e clique no cadeado (🔓) para atualizar a tabela e definir o mata-mata!</p>
     </header>
 
+    <!-- PRIMEIRA PARTE DA TABELA -->
     <div class="secao-titulo">🏆 Primeira Fase - Grupos</div>
     <div class="container-grupos" id="wrapper-fase-grupos"></div>
 
-    <div class="secao-titulo">⚔️ Segunda Parte - Chaveamento Mata-Mata</div>
+    <!-- SEGUNDA PARTE DA TABELA -->
+    <div class="secao-titulo">⚔️ Chaveamento Mata-Mata</div>
     <div class="container-matamata" id="wrapper-mata-mata"></div>
 
+    <!-- SEÇÃO FINAL DO CAMPEÃO -->
+    <div class="container-campeao">
+        <div class="titulo-campeao">⭐ CAMPEÃO ⭐</div>
+        <div class="box-nome-campeao" id="nome-do-campeao">Aguardando a Final...</div>
+    </div>
+
     <script>
-        // Dicionário comercial de seleções
         const nomesCompletosSelecoes = {
             "MEX": "México", "AFS": "África do Sul", "COR": "Coreia do Sul", "TCH": "Rep. Tcheca",
             "CAN": "Canadá", "BOS": "Bósnia", "CAT": "Catar", "SUI": "Suíça",
@@ -317,26 +355,18 @@
             "L": { times: ["ING", "CRO", "GHA", "PAN"], jogos: [{t1:"ING", t2:"CRO", d:"17/06 17:00"}, {t1:"GHA", t2:"PAN", d:"17/06 20:00"}, {t1:"ING", t2:"GHA", d:"23/06 17:00"}, {t1:"PAN", t2:"CRO", d:"23/06 20:00"}, {t1:"CRO", t2:"GHA", d:"27/06 17:00"}, {t1:"PAN", t2:"ING", d:"27/06 17:00"}] }
         };
 
-        // MAPEAMENTO CORRIGIDO RIGOROSAMENTE CONFORME A SUA FOTO DE MOLDES (PARTIDAS 73 À 88)
         const mapaAutoMata = {
-            "p73": { t1: "2º A", t2: "2º B" },
-            "p74": { t1: "1º E", t2: "3º A-B-C-D" },
-            "p75": { t1: "1º F", t2: "2º C" },
-            "p76": { t1: "1º C", t2: "2º F" },
-            "p77": { t1: "1º I", t2: "3º C-D-E-F-G-H" }, // Representando o 1i do molde
-            "p78": { t1: "2º E", t2: "2º I" },            // Representando o 2i do molde
-            "p79": { t1: "1º A", t2: "3º C-E-F-H" },
-            "p80": { t1: "1º L", t2: "3º E-H-I-J-K" },
-            "p81": { t1: "1º D", t2: "3º B-E-F-I-J" },
-            "p82": { t1: "1º G", t2: "3º A-E-H-I-J" },
-            "p83": { t1: "2º K", t2: "2º L" },
-            "p84": { t1: "1º H", t2: "2º J" },
-            "p85": { t1: "1º B", t2: "3º E-F-G-H-I-J" },
-            "p86": { t1: "1º J", t2: "2º H" },
-            "p87": { t1: "1º K", t2: "3º D-E-I-J-L" },
-            "p88": { t1: "2º D", t2: "2º G" }
+            "p73": { t1: "2º A", t2: "2º B" }, "p74": { t1: "1º E", t2: "3º A-B-C-D" },
+            "p75": { t1: "1º F", t2: "2º C" }, "p76": { t1: "1º C", t2: "2º F" },
+            "p77": { t1: "1º I", t2: "3º C-D-E-F-G-H" }, "p78": { t1: "2º E", t2: "2º I" },
+            "p79": { t1: "1º A", t2: "3º C-E-F-H" }, "p80": { t1: "1º L", t2: "3º E-H-I-J-K" },
+            "p81": { t1: "1º D", t2: "3º B-E-F-I-J" }, "p82": { t1: "1º G", t2: "3º A-E-H-I-J" },
+            "p83": { t1: "2º K", t2: "2º L" }, "p84": { t1: "1º H", t2: "2º J" },
+            "p85": { t1: "1º B", t2: "3º E-F-G-H-I-J" }, "p86": { t1: "1º J", t2: "2º H" },
+            "p87": { t1: "1º K", t2: "3º D-E-I-J-L" }, "p88": { t1: "2º D", t2: "2º G" }
         };
 
+        // ESTRUTURA COMPLETA ALINHADA COM AS TRÊS FOTOS (INCLUINDO 1000581051.JPG)
         const estruturaMataMata = {
             "Segundas de Final": [
                 {id:"p73", d:"Dom 28/06 16:00"}, {id:"p74", d:"Seg 29/06 17:30"}, {id:"p75", d:"Seg 29/06 22:00"}, {id:"p76", d:"Seg 29/06 14:00"},
@@ -345,20 +375,30 @@
                 {id:"p85", d:"Sex 03/07 00:00"}, {id:"p86", d:"Sex 03/07 19:00"}, {id:"p87", d:"Sex 03/07 22:30"}, {id:"p88", d:"Sex 03/07 15:00"}
             ],
             "Oitavas de Final": [
-                {id:"of1", d:"Sáb 04/07 18:00", orig: ["p74", "p77"]}, {id:"of2", d:"Sáb 04/07 14:00", orig: ["p73", "p75"]},
-                {id:"of3", d:"Dom 05/07 17:00", orig: ["p76", "p78"]}, {id:"of4", d:"Dom 05/07 21:00", orig: ["p79", "p80"]},
-                {id:"of5", d:"Seg 06/07 16:00", orig: ["p83", "p84"]}, {id:"of6", d:"Seg 06/07 21:00", orig: ["p81", "p82"]},
-                {id:"of7", d:"Ter 07/07 13:00", orig: ["p86", "p88"]}, {id:"of8", d:"Ter 07/07 17:00", orig: ["p85", "p87"]}
+                {id:"p89", d:"Sáb 04/07 18:00", orig: ["p74", "p77"]},
+                {id:"p90", d:"Sáb 04/07 14:00", orig: ["p73", "p75"]},
+                {id:"p91", d:"Dom 05/07 17:00", orig: ["p76", "p78"]},
+                {id:"p92", d:"Dom 05/07 21:00", orig: ["p79", "p80"]},
+                {id:"p93", d:"Seg 06/07 16:00", orig: ["p83", "p84"]},
+                {id:"p94", d:"Seg 06/07 21:00", orig: ["p81", "p82"]},
+                {id:"p95", d:"Ter 07/07 13:00", orig: ["p86", "p88"]},
+                {id:"p96", d:"Ter 07/07 17:00", orig: ["p85", "p87"]}
             ],
             "Quartas de Final": [
-                {id:"qf1", d:"Qui 09/07 17:00", orig: ["of1", "of2"]}, {id:"qf2", d:"Sex 10/07 16:00", orig: ["of3", "of4"]},
-                {id:"qf3", d:"Sáb 11/07 17:00", orig: ["of5", "of6"]}, {id:"qf4", d:"Sáb 11/07 22:00", orig: ["of7", "of8"]}
+                {id:"p97", d:"Qui 09/07 17:00", orig: ["p89", "p90"]},
+                {id:"p98", d:"Sex 10/07 16:00", orig: ["p93", "p94"]},
+                {id:"p99", d:"Sáb 11/07 18:00", orig: ["p91", "p92"]},
+                {id:"p100", d:"Sáb 11/07 22:00", orig: ["p95", "p96"]}
             ],
             "Semifinal": [
-                {id:"semi1", d:"Ter 14/07 16:00", orig: ["qf1", "qf2"]}, {id:"semi2", d:"Qua 15/07 17:00", orig: ["qf3", "qf4"]}
+                {id:"p101", d:"Ter 14/07 16:00 / Dallas", orig: ["p97", "p98"]}, // G97 x G98
+                {id:"p102", d:"Qua 15/07 16:00 / Atlanta", orig: ["p99", "p100"]} // G99 x G100
+            ],
+            "Decisão do 3º Lugar": [
+                {id:"p103", d:"Sáb 18/07 18:00 / Miami", orig: ["p101", "p102"], tipo: "perdedores"} // P101 x P102
             ],
             "Grande Final": [
-                {id:"final1", d:"Dom 19/07 16:00", orig: ["semi1", "semi2"]}
+                {id:"p104", d:"Dom 19/07 16:00 / N. York", orig: ["p101", "p102"], tipo: "vencedores"} // G101 x G102
             ]
         };
 
@@ -389,9 +429,7 @@
 
         function toggleTravaGrupo(grupoId, jogoIdx) {
             const chave = `${grupoId}_${jogoIdx}`;
-            if (!databaseGrupos[chave]) {
-                databaseGrupos[chave] = { p1: "", p2: "", travado: false };
-            }
+            if (!databaseGrupos[chave]) databaseGrupos[chave] = { p1: "", p2: "", travado: false };
             const jogo = databaseGrupos[chave];
 
             if (jogo.travado) {
@@ -450,7 +488,7 @@
                 const jogo = databaseGrupos[chave];
 
                 if (jogo && jogo.travado && jogo.p1 !== "" && jogo.p2 !== "") {
-                    const g1 = jogo.p1; const g2 = jogo.p2;
+                    const g1 = PatternPlacar(jogo.p1); const g2 = PatternPlacar(jogo.p2);
                     stats[j.t1].gp += g1; stats[j.t1].gc += g2;
                     stats[j.t2].gp += g2; stats[j.t2].gc += g1;
 
@@ -498,47 +536,39 @@
             });
         }
 
+        function PatternPlacar(v) { return v === "" || isNaN(v) ? 0 : parseInt(v); }
+
         function calcularPassagemAutomaticaFaseGrupos() {
             Object.keys(mapaAutoMata).forEach(idJogo => {
                 const regra = mapaAutoMata[idJogo];
                 if (!databaseMataMata[idJogo]) databaseMataMata[idJogo] = { t1: "", t2: "", p1: "", p2: "", travado: false };
                 
                 if (!databaseMataMata[idJogo].travado) {
-                    // Trata Time 1
                     if (regra.t1.includes("1º") || regra.t1.includes("2º")) {
                         const g = regra.t1.split(" ")[1];
                         const pos = regra.t1.split(" ")[0];
-                        
                         let grupoPronto = true;
                         for(let i=0; i<6; i++) {
                             if(!databaseGrupos[`${g}_${i}`]?.travado) { grupoPronto = false; break; }
                         }
-
                         if (grupoPronto && classificadosGruposGlobal[g]) {
                             const siglaTime = pos === "1º" ? classificadosGruposGlobal[g].primeiro : classificadosGruposGlobal[g].segundo;
                             databaseMataMata[idJogo].t1 = obterNomeCompleto(siglaTime);
-                        } else {
-                            databaseMataMata[idJogo].t1 = "";
-                        }
+                        } else { databaseMataMata[idJogo].t1 = ""; }
                         const el = document.getElementById(`m-t1-${idJogo}`); if(el) el.value = databaseMataMata[idJogo].t1;
                     }
                     
-                    // Trata Time 2
                     if (regra.t2.includes("1º") || regra.t2.includes("2º")) {
                         const g = regra.t2.split(" ")[1];
                         const pos = regra.t2.split(" ")[0];
-                        
                         let grupoPronto = true;
                         for(let i=0; i<6; i++) {
                             if(!databaseGrupos[`${g}_${i}`]?.travado) { grupoPronto = false; break; }
                         }
-
                         if (grupoPronto && classificadosGruposGlobal[g]) {
                             const siglaTime = pos === "1º" ? classificadosGruposGlobal[g].primeiro : classificadosGruposGlobal[g].segundo;
                             databaseMataMata[idJogo].t2 = obterNomeCompleto(siglaTime);
-                        } else {
-                            databaseMataMata[idJogo].t2 = "";
-                        }
+                        } else { databaseMataMata[idJogo].t2 = ""; }
                         const el = document.getElementById(`m-t2-${idJogo}`); if(el) el.value = databaseMataMata[idJogo].t2;
                     }
                 }
@@ -568,6 +598,7 @@
                 jogo.travado = false;
                 salvarDados();
                 atualizarInputsMataInterface(jogoId, false);
+                if (jogoId === "p104") atualizarPainelCampeao("");
                 return;
             }
 
@@ -604,33 +635,54 @@
             if (!jogo || !jogo.travado) return;
 
             let vencedor = "";
-            if (jogo.p1 > jogo.p2) vencedor = jogo.t1;
-            else if (jogo.p2 > jogo.p1) vencedor = jogo.t2;
-            else {
-                vencedor = prompt(`Empate!\nDigite 1 para: ${jogo.t1}\nDigite 2 para: ${jogo.t2}`);
-                vencedor = vencedor === "2" ? jogo.t2 : jogo.t1;
+            let perdedor = "";
+
+            if (jogo.p1 > jogo.p2) {
+                vencedor = jogo.t1; perdedor = jogo.t2;
+            } else if (jogo.p2 > jogo.p1) {
+                vencedor = jogo.t2; perdedor = jogo.t1;
+            } else {
+                let escolha = prompt(`Empate!\nDigite 1 para: ${jogo.t1}\nDigite 2 para: ${jogo.t2}`);
+                if(escolha === "2") { vencedor = jogo.t2; perdedor = jogo.t1; } 
+                else { vencedor = jogo.t1; perdedor = jogo.t2; }
             }
 
+            // SE FOI A GRANDE FINAL, EXIBE O CAMPEÃO
+            if (jogoId === "p104") {
+                atualizarPainelCampeao(vencedor);
+                return;
+            }
+
+            // MAPEAMENTO DE AVANÇO DE CHAVES (INCLUINDO REGRAS DA FOTO 1000581051.JPG)
             Object.keys(estruturaMataMata).forEach(fase => {
                 estruturaMataMata[fase].forEach(confronto => {
                     if (confronto.orig) {
+                        const targetTipo = confronto.tipo || "vencedores";
+
                         if (confronto.orig[0] === jogoId) {
                             if (!databaseMataMata[confronto.id]) databaseMataMata[confronto.id] = { t1:"", t2:"", p1:"", p2:"", travado:false };
                             if (!databaseMataMata[confronto.id].travado) {
-                                databaseMataMata[confronto.id].t1 = vencedor;
-                                const el = document.getElementById(`m-t1-${confronto.id}`); if(el) el.value = vencedor;
+                                const herdeiro = (targetTipo === "perdedores") ? perdedor : vencedor;
+                                databaseMataMata[confronto.id].t1 = herdeiro;
+                                const el = document.getElementById(`m-t1-${confronto.id}`); if(el) el.value = herdeiro;
                             }
                         } else if (confronto.orig[1] === jogoId) {
                             if (!databaseMataMata[confronto.id]) databaseMataMata[confronto.id] = { t1:"", t2:"", p1:"", p2:"", travado:false };
                             if (!databaseMataMata[confronto.id].travado) {
-                                databaseMataMata[confronto.id].t2 = vencedor;
-                                const el = document.getElementById(`m-t2-${confronto.id}`); if(el) el.value = vencedor;
+                                const herdeiro = (targetTipo === "perdedores") ? perdedor : vencedor;
+                                databaseMataMata[confronto.id].t2 = herdeiro;
+                                const el = document.getElementById(`m-t2-${confronto.id}`); if(el) el.value = herdeiro;
                             }
                         }
                     }
                 });
             });
             salvarDados();
+        }
+
+        function atualizarPainelCampeao(nome) {
+            const el = document.getElementById("nome-do-campeao");
+            if(el) el.innerText = nome ? `🏆 ${nome} 🏆` : "Aguardando a Final...";
         }
 
         function renderizarGrupos() {
@@ -713,12 +765,12 @@
                     const p2 = jogoSalvo?.p2 ?? "";
                     const travado = jogoSalvo?.travado ?? false;
 
-                    // Exibe a marcação amigável do molde ex: (Partida 73)
-                    const labelPartida = c.id.startsWith("p") ? `(P. ${c.id.substring(1)})` : "";
+                    const numPartida = c.id.substring(1);
+                    const labelPartida = `Partida ${numPartida}`;
 
                     jogosHtml += `
                         <div class="linha-confronto">
-                            <span class="info-data-hora">${c.d} <br/><small style="color:var(--laranja-copa)">${labelPartida}</small></span>
+                            <span class="info-data-hora">${c.d} <br/><small style="color:var(--laranja-copa); font-weight:bold;">${labelPartida}</small></span>
                             <div class="time-confronto">
                                 <input type="text" id="m-t1-${c.id}" value="${t1}" placeholder="Aguardando..." ${travado ? 'disabled' : ''} oninput="alterarTextoMata('${c.id}', 't1', this.value)">
                             </div>
@@ -747,6 +799,9 @@
             renderizarGrupos();
             renderizarMataMata();
             calcularPassagemAutomaticaFaseGrupos();
+            if(databaseMataMata["p104"]?.travado) {
+                calcularVencedorMataEAvancar("p104");
+            }
         });
     </script>
 </body>
