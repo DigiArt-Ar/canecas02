@@ -1,1 +1,18 @@
-ghgghhhhhj
+{
+  "short_name": "Copa 2026",
+  "name": "Copa 2026 DigiArt",
+  "description": "Tabela Interativa e Automatizada da Copa do Mundo 2026",
+  "icons": [
+    {
+      "src": "ico.png",
+      "type": "image/png",
+      "sizes": "512x512",
+      "purpose": "any maskable"
+    }
+  ],
+  "start_url": "./index.html",
+  "background_color": "#0f1115",
+  "theme-color": "#0f1115",
+  "display": "standalone",
+  "orientation": "portrait"
+}
