@@ -168,7 +168,6 @@
             font-weight: 600;
         }
 
-        /* Estilo das bandeirinhas redondas nos confrontos */
         .bandeirinha {
             display: inline-block;
             width: 18px;
@@ -389,7 +388,7 @@
             "p87": { t1: "1º K", t2: "3º D-E-I-J-L" }, "p88": { t1: "2º D", t2: "2º G" }
         };
 
-        const estruturaMataMata = {
+        const structureMataMata = {
             "Segundas de Final": [
                 {id:"p73", d:"Dom 28/06 16:00"}, {id:"p74", d:"Seg 29/06 17:30"}, {id:"p75", d:"Seg 29/06 22:00"}, {id:"p76", d:"Seg 29/06 14:00"},
                 {id:"p77", d:"Ter 30/06 18:00"}, {id:"p78", d:"Ter 30/06 14:00"}, {id:"p79", d:"Ter 30/06 22:00"}, {id:"p80", d:"Qua 01/07 13:00"},
@@ -449,7 +448,6 @@
             return nomesCompletosSelecoes[sigla.toUpperCase()] || sigla;
         }
 
-        // ALTERAÇÃO BÁSICA E SEGURA PARA GERAR A CLASSE DA BANDEIRA
         function pegarClasseBandeira(sigla) {
             if (!sigla || sigla.includes("º") || sigla.includes("-")) return "";
             let cod = sigla.toLowerCase().trim();
@@ -560,7 +558,7 @@
         }
 
         function processarGrupo(grupoId) {
-            const dadosGrupo = structure = estruturaCopa[grupoId];
+            const dadosGrupo = estruturaCopa[grupoId];
             let stats = {};
 
             dadosGrupo.times.forEach(t => {
@@ -571,7 +569,7 @@
                 const chave = `${grupoId}_${idx}`;
                 const jogo = databaseGrupos[chave];
 
-                if (jogo && jogo.travado && jogo.p1 !== "" && jogo.p2 !== "") {
+                if (jogo && jogo.travado && PatternPlacar(jogo.p1) !== "" && PatternPlacar(jogo.p2) !== "") {
                     const g1 = PatternPlacar(jogo.p1); const g2 = PatternPlacar(jogo.p2);
                     stats[j.t1].gp += g1; stats[j.t1].gc += g2;
                     stats[j.t2].gp += g2; stats[j.t2].gc += g1;
@@ -754,8 +752,8 @@
                 return;
             }
 
-            Object.keys(estruturaMataMata).forEach(fase => {
-                estruturaMataMata[fase].forEach(confronto => {
+            Object.keys(structureMataMata).forEach(fase => {
+                structureMataMata[fase].forEach(confronto => {
                     if (confronto.orig) {
                         const targetTipo = confronto.tipo || "vencedores";
 
@@ -801,6 +799,7 @@
             }
         }
 
+        // ALTERADO: EXIBE APENAS AS SIGLAS DE 3 LETRAS NOS CONFRONTOS DOS GRUPOS
         function renderizarGrupos() {
             const wrapper = document.getElementById('wrapper-fase-grupos');
             if(!wrapper) return;
@@ -823,7 +822,7 @@
                             <span class="info-data-hora">${j.d}</span>
                             <span class="time-confronto" title="${obterNomeCompleto(j.t1)}">
                                 <span class="bandeirinha ${pegarClasseBandeira(j.t1)}"></span>
-                                ${obterNomeCompleto(j.t1)}
+                                ${j.t1.toUpperCase()}
                             </span>
                             <div class="area-placar">
                                 <input type="number" id="input-${grupoId}-${idx}-1" class="input-placar" value="${val1}" ${travado ? 'disabled' : ''} oninput="alterarPlacarGrupo('${grupoId}', ${idx}, 'p1', this.value)">
@@ -832,7 +831,7 @@
                             </div>
                             <span class="time-confronto time-direita" title="${obterNomeCompleto(j.t2)}">
                                 <span class="bandeirinha ${pegarClasseBandeira(j.t2)}"></span>
-                                ${obterNomeCompleto(j.t2)}
+                                ${j.t2.toUpperCase()}
                             </span>
                             <button id="btn-${grupoId}-${idx}" class="btn-trava ${travado ? 'bloqueado' : ''}" onclick="toggleTravaGrupo('${grupoId}', ${idx})">
                                 ${travado ? '🔒' : '🔓'}
@@ -869,14 +868,14 @@
             if(!wrapper) return;
             wrapper.innerHTML = "";
 
-            Object.keys(estruturaMataMata).forEach(faseNome => {
+            Object.keys(structureMataMata).forEach(faseNome => {
                 const cardFase = document.createElement('div');
                 cardFase.className = 'card-fase-mata';
                 
                 let htmlTituloFase = `<div class="titulo-grupo">${faseNome}</div>`;
                 let htmlConfrontos = '';
 
-                estruturaMataMata[faseNome].forEach(c => {
+                structureMataMata[faseNome].forEach(c => {
                     const dadosSalvos = databaseMataMata[c.id] || { t1:"", t2:"", p1:"", p2:"", travado:false };
                     const travado = dadosSalvos.travado;
 
@@ -909,7 +908,7 @@
                 cardFase.innerHTML = htmlTituloFase + htmlConfrontos;
                 wrapper.appendChild(cardFase);
 
-                estruturaMataMata[faseNome].forEach(c => {
+                structureMataMata[faseNome].forEach(c => {
                     const dadosSalvos = databaseMataMata[c.id];
                     if (dadosSalvos && dadosSalvos.travado) {
                         atualizarInputsMataInterface(c.id, true);
