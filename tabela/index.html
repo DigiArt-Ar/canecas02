@@ -168,7 +168,6 @@
             font-weight: 600;
         }
 
-        /* Estilo comum para as bandeirinhas redondas nas tabelas */
         .bandeirinha {
             display: inline-block;
             width: 18px;
@@ -348,35 +347,56 @@
     </div>
 
     <script>
-        const nomesCompletosSelecoes = {
-            "MEX": "México", "AFS": "África do Sul", "COR": "Coreia do Sul", "TCH": "Rep. Tcheca",
-            "CAN": "Canadá", "BOS": "Bósnia", "CAT": "Catar", "SUI": "Suíça",
-            "BRA": "Brasil", "MAR": "Marrocos", "HAI": "Haiti", "SCO": "Escócia",
-            "USA": "EUA", "PAR": "Paraguai", "AUS": "Austrália", "TUR": "Turquia",
-            "ALE": "Alemanha", "CUR": "Curaçao", "CDI": "C. do Marfim", "EQU": "Equador",
-            "HOL": "Holanda", "JAP": "Japão", "SUE": "Suécia", "TUN": "Tunísia",
-            "BEL": "Bélgica", "EGT": "Egito", "IRA": "Irã", "NZE": "Nova Zelândia",
-            "ESP": "Espanha", "CAB": "Cabo Verde", "SAU": "Arábia Saud.", "URU": "Uruguai",
-            "FRA": "França", "SNG": "Senegal", "IRQ": "Iraque", "NOR": "Noruega",
-            "ARG": "Argentina", "AGL": "Angola", "AST": "Austrália", "JRD": "Jordânia",
-            "POR": "Portugal", "RDC": "RD Congo", "UZB": "Uzbequistão", "COL": "Colômbia",
-            "ING": "Inglaterra", "CRO": "Croácia", "GHA": "Gana", "PAN": "Panamá"
-        };
-
-        // MAPEAMENTO DAS SIGLAS FIFA DE 3 LETRAS PARA O CÓDIGO DA BANDEIRA DA NET (2 LETRAS)
-        const mapeamentoBandeiras = {
-            "MEX": "mx", "AFS": "za", "COR": "kr", "TCH": "cz",
-            "CAN": "ca", "BOS": "ba", "CAT": "qa", "SUI": "ch",
-            "BRA": "br", "MAR": "ma", "HAI": "ht", "SCO": "gb-sct",
-            "USA": "us", "PAR": "py", "AUS": "au", "TUR": "tr",
-            "ALE": "de", "CUR": "cw", "CDI": "ci", "EQU": "ec",
-            "HOL": "nl", "JAP": "jp", "SUE": "se", "TUN": "tn",
-            "BEL": "be", "EGT": "eg", "IRA": "ir", "NZE": "nz",
-            "ESP": "es", "CAB": "cv", "SAU": "sa", "URU": "uy",
-            "FRA": "fr", "SNG": "sn", "IRQ": "iq", "NOR": "no",
-            "ARG": "ar", "AGL": "ao", "AST": "au", "JRD": "jo",
-            "POR": "pt", "RDC": "cd", "UZB": "uz", "COL": "co",
-            "ING": "gb-eng", "CRO": "hr", "GHA": "gh", "PAN": "pa"
+        // ESTRUTURA COM NOME COMPLETO E CLASSE DIRETA DA BANDEIRA CORRETA
+        const dadosSelecoes = {
+            "MEX": { nome: "México", bandeira: "fi fi-mx" },
+            "AFS": { nome: "África do Sul", bandeira: "fi fi-za" },
+            "COR": { nome: "Coreia do Sul", bandeira: "fi fi-kr" },
+            "TCH": { nome: "Rep. Tcheca", bandeira: "fi fi-cz" },
+            "CAN": { nome: "Canadá", bandeira: "fi fi-ca" },
+            "BOS": { nome: "Bósnia", bandeira: "fi fi-ba" },
+            "CAT": { nome: "Catar", bandeira: "fi fi-qa" },
+            "SUI": { nome: "Suíça", bandeira: "fi fi-ch" },
+            "BRA": { nome: "Brasil", bandeira: "fi fi-br" },
+            "MAR": { nome: "Marrocos", bandeira: "fi fi-ma" },
+            "HAI": { nome: "Haiti", bandeira: "fi fi-ht" },
+            "SCO": { nome: "Escócia", bandeira: "fi fi-gb-sct" },
+            "USA": { nome: "EUA", bandeira: "fi fi-us" },
+            "PAR": { nome: "Paraguai", bandeira: "fi fi-py" },
+            "AUS": { nome: "Austrália", bandeira: "fi fi-au" },
+            "TUR": { nome: "Turquia", bandeira: "fi fi-tr" },
+            "ALE": { nome: "Alemanha", bandeira: "fi fi-de" },
+            "CUR": { nome: "Curaçao", bandeira: "fi fi-cw" },
+            "CDI": { nome: "C. do Marfim", bandeira: "fi fi-ci" },
+            "EQU": { nome: "Equador", bandeira: "fi fi-ec" },
+            "HOL": { nome: "Holanda", bandeira: "fi fi-nl" },
+            "JAP": { nome: "Japão", bandeira: "fi fi-jp" },
+            "SUE": { nome: "Suécia", bandeira: "fi fi-se" },
+            "TUN": { nome: "Tunísia", bandeira: "fi fi-tn" },
+            "BEL": { nome: "Bélgica", bandeira: "fi fi-be" },
+            "EGT": { nome: "Egito", bandeira: "fi fi-eg" },
+            "IRA": { nome: "Irã", bandeira: "fi fi-ir" },
+            "NZE": { nome: "Nova Zelândia", bandeira: "fi fi-nz" },
+            "ESP": { nome: "Espanha", bandeira: "fi fi-es" },
+            "CAB": { nome: "Cabo Verde", bandeira: "fi fi-cv" },
+            "SAU": { nome: "Arábia Saud.", bandeira: "fi fi-sa" },
+            "URU": { nome: "Uruguai", bandeira: "fi fi-uy" },
+            "FRA": { nome: "França", bandeira: "fi fi-fr" },
+            "SNG": { nome: "Senegal", bandeira: "fi fi-sn" },
+            "IRQ": { nome: "Iraque", bandeira: "fi fi-iq" },
+            "NOR": { nome: "Noruega", bandeira: "fi fi-no" },
+            "ARG": { nome: "Argentina", bandeira: "fi fi-ar" },
+            "AGL": { nome: "Angola", bandeira: "fi fi-ao" },
+            "AST": { nome: "Austrália", bandeira: "fi fi-au" },
+            "JRD": { nome: "Jordânia", bandeira: "fi fi-jo" },
+            "POR": { nome: "Portugal", bandeira: "fi fi-pt" },
+            "RDC": { nome: "RD Congo", bandeira: "fi fi-cd" },
+            "UZB": { nome: "Uzbequistão", bandeira: "fi fi-uz" },
+            "COL": { nome: "Colômbia", bandeira: "fi fi-co" },
+            "ING": { nome: "Inglaterra", bandeira: "fi fi-gb-eng" },
+            "CRO": { nome: "Croácia", bandeira: "fi fi-hr" },
+            "GHA": { nome: "Gana", bandeira: "fi fi-gh" },
+            "PAN": { nome: "Panamá", bandeira: "fi fi-pa" }
         };
 
         const estruturaCopa = {
@@ -461,15 +481,23 @@
         }
 
         function obterNomeCompleto(sigla) {
-            if (!sigla) return "";
-            return nomesCompletosSelecoes[sigla.toUpperCase()] || sigla;
+            if (!sigla || !dadosSelecoes[sigla.toUpperCase()]) return sigla || "";
+            return dadosSelecoes[sigla.toUpperCase()].nome;
         }
 
-        // FUNÇÃO ADICIONAL PARA RETORNAR A CLASS DA BANDEIRA CORRETA
         function pegarClasseBandeira(sigla) {
-            if (!sigla) return "";
-            const codigoNet = mapeamentoBandeiras[sigla.toUpperCase()];
-            return codigoNet ? `fi fi-${codigoNet}` : "";
+            if (!sigla || !dadosSelecoes[sigla.toUpperCase()]) return "";
+            return dadosSelecoes[sigla.toUpperCase()].bandeira;
+        }
+
+        function buscarSiglaPorNome(nome) {
+            if (!nome) return "";
+            for (let [sigla, dados] of Object.entries(dadosSelecoes)) {
+                if (dados.nome.toLowerCase() === nome.toLowerCase() || sigla.toLowerCase() === nome.toLowerCase()) {
+                    return sigla;
+                }
+            }
+            return "";
         }
 
         function toggleTravaGrupo(grupoId, jogoIdx) {
@@ -568,7 +596,6 @@
                 const tr = document.createElement('tr');
                 const nomeExibicao = obterNomeCompleto(time);
 
-                // O TOPO MANTÉM OS NOMES LIMPOS (SEM BANDEIRA) DO JEITO QUE VOCÊ PEDIU
                 tr.innerHTML = `
                     <td>${pos + 1}º</td>
                     <td class="align-left" title="${nomeExibicao}">${nomeExibicao}</td>
@@ -600,7 +627,6 @@
                         if (grupoPronto && classificadosGruposGlobal[g]) {
                             const siglaTime = pos === "1º" ? classificadosGruposGlobal[g].primeiro : classificadosGruposGlobal[g].segundo;
                             databaseMataMata[idJogo].t1 = obterNomeCompleto(siglaTime);
-                            // Atualiza dinamicamente a bandeira no input do Mata-Mata se for preenchido automaticamente
                             const bandEl = document.getElementById(`band-m-t1-${idJogo}`);
                             if (bandEl) bandEl.className = `bandeirinha ${pegarClasseBandeira(siglaTime)}`;
                         } else { 
@@ -621,7 +647,6 @@
                         if (grupoPronto && classificadosGruposGlobal[g]) {
                             const siglaTime = pos === "1º" ? classificadosGruposGlobal[g].primeiro : classificadosGruposGlobal[g].segundo;
                             databaseMataMata[idJogo].t2 = obterNomeCompleto(siglaTime);
-                            // Atualiza dinamicamente a bandeira no input do Mata-Mata se for preenchido automaticamente
                             const bandEl = document.getElementById(`band-m-t2-${idJogo}`);
                             if (bandEl) bandEl.className = `bandeirinha ${pegarClasseBandeira(siglaTime)}`;
                         } else { 
@@ -641,14 +666,7 @@
             if (databaseMataMata[jogoId].travado) return;
             databaseMataMata[jogoId][campo] = valor;
 
-            // Tenta achar a sigla digitada para colocar a bandeira em tempo real no mata-mata manual
-            let siglaEncontrada = "";
-            for (let [sigla, nome] of Object.entries(nomesCompletosSelecoes)) {
-                if (nome.toLowerCase() === valor.toLowerCase() || sigla.toLowerCase() === valor.toLowerCase()) {
-                    siglaEncontrada = sigla;
-                    break;
-                }
-            }
+            const siglaEncontrada = buscarSiglaPorNome(valor);
             const sufixoTime = campo === "t1" ? "t1" : "t2";
             const bandEl = document.getElementById(`band-m-${sufixoTime}-${jogoId}`);
             if (bandEl) bandEl.className = siglaEncontrada ? `bandeirinha ${pegarClasseBandeira(siglaEncontrada)}` : "bandeirinha";
@@ -730,15 +748,14 @@
                     if (confronto.orig) {
                         const targetTipo = confronto.tipo || "vencedores";
 
-                        if (confronto.orig[0] === widgetAlvo = jogoId) {
+                        if (confronto.orig[0] === jogoId) {
                             if (!databaseMataMata[confronto.id]) databaseMataMata[confronto.id] = { t1:"", t2:"", p1:"", p2:"", travado:false };
                             if (!databaseMataMata[confronto.id].travado) {
                                 const herdeiro = (targetTipo === "perdedores") ? perdedor : vencedor;
                                 databaseMataMata[confronto.id].t1 = herdeiro;
                                 const el = document.getElementById(`m-t1-${confronto.id}`); if(el) el.value = herdeiro;
                                 
-                                // Aplica a bandeira dinamicamente na passagem do Mata-Mata
-                                let siglaH = ""; for(let [s,n] of Object.entries(nomesCompletosSelecoes)){if(n===herdeiro)siglaH=s;}
+                                const siglaH = buscarSiglaPorNome(herdeiro);
                                 const bandEl = document.getElementById(`band-m-t1-${confronto.id}`);
                                 if(bandEl) bandEl.className = siglaH ? `bandeirinha ${pegarClasseBandeira(siglaH)}` : "bandeirinha";
                             }
@@ -749,8 +766,7 @@
                                 databaseMataMata[confronto.id].t2 = herdeiro;
                                 const el = document.getElementById(`m-t2-${confronto.id}`); if(el) el.value = herdeiro;
                                 
-                                // Aplica a bandeira dinamicamente na passagem do Mata-Mata
-                                let siglaH = ""; for(let [s,n] of Object.entries(nomesCompletosSelecoes)){if(n===herdeiro)siglaH=s;}
+                                const siglaH = buscarSiglaPorNome(herdeiro);
                                 const bandEl = document.getElementById(`band-m-t2-${confronto.id}`);
                                 if(bandEl) bandEl.className = siglaH ? `bandeirinha ${pegarClasseBandeira(siglaH)}` : "bandeirinha";
                             }
@@ -766,7 +782,7 @@
             if(!el) return;
             
             if(nome) {
-                let siglaC = ""; for(let [s,n] of Object.entries(nomesCompletosSelecoes)){if(n===nome)siglaC=s;}
+                const siglaC = buscarSiglaPorNome(nome);
                 const bClass = pegarClasseBandeira(siglaC);
                 el.innerHTML = `<span class="bandeirinha ${bClass}"></span> 🏆 ${nome} 🏆 <span class="bandeirinha ${bClass}"></span>`;
             } else {
@@ -791,7 +807,6 @@
                     const val2 = databaseGrupos[chave]?.p2 ?? "";
                     const travado = databaseGrupos[chave]?.travado ?? false;
 
-                    // AS BANDEIRAS ENTRAM EXCLUSIVAMENTE AQUI NAS LINHAS DE CONFRONTO
                     blocoJogosHtml += `
                         <div class="linha-confronto">
                             <span class="info-data-hora">${j.d}</span>
@@ -854,8 +869,8 @@
                     const dadosSalvos = databaseMataMata[c.id] || { t1:"", t2:"", p1:"", p2:"", travado:false };
                     const travado = dadosSalvos.travado;
 
-                    let s1 = ""; let s2 = "";
-                    for(let [s,n] of Object.entries(nomesCompletosSelecoes)){if(n===dadosSalvos.t1)s1=s; if(n===dadosSalvos.t2)s2=s;}
+                    const s1 = buscarSiglaPorNome(dadosSalvos.t1);
+                    const s2 = buscarSiglaPorNome(dadosSalvos.t2);
 
                     htmlConfrontos += `
                         <div class="linha-confronto">
@@ -883,7 +898,6 @@
                 cardFase.innerHTML = htmlTituloFase + htmlConfrontos;
                 wrapper.appendChild(cardFase);
 
-                // Aplica travas visuais salvas no carregamento inicial do mata-mata
                 estruturaMataMata[faseNome].forEach(c => {
                     const dadosSalvos = databaseMataMata[c.id];
                     if (dadosSalvos && dadosSalvos.travado) {
