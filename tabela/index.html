@@ -168,6 +168,7 @@
             font-weight: 600;
         }
 
+        /* Estilo das bandeirinhas redondas nos confrontos */
         .bandeirinha {
             display: inline-block;
             width: 18px;
@@ -347,56 +348,19 @@
     </div>
 
     <script>
-        // ESTRUTURA COM NOME COMPLETO E CLASSE DIRETA DA BANDEIRA CORRETA
-        const dadosSelecoes = {
-            "MEX": { nome: "México", bandeira: "fi fi-mx" },
-            "AFS": { nome: "África do Sul", bandeira: "fi fi-za" },
-            "COR": { nome: "Coreia do Sul", bandeira: "fi fi-kr" },
-            "TCH": { nome: "Rep. Tcheca", bandeira: "fi fi-cz" },
-            "CAN": { nome: "Canadá", bandeira: "fi fi-ca" },
-            "BOS": { nome: "Bósnia", bandeira: "fi fi-ba" },
-            "CAT": { nome: "Catar", bandeira: "fi fi-qa" },
-            "SUI": { nome: "Suíça", bandeira: "fi fi-ch" },
-            "BRA": { nome: "Brasil", bandeira: "fi fi-br" },
-            "MAR": { nome: "Marrocos", bandeira: "fi fi-ma" },
-            "HAI": { nome: "Haiti", bandeira: "fi fi-ht" },
-            "SCO": { nome: "Escócia", bandeira: "fi fi-gb-sct" },
-            "USA": { nome: "EUA", bandeira: "fi fi-us" },
-            "PAR": { nome: "Paraguai", bandeira: "fi fi-py" },
-            "AUS": { nome: "Austrália", bandeira: "fi fi-au" },
-            "TUR": { nome: "Turquia", bandeira: "fi fi-tr" },
-            "ALE": { nome: "Alemanha", bandeira: "fi fi-de" },
-            "CUR": { nome: "Curaçao", bandeira: "fi fi-cw" },
-            "CDI": { nome: "C. do Marfim", bandeira: "fi fi-ci" },
-            "EQU": { nome: "Equador", bandeira: "fi fi-ec" },
-            "HOL": { nome: "Holanda", bandeira: "fi fi-nl" },
-            "JAP": { nome: "Japão", bandeira: "fi fi-jp" },
-            "SUE": { nome: "Suécia", bandeira: "fi fi-se" },
-            "TUN": { nome: "Tunísia", bandeira: "fi fi-tn" },
-            "BEL": { nome: "Bélgica", bandeira: "fi fi-be" },
-            "EGT": { nome: "Egito", bandeira: "fi fi-eg" },
-            "IRA": { nome: "Irã", bandeira: "fi fi-ir" },
-            "NZE": { nome: "Nova Zelândia", bandeira: "fi fi-nz" },
-            "ESP": { nome: "Espanha", bandeira: "fi fi-es" },
-            "CAB": { nome: "Cabo Verde", bandeira: "fi fi-cv" },
-            "SAU": { nome: "Arábia Saud.", bandeira: "fi fi-sa" },
-            "URU": { nome: "Uruguai", bandeira: "fi fi-uy" },
-            "FRA": { nome: "França", bandeira: "fi fi-fr" },
-            "SNG": { nome: "Senegal", bandeira: "fi fi-sn" },
-            "IRQ": { nome: "Iraque", bandeira: "fi fi-iq" },
-            "NOR": { nome: "Noruega", bandeira: "fi fi-no" },
-            "ARG": { nome: "Argentina", bandeira: "fi fi-ar" },
-            "AGL": { nome: "Angola", bandeira: "fi fi-ao" },
-            "AST": { nome: "Austrália", bandeira: "fi fi-au" },
-            "JRD": { nome: "Jordânia", bandeira: "fi fi-jo" },
-            "POR": { nome: "Portugal", bandeira: "fi fi-pt" },
-            "RDC": { nome: "RD Congo", bandeira: "fi fi-cd" },
-            "UZB": { nome: "Uzbequistão", bandeira: "fi fi-uz" },
-            "COL": { nome: "Colômbia", bandeira: "fi fi-co" },
-            "ING": { nome: "Inglaterra", bandeira: "fi fi-gb-eng" },
-            "CRO": { nome: "Croácia", bandeira: "fi fi-hr" },
-            "GHA": { nome: "Gana", bandeira: "fi fi-gh" },
-            "PAN": { nome: "Panamá", bandeira: "fi fi-pa" }
+        const nomesCompletosSelecoes = {
+            "MEX": "México", "AFS": "África do Sul", "COR": "Coreia do Sul", "TCH": "Rep. Tcheca",
+            "CAN": "Canadá", "BOS": "Bósnia", "CAT": "Catar", "SUI": "Suíça",
+            "BRA": "Brasil", "MAR": "Marrocos", "HAI": "Haiti", "SCO": "Escócia",
+            "USA": "EUA", "PAR": "Paraguai", "AUS": "Austrália", "TUR": "Turquia",
+            "ALE": "Alemanha", "CUR": "Curaçao", "CDI": "C. do Marfim", "EQU": "Equador",
+            "HOL": "Holanda", "JAP": "Japão", "SUE": "Suécia", "TUN": "Tunísia",
+            "BEL": "Bélgica", "EGT": "Egito", "IRA": "Irã", "NZE": "Nova Zelândia",
+            "ESP": "Espanha", "CAB": "Cabo Verde", "SAU": "Arábia Saud.", "URU": "Uruguai",
+            "FRA": "França", "SNG": "Senegal", "IRQ": "Iraque", "NOR": "Noruega",
+            "ARG": "Argentina", "AGL": "Angola", "AST": "Austrália", "JRD": "Jordânia",
+            "POR": "Portugal", "RDC": "RD Congo", "UZB": "Uzbequistão", "COL": "Colômbia",
+            "ING": "Inglaterra", "CRO": "Croácia", "GHA": "Gana", "PAN": "Panamá"
         };
 
         const estruturaCopa = {
@@ -481,19 +445,66 @@
         }
 
         function obterNomeCompleto(sigla) {
-            if (!sigla || !dadosSelecoes[sigla.toUpperCase()]) return sigla || "";
-            return dadosSelecoes[sigla.toUpperCase()].nome;
+            if (!sigla) return "";
+            return nomesCompletosSelecoes[sigla.toUpperCase()] || sigla;
         }
 
+        // ALTERAÇÃO BÁSICA E SEGURA PARA GERAR A CLASSE DA BANDEIRA
         function pegarClasseBandeira(sigla) {
-            if (!sigla || !dadosSelecoes[sigla.toUpperCase()]) return "";
-            return dadosSelecoes[sigla.toUpperCase()].bandeira;
+            if (!sigla || sigla.includes("º") || sigla.includes("-")) return "";
+            let cod = sigla.toLowerCase().trim();
+            if (cod === "ale") return "fi fi-de";
+            if (cod === "hol") return "fi fi-nl";
+            if (cod === "ing") return "fi fi-gb-eng";
+            if (cod === "sco") return "fi fi-gb-sct";
+            if (cod === "afs") return "fi fi-za";
+            if (cod === "cor") return "fi fi-kr";
+            if (cod === "tch") return "fi fi-cz";
+            if (cod === "bos") return "fi fi-ba";
+            if (cod === "cat") return "fi fi-qa";
+            if (cod === "sui") return "fi fi-ch";
+            if (cod === "mar") return "fi fi-ma";
+            if (cod === "hai") return "fi fi-ht";
+            if (cod === "usa") return "fi fi-us";
+            if (cod === "par") return "fi fi-py";
+            if (cod === "aus") return "fi fi-au";
+            if (cod === "tur") return "fi fi-tr";
+            if (cod === "cur") return "fi fi-cw";
+            if (cod === "cdi") return "fi fi-ci";
+            if (cod === "equ") return "fi fi-ec";
+            if (cod === "jap") return "fi fi-jp";
+            if (cod === "sue") return "fi fi-se";
+            if (cod === "tun") return "fi fi-tn";
+            if (cod === "bel") return "fi fi-be";
+            if (cod === "egt") return "fi fi-eg";
+            if (cod === "ira") return "fi fi-ir";
+            if (cod === "nze") return "fi fi-nz";
+            if (cod === "esp") return "fi fi-es";
+            if (cod === "cab") return "fi fi-cv";
+            if (cod === "sau") return "fi fi-sa";
+            if (cod === "uru") return "fi fi-uy";
+            if (cod === "fra") return "fi fi-fr";
+            if (cod === "sng") return "fi fi-sn";
+            if (cod === "irq") return "fi fi-iq";
+            if (cod === "nor") return "fi fi-no";
+            if (cod === "arg") return "fi fi-ar";
+            if (cod === "agl") return "fi fi-ao";
+            if (cod === "ast") return "fi fi-au";
+            if (cod === "jrd") return "fi fi-jo";
+            if (cod === "por") return "fi fi-pt";
+            if (cod === "rdc") return "fi fi-cd";
+            if (cod === "uzb") return "fi fi-uz";
+            if (cod === "col") return "fi fi-co";
+            if (cod === "cro") return "fi fi-hr";
+            if (cod === "gha") return "fi fi-gh";
+            if (cod === "pan") return "fi fi-pa";
+            return "fi fi-" + cod.substring(0, 2);
         }
 
-        function buscarSiglaPorNome(nome) {
+        function encontrarSiglaPorNome(nome) {
             if (!nome) return "";
-            for (let [sigla, dados] of Object.entries(dadosSelecoes)) {
-                if (dados.nome.toLowerCase() === nome.toLowerCase() || sigla.toLowerCase() === nome.toLowerCase()) {
+            for (let [sigla, nCompleto] of Object.entries(nomesCompletosSelecoes)) {
+                if (nCompleto.toLowerCase() === nome.toLowerCase() || sigla.toLowerCase() === nome.toLowerCase()) {
                     return sigla;
                 }
             }
@@ -549,7 +560,7 @@
         }
 
         function processarGrupo(grupoId) {
-            const dadosGrupo = estruturaCopa[grupoId];
+            const dadosGrupo = structure = estruturaCopa[grupoId];
             let stats = {};
 
             dadosGrupo.times.forEach(t => {
@@ -666,10 +677,10 @@
             if (databaseMataMata[jogoId].travado) return;
             databaseMataMata[jogoId][campo] = valor;
 
-            const siglaEncontrada = buscarSiglaPorNome(valor);
+            const sFnd = encontrarSiglaPorNome(valor);
             const sufixoTime = campo === "t1" ? "t1" : "t2";
             const bandEl = document.getElementById(`band-m-${sufixoTime}-${jogoId}`);
-            if (bandEl) bandEl.className = siglaEncontrada ? `bandeirinha ${pegarClasseBandeira(siglaEncontrada)}` : "bandeirinha";
+            if (bandEl) bandEl.className = sFnd ? `bandeirinha ${pegarClasseBandeira(sFnd)}` : "bandeirinha";
 
             salvarDados();
         }
@@ -755,9 +766,9 @@
                                 databaseMataMata[confronto.id].t1 = herdeiro;
                                 const el = document.getElementById(`m-t1-${confronto.id}`); if(el) el.value = herdeiro;
                                 
-                                const siglaH = buscarSiglaPorNome(herdeiro);
+                                const sH = encontrarSiglaPorNome(herdeiro);
                                 const bandEl = document.getElementById(`band-m-t1-${confronto.id}`);
-                                if(bandEl) bandEl.className = siglaH ? `bandeirinha ${pegarClasseBandeira(siglaH)}` : "bandeirinha";
+                                if(bandEl) bandEl.className = sH ? `bandeirinha ${pegarClasseBandeira(sH)}` : "bandeirinha";
                             }
                         } else if (confronto.orig[1] === jogoId) {
                             if (!databaseMataMata[confronto.id]) databaseMataMata[confronto.id] = { t1:"", t2:"", p1:"", p2:"", travado:false };
@@ -766,9 +777,9 @@
                                 databaseMataMata[confronto.id].t2 = herdeiro;
                                 const el = document.getElementById(`m-t2-${confronto.id}`); if(el) el.value = herdeiro;
                                 
-                                const siglaH = buscarSiglaPorNome(herdeiro);
+                                const sH = encontrarSiglaPorNome(herdeiro);
                                 const bandEl = document.getElementById(`band-m-t2-${confronto.id}`);
-                                if(bandEl) bandEl.className = siglaH ? `bandeirinha ${pegarClasseBandeira(siglaH)}` : "bandeirinha";
+                                if(bandEl) bandEl.className = sH ? `bandeirinha ${pegarClasseBandeira(sH)}` : "bandeirinha";
                             }
                         }
                     }
@@ -782,8 +793,8 @@
             if(!el) return;
             
             if(nome) {
-                const siglaC = buscarSiglaPorNome(nome);
-                const bClass = pegarClasseBandeira(siglaC);
+                const sC = encontrarSiglaPorNome(nome);
+                const bClass = pegarClasseBandeira(sC);
                 el.innerHTML = `<span class="bandeirinha ${bClass}"></span> 🏆 ${nome} 🏆 <span class="bandeirinha ${bClass}"></span>`;
             } else {
                 el.innerText = "Aguardando a Final...";
@@ -869,8 +880,8 @@
                     const dadosSalvos = databaseMataMata[c.id] || { t1:"", t2:"", p1:"", p2:"", travado:false };
                     const travado = dadosSalvos.travado;
 
-                    const s1 = buscarSiglaPorNome(dadosSalvos.t1);
-                    const s2 = buscarSiglaPorNome(dadosSalvos.t2);
+                    const s1 = encontrarSiglaPorNome(dadosSalvos.t1);
+                    const s2 = encontrarSiglaPorNome(dadosSalvos.t2);
 
                     htmlConfrontos += `
                         <div class="linha-confronto">
