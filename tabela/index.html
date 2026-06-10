@@ -5,9 +5,10 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Tabela Interativa - Copa do Mundo 2026</title>
     
-    <!-- Vinculação do Manifesto PWA -->
     <link rel="manifest" href="manifest.json">
     <meta name="theme-color" content="#0f1115">
+
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/gh/lipis/flag-icons@7.0.0/css/flag-icons.min.css">
 
     <style>
         :root {
@@ -157,11 +158,26 @@
         }
 
         .time-confronto {
+            display: flex;
+            align-items: center;
+            gap: 6px;
             flex: 1;
             white-space: nowrap;
             overflow: hidden;
             text-overflow: ellipsis;
             font-weight: 600;
+        }
+
+        /* Estilo comum para as bandeirinhas redondas nas tabelas */
+        .bandeirinha {
+            display: inline-block;
+            width: 18px;
+            height: 18px;
+            border-radius: 50%;
+            background-size: cover;
+            background-position: center;
+            box-shadow: 0 0 4px rgba(0,0,0,0.4);
+            flex-shrink: 0;
         }
 
         .time-confronto input {
@@ -186,6 +202,7 @@
         }
 
         .time-direita {
+            flex-direction: row-reverse;
             text-align: right;
         }
         
@@ -297,6 +314,10 @@
         }
 
         .box-nome-campeao {
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 10px;
             background-color: var(--bg-principal);
             border: 1px dashed #ffd700;
             color: #ffd700;
@@ -315,15 +336,12 @@
         <p>Preencha os jogos das chaves. Insira os placares e clique no cadeado (🔓) para atualizar a tabela e definir o mata-mata!</p>
     </header>
 
-    <!-- PRIMEIRA PARTE DA TABELA -->
     <div class="secao-titulo">🏆 Primeira Fase - Grupos</div>
     <div class="container-grupos" id="wrapper-fase-grupos"></div>
 
-    <!-- SEGUNDA PARTE DA TABELA -->
     <div class="secao-titulo">⚔️ Chaveamento Mata-Mata</div>
     <div class="container-matamata" id="wrapper-mata-mata"></div>
 
-    <!-- SEÇÃO FINAL DO CAMPEÃO -->
     <div class="container-campeao">
         <div class="titulo-campeao">⭐ CAMPEÃO ⭐</div>
         <div class="box-nome-campeao" id="nome-do-campeao">Aguardando a Final...</div>
@@ -343,6 +361,22 @@
             "ARG": "Argentina", "AGL": "Angola", "AST": "Austrália", "JRD": "Jordânia",
             "POR": "Portugal", "RDC": "RD Congo", "UZB": "Uzbequistão", "COL": "Colômbia",
             "ING": "Inglaterra", "CRO": "Croácia", "GHA": "Gana", "PAN": "Panamá"
+        };
+
+        // MAPEAMENTO DAS SIGLAS FIFA DE 3 LETRAS PARA O CÓDIGO DA BANDEIRA DA NET (2 LETRAS)
+        const mapeamentoBandeiras = {
+            "MEX": "mx", "AFS": "za", "COR": "kr", "TCH": "cz",
+            "CAN": "ca", "BOS": "ba", "CAT": "qa", "SUI": "ch",
+            "BRA": "br", "MAR": "ma", "HAI": "ht", "SCO": "gb-sct",
+            "USA": "us", "PAR": "py", "AUS": "au", "TUR": "tr",
+            "ALE": "de", "CUR": "cw", "CDI": "ci", "EQU": "ec",
+            "HOL": "nl", "JAP": "jp", "SUE": "se", "TUN": "tn",
+            "BEL": "be", "EGT": "eg", "IRA": "ir", "NZE": "nz",
+            "ESP": "es", "CAB": "cv", "SAU": "sa", "URU": "uy",
+            "FRA": "fr", "SNG": "sn", "IRQ": "iq", "NOR": "no",
+            "ARG": "ar", "AGL": "ao", "AST": "au", "JRD": "jo",
+            "POR": "pt", "RDC": "cd", "UZB": "uz", "COL": "co",
+            "ING": "gb-eng", "CRO": "hr", "GHA": "gh", "PAN": "pa"
         };
 
         const estruturaCopa = {
@@ -431,6 +465,13 @@
             return nomesCompletosSelecoes[sigla.toUpperCase()] || sigla;
         }
 
+        // FUNÇÃO ADICIONAL PARA RETORNAR A CLASS DA BANDEIRA CORRETA
+        function pegarClasseBandeira(sigla) {
+            if (!sigla) return "";
+            const codigoNet = mapeamentoBandeiras[sigla.toUpperCase()];
+            return codigoNet ? `fi fi-${codigoNet}` : "";
+        }
+
         function toggleTravaGrupo(grupoId, jogoIdx) {
             const chave = `${grupoId}_${jogoIdx}`;
             if (!databaseGrupos[chave]) databaseGrupos[chave] = { p1: "", p2: "", travado: false };
@@ -439,7 +480,7 @@
             if (jogo.travado) {
                 jogo.travado = false;
                 salvarDados();
-                atualizarInputsGrupoInterface(grupoId, logoIdx = jogoIdx, false);
+                atualizarInputsGrupoInterface(grupoId, jogoIdx, false);
                 processarGrupo(grupoId);
                 calcularPassagemAutomaticaFaseGrupos();
                 return;
@@ -527,6 +568,7 @@
                 const tr = document.createElement('tr');
                 const nomeExibicao = obterNomeCompleto(time);
 
+                // O TOPO MANTÉM OS NOMES LIMPOS (SEM BANDEIRA) DO JEITO QUE VOCÊ PEDIU
                 tr.innerHTML = `
                     <td>${pos + 1}º</td>
                     <td class="align-left" title="${nomeExibicao}">${nomeExibicao}</td>
@@ -558,7 +600,14 @@
                         if (grupoPronto && classificadosGruposGlobal[g]) {
                             const siglaTime = pos === "1º" ? classificadosGruposGlobal[g].primeiro : classificadosGruposGlobal[g].segundo;
                             databaseMataMata[idJogo].t1 = obterNomeCompleto(siglaTime);
-                        } else { databaseMataMata[idJogo].t1 = ""; }
+                            // Atualiza dinamicamente a bandeira no input do Mata-Mata se for preenchido automaticamente
+                            const bandEl = document.getElementById(`band-m-t1-${idJogo}`);
+                            if (bandEl) bandEl.className = `bandeirinha ${pegarClasseBandeira(siglaTime)}`;
+                        } else { 
+                            databaseMataMata[idJogo].t1 = ""; 
+                            const bandEl = document.getElementById(`band-m-t1-${idJogo}`);
+                            if (bandEl) bandEl.className = "bandeirinha";
+                        }
                         const el = document.getElementById(`m-t1-${idJogo}`); if(el) el.value = databaseMataMata[idJogo].t1;
                     }
                     
@@ -572,7 +621,14 @@
                         if (grupoPronto && classificadosGruposGlobal[g]) {
                             const siglaTime = pos === "1º" ? classificadosGruposGlobal[g].primeiro : classificadosGruposGlobal[g].segundo;
                             databaseMataMata[idJogo].t2 = obterNomeCompleto(siglaTime);
-                        } else { databaseMataMata[idJogo].t2 = ""; }
+                            // Atualiza dinamicamente a bandeira no input do Mata-Mata se for preenchido automaticamente
+                            const bandEl = document.getElementById(`band-m-t2-${idJogo}`);
+                            if (bandEl) bandEl.className = `bandeirinha ${pegarClasseBandeira(siglaTime)}`;
+                        } else { 
+                            databaseMataMata[idJogo].t2 = ""; 
+                            const bandEl = document.getElementById(`band-m-t2-${idJogo}`);
+                            if (bandEl) bandEl.className = "bandeirinha";
+                        }
                         const el = document.getElementById(`m-t2-${idJogo}`); if(el) el.value = databaseMataMata[idJogo].t2;
                     }
                 }
@@ -584,6 +640,19 @@
             if (!databaseMataMata[jogoId]) databaseMataMata[jogoId] = { t1:"", t2:"", p1:"", p2:"", travado: false };
             if (databaseMataMata[jogoId].travado) return;
             databaseMataMata[jogoId][campo] = valor;
+
+            // Tenta achar a sigla digitada para colocar a bandeira em tempo real no mata-mata manual
+            let siglaEncontrada = "";
+            for (let [sigla, nome] of Object.entries(nomesCompletosSelecoes)) {
+                if (nome.toLowerCase() === valor.toLowerCase() || sigla.toLowerCase() === valor.toLowerCase()) {
+                    siglaEncontrada = sigla;
+                    break;
+                }
+            }
+            const sufixoTime = campo === "t1" ? "t1" : "t2";
+            const bandEl = document.getElementById(`band-m-${sufixoTime}-${jogoId}`);
+            if (bandEl) bandEl.className = siglaEncontrada ? `bandeirinha ${pegarClasseBandeira(siglaEncontrada)}` : "bandeirinha";
+
             salvarDados();
         }
 
@@ -606,7 +675,7 @@
                 return;
             }
 
-            if (jogo.t1 === "" || font === "" || jogo.t2 === "" || jogo.p1 === "" || jogo.p2 === "") {
+            if (jogo.t1 === "" || jogo.t2 === "" || jogo.p1 === "" || jogo.p2 === "") {
                 alert("Preencha as equipes e os placares do mata-mata antes de travar.");
                 return;
             }
@@ -661,12 +730,17 @@
                     if (confronto.orig) {
                         const targetTipo = confronto.tipo || "vencedores";
 
-                        if (confronto.orig[0] === jogoId) {
+                        if (confronto.orig[0] === widgetAlvo = jogoId) {
                             if (!databaseMataMata[confronto.id]) databaseMataMata[confronto.id] = { t1:"", t2:"", p1:"", p2:"", travado:false };
                             if (!databaseMataMata[confronto.id].travado) {
                                 const herdeiro = (targetTipo === "perdedores") ? perdedor : vencedor;
                                 databaseMataMata[confronto.id].t1 = herdeiro;
                                 const el = document.getElementById(`m-t1-${confronto.id}`); if(el) el.value = herdeiro;
+                                
+                                // Aplica a bandeira dinamicamente na passagem do Mata-Mata
+                                let siglaH = ""; for(let [s,n] of Object.entries(nomesCompletosSelecoes)){if(n===herdeiro)siglaH=s;}
+                                const bandEl = document.getElementById(`band-m-t1-${confronto.id}`);
+                                if(bandEl) bandEl.className = siglaH ? `bandeirinha ${pegarClasseBandeira(siglaH)}` : "bandeirinha";
                             }
                         } else if (confronto.orig[1] === jogoId) {
                             if (!databaseMataMata[confronto.id]) databaseMataMata[confronto.id] = { t1:"", t2:"", p1:"", p2:"", travado:false };
@@ -674,6 +748,11 @@
                                 const herdeiro = (targetTipo === "perdedores") ? perdedor : vencedor;
                                 databaseMataMata[confronto.id].t2 = herdeiro;
                                 const el = document.getElementById(`m-t2-${confronto.id}`); if(el) el.value = herdeiro;
+                                
+                                // Aplica a bandeira dinamicamente na passagem do Mata-Mata
+                                let siglaH = ""; for(let [s,n] of Object.entries(nomesCompletosSelecoes)){if(n===herdeiro)siglaH=s;}
+                                const bandEl = document.getElementById(`band-m-t2-${confronto.id}`);
+                                if(bandEl) bandEl.className = siglaH ? `bandeirinha ${pegarClasseBandeira(siglaH)}` : "bandeirinha";
                             }
                         }
                     }
@@ -684,7 +763,15 @@
 
         function atualizarPainelCampeao(nome) {
             const el = document.getElementById("nome-do-campeao");
-            if(el) el.innerText = nome ? `🏆 ${nome} 🏆` : "Aguardando a Final...";
+            if(!el) return;
+            
+            if(nome) {
+                let siglaC = ""; for(let [s,n] of Object.entries(nomesCompletosSelecoes)){if(n===nome)siglaC=s;}
+                const bClass = pegarClasseBandeira(siglaC);
+                el.innerHTML = `<span class="bandeirinha ${bClass}"></span> 🏆 ${nome} 🏆 <span class="bandeirinha ${bClass}"></span>`;
+            } else {
+                el.innerText = "Aguardando a Final...";
+            }
         }
 
         function renderizarGrupos() {
@@ -704,16 +791,23 @@
                     const val2 = databaseGrupos[chave]?.p2 ?? "";
                     const travado = databaseGrupos[chave]?.travado ?? false;
 
+                    // AS BANDEIRAS ENTRAM EXCLUSIVAMENTE AQUI NAS LINHAS DE CONFRONTO
                     blocoJogosHtml += `
                         <div class="linha-confronto">
                             <span class="info-data-hora">${j.d}</span>
-                            <span class="time-confronto" title="${obterNomeCompleto(j.t1)}">${obterNomeCompleto(j.t1)}</span>
+                            <span class="time-confronto" title="${obterNomeCompleto(j.t1)}">
+                                <span class="bandeirinha ${pegarClasseBandeira(j.t1)}"></span>
+                                ${obterNomeCompleto(j.t1)}
+                            </span>
                             <div class="area-placar">
                                 <input type="number" id="input-${grupoId}-${idx}-1" class="input-placar" value="${val1}" ${travado ? 'disabled' : ''} oninput="alterarPlacarGrupo('${grupoId}', ${idx}, 'p1', this.value)">
                                 <span class="vs-separador">x</span>
                                 <input type="number" id="input-${grupoId}-${idx}-2" class="input-placar" value="${val2}" ${travado ? 'disabled' : ''} oninput="alterarPlacarGrupo('${grupoId}', ${idx}, 'p2', this.value)">
                             </div>
-                            <span class="time-confronto time-direita" title="${obterNomeCompleto(j.t2)}">${obterNomeCompleto(j.t2)}</span>
+                            <span class="time-confronto time-direita" title="${obterNomeCompleto(j.t2)}">
+                                <span class="bandeirinha ${pegarClasseBandeira(j.t2)}"></span>
+                                ${obterNomeCompleto(j.t2)}
+                            </span>
                             <button id="btn-${grupoId}-${idx}" class="btn-trava ${travado ? 'bloqueado' : ''}" onclick="toggleTravaGrupo('${grupoId}', ${idx})">
                                 ${travado ? '🔒' : '🔓'}
                             </button>
@@ -726,22 +820,19 @@
                     <table class="tabela-classificacao">
                         <thead>
                             <tr>
-                                <th style="width: 8%">P</th>
-                                <th class="align-left" style="width: 38%">Seleção</th>
-                                <th style="width: 11%">PTS</th>
-                                <th style="width: 11%">V</th>
-                                <th style="width: 11%">E</th>
-                                <th style="width: 11%">GP</th>
-                                <th style="width: 10%">SG</th>
+                                <th>Pos</th>
+                                <th style="text-align:left">Seleção</th>
+                                <th>P</th>
+                                <th>V</th>
+                                <th>E</th>
+                                <th>GP</th>
+                                <th>SG</th>
                             </tr>
                         </thead>
                         <tbody id="tbody-${grupoId}"></tbody>
                     </table>
-                    <div class="bloco-jogos">
-                        ${blocoJogosHtml}
-                    </div>
+                    <div class="bloco-jogos">${blocoJogosHtml}</div>
                 `;
-                
                 wrapper.appendChild(card);
                 processarGrupo(grupoId);
             });
@@ -753,37 +844,35 @@
             wrapper.innerHTML = "";
 
             Object.keys(estruturaMataMata).forEach(faseNome => {
-                const listaConfrontos = estruturaMataMata[faseNome];
                 const cardFase = document.createElement('div');
                 cardFase.className = 'card-fase-mata';
                 
-                let jogosHtml = `<div class="titulo-grupo">${faseNome}</div>`;
-                
-                listaConfrontos.forEach(c => {
-                    const jogoSalvo = databaseMataMata[c.id];
-                    const t1 = jogoSalvo?.t1 ?? "";
-                    const t2 = jogoSalvo?.t2 ?? "";
-                    const p1 = jogoSalvo?.p1 ?? "";
-                    const p2 = jogoSalvo?.p2 ?? "";
-                    const travado = jogoSalvo?.travado ?? false;
+                let htmlTituloFase = `<div class="titulo-grupo">${faseNome}</div>`;
+                let htmlConfrontos = '';
 
-                    const numPartida = c.id.substring(1);
-                    const labelPartida = `Partida ${numPartida}`;
+                estruturaMataMata[faseNome].forEach(c => {
+                    const dadosSalvos = databaseMataMata[c.id] || { t1:"", t2:"", p1:"", p2:"", travado:false };
+                    const travado = dadosSalvos.travado;
 
-                    jogosHtml += `
+                    let s1 = ""; let s2 = "";
+                    for(let [s,n] of Object.entries(nomesCompletosSelecoes)){if(n===dadosSalvos.t1)s1=s; if(n===dadosSalvos.t2)s2=s;}
+
+                    htmlConfrontos += `
                         <div class="linha-confronto">
-                            <span class="info-data-hora">${c.d} <br/><small style="color:var(--laranja-copa); font-weight:bold;">${labelPartida}</small></span>
-                            <div class="time-confronto">
-                                <input type="text" id="m-t1-${c.id}" value="${t1}" placeholder="Aguardando..." ${travado ? 'disabled' : ''} oninput="alterarTextoMata('${c.id}', 't1', this.value)">
-                            </div>
+                            <span class="info-data-hora">${c.d}</span>
+                            <span class="time-confronto">
+                                <span id="band-m-t1-${c.id}" class="bandeirinha ${pegarClasseBandeira(s1)}"></span>
+                                <input type="text" id="m-t1-${c.id}" value="${dadosSalvos.t1}" placeholder="Equipe A" ${travado ? 'disabled' : ''} onchange="alterarTextoMata('${c.id}', 't1', this.value)">
+                            </span>
                             <div class="area-placar">
-                                <input type="number" id="m-p1-${c.id}" class="input-placar" value="${p1}" ${travado ? 'disabled' : ''} oninput="alterarPlacarMata('${c.id}', 'p1', this.value)">
+                                <input type="number" id="m-p1-${c.id}" class="input-placar" value="${dadosSalvos.p1 ?? ""}" ${travado ? 'disabled' : ''} oninput="alterarPlacarMata('${c.id}', 'p1', this.value)">
                                 <span class="vs-separador">x</span>
-                                <input type="number" id="m-p2-${c.id}" class="input-placar" value="${p2}" ${travado ? 'disabled' : ''} oninput="alterarPlacarMata('${c.id}', 'p2', this.value)">
+                                <input type="number" id="m-p2-${c.id}" class="input-placar" value="${dadosSalvos.p2 ?? ""}" ${travado ? 'disabled' : ''} oninput="alterarPlacarMata('${c.id}', 'p2', this.value)">
                             </div>
-                            <div class="time-confronto time-direita">
-                                <input type="text" id="m-t2-${c.id}" value="${t2}" placeholder="Aguardando..." ${travado ? 'disabled' : ''} oninput="alterarTextoMata('${c.id}', 't2', this.value)">
-                            </div>
+                            <span class="time-confronto time-direita">
+                                <span id="band-m-t2-${c.id}" class="bandeirinha ${pegarClasseBandeira(s2)}"></span>
+                                <input type="text" id="m-t2-${c.id}" value="${dadosSalvos.t2}" placeholder="Equipe B" ${travado ? 'disabled' : ''} onchange="alterarTextoMata('${c.id}', 't2', this.value)">
+                            </span>
                             <button id="btn-m-${c.id}" class="btn-trava ${travado ? 'bloqueado' : ''}" onclick="toggleTravaMata('${c.id}')">
                                 ${travado ? '🔒' : '🔓'}
                             </button>
@@ -791,20 +880,25 @@
                     `;
                 });
 
-                cardFase.innerHTML = jogosHtml;
+                cardFase.innerHTML = htmlTituloFase + htmlConfrontos;
                 wrapper.appendChild(cardFase);
+
+                // Aplica travas visuais salvas no carregamento inicial do mata-mata
+                estruturaMataMata[faseNome].forEach(c => {
+                    const dadosSalvos = databaseMataMata[c.id];
+                    if (dadosSalvos && dadosSalvos.travado) {
+                        atualizarInputsMataInterface(c.id, true);
+                        if (c.id === "p104") atualizarPainelCampeao(dadosSalvos.p1 > dadosSalvos.p2 ? dadosSalvos.t1 : dadosSalvos.t2);
+                    }
+                });
             });
         }
 
-        document.addEventListener("DOMContentLoaded", function() {
-            carregarDados();
-            renderizarGrupos();
-            renderizarMataMata();
-            calcularPassagemAutomaticaFaseGrupos();
-            if(databaseMataMata["p104"]?.travado) {
-                calcularVencedorMataEAvancar("p104");
-            }
-        });
+        // INICIALIZAÇÃO DO APP
+        carregarDados();
+        renderizarGrupos();
+        calcularPassagemAutomaticaFaseGrupos();
+        renderizarMataMata();
     </script>
 </body>
 </html>
