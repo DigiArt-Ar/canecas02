@@ -71,11 +71,11 @@
                 btnSortear.innerText = Math.floor(Math.random() * 99) + 1;
                 btnSortear.classList.remove('sorteado-ativo');
                 contagem++;
-                if(contagem > 10) {
+                if(contagem > 5) {
                     clearInterval(interval);
                     finalizarSorteio();
                 }
-            }, 50);
+            }, 150);
         });
 
         function finalizarSorteio() {
