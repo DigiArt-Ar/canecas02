@@ -5,55 +5,53 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
     <title>Bingo</title>
     <style>
-        * { box-sizing: border-box; touch-action: manipulation; }
-        body { 
-            margin: 0; background: #2c3e50; color: white; height: 100vh; width: 100vw;
-            display: flex; align-items: center; justify-content: center; overflow: hidden; 
-            font-family: sans-serif;
+        body { margin: 0; background: #2c3e50; color: white; height: 100vh; overflow: hidden; font-family: sans-serif; display: flex; align-items: center; justify-content: center; }
+        
+        /* Container principal que força a horizontalidade */
+        .app-container { 
+            display: flex; width: 98vw; height: 95vh; gap: 2vw; align-items: center; justify-content: center;
         }
-        
-        /* Container principal que obriga o layout a ser horizontal */
-        .container { 
-            display: flex; width: 95vw; height: 90vh; gap: 2vw; align-items: center; justify-content: center;
-        }
-        
-        /* Coluna esquerda fixa */
-        .left-col { width: 30%; display: flex; flex-direction: column; align-items: center; gap: 2vh; }
-        
+
+        /* Coluna esquerda: Botão de Sorteio (Fixo) */
+        .col-sorteio { width: 30%; display: flex; flex-direction: column; align-items: center; justify-content: center; }
         #btn-sortear { 
-            width: 25vh; height: 25vh; border-radius: 50%; border: 0.8vh solid #f1c40f; 
+            width: 20vh; height: 20vh; border-radius: 50%; border: 0.8vh solid #f1c40f; 
             background: #e67e22; color: white; font-size: 8vh; font-weight: bold; cursor: pointer;
-            display: flex; align-items: center; justify-content: center;
         }
-        
-        #btn-reset { padding: 1.5vh 3vh; background: #c0392b; border: none; color: white; border-radius: 1vh; cursor: pointer; font-size: 2vh; }
-        
-        /* Grade responsiva que se ajusta ao espaço restante */
-        .right-col { 
-            width: 65%; display: grid; grid-template-columns: repeat(10, 1fr); gap: 0.5vh;
+
+        /* Coluna direita: Grade + Reset */
+        .col-grade { width: 65%; display: flex; flex-direction: column; align-items: center; gap: 1vh; }
+        #grid-numeros { 
+            display: grid; grid-template-columns: repeat(10, 1fr); gap: 0.6vh; width: 100%;
         }
-        
         .num { 
             background: #34495e; border-radius: 50%; aspect-ratio: 1/1; 
-            display: flex; align-items: center; justify-content: center; font-size: 1.2vh;
+            display: flex; align-items: center; justify-content: center; font-size: 1.8vh; font-weight: bold;
         }
-        
-        .sorteado { background: #2ecc71; color: white; font-weight: bold; transform: scale(1.1); }
+        .sorteado { background: #2ecc71; transform: scale(1.1); }
+
+        /* Reset na grade, conforme pedido */
+        #btn-reset { 
+            padding: 1.5vh 3vh; background: #c0392b; border: none; color: white; border-radius: 1vh; 
+            cursor: pointer; font-size: 2vh; margin-top: 1vh;
+        }
     </style>
 </head>
 <body>
 
-<div class="container">
-    <div class="left-col">
+<div class="app-container">
+    <div class="col-sorteio">
         <button id="btn-sortear">SORTEAR</button>
-        <button id="btn-reset">REINICIAR</button>
     </div>
-    <div class="right-col" id="grid"></div>
+    <div class="col-grade">
+        <div id="grid-numeros"></div>
+        <button id="btn-reset">REINICIAR SORTEIO</button>
+    </div>
 </div>
 
 <script>
     const btn = document.getElementById('btn-sortear');
-    const grid = document.getElementById('grid');
+    const grid = document.getElementById('grid-numeros');
     let sorteados = [];
     let travado = false;
 
@@ -86,7 +84,6 @@
         btn.innerText = num;
         document.getElementById('n'+num).classList.add('sorteado');
         
-        // Fala direta
         let msg = new SpeechSynthesisUtterance(num.toString());
         msg.lang = 'pt-BR';
         window.speechSynthesis.speak(msg);
@@ -95,7 +92,7 @@
     }
 
     document.getElementById('btn-reset').onclick = () => {
-        if(confirm("Tem certeza que deseja reiniciar?")) location.reload();
+        if(confirm("Tem certeza que deseja reiniciar o sorteio?")) location.reload();
     };
 </script>
 </body>
