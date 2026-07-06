@@ -10,9 +10,14 @@
         
         #btn-sortear { 
             width: 300px; height: 300px; border-radius: 50%; border: 8px solid #f1c40f; 
-            background: #e67e22; color: white; font-size: 3rem; cursor: pointer; 
+            background: #e67e22; color: white; cursor: pointer; 
             transition: all 0.3s; box-shadow: 0 0 20px rgba(0,0,0,0.5);
+            /* Alteração: Sorteado maior, texto "SORTEAR" menor */
+            font-size: 5rem; font-weight: bold;
         }
+        /* Ajuste do texto inicial */
+        #btn-sortear:not(.sorteado-ativo) { font-size: 3rem; }
+        
         #btn-sortear:disabled { background: #95a5a6; cursor: not-allowed; border-color: #7f8c8d; }
         
         #grid-numeros { display: grid; grid-template-columns: repeat(10, 45px); gap: 8px; }
@@ -35,17 +40,23 @@
     <div id="grid-numeros"></div>
 
     <script>
-        let sorteados = [];
+        // Carrega dados salvos
+        let sorteados = JSON.parse(localStorage.getItem('bingo_sorteados')) || [];
         let sorteando = false;
         const btnSortear = document.getElementById('btn-sortear');
         const grid = document.getElementById('grid-numeros');
 
-        // Cria a grade
+        // Cria a grade e restaura o estado
         for(let i=1; i<=99; i++) {
             let div = document.createElement('div');
             div.className = 'num';
             div.id = 'num-' + i;
             div.innerText = i;
+            if (sorteados.includes(i)) {
+                div.classList.add('sorteado');
+                btnSortear.innerText = i;
+                btnSortear.classList.add('sorteado-ativo');
+            }
             grid.appendChild(div);
         }
 
@@ -56,11 +67,11 @@
             btnSortear.disabled = true;
 
             let contagem = 0;
-            // Efeito roleta por 2 segundos
             let interval = setInterval(() => {
                 btnSortear.innerText = Math.floor(Math.random() * 99) + 1;
+                btnSortear.classList.remove('sorteado-ativo');
                 contagem++;
-                if(contagem > 10) { // Finaliza o sorteio
+                if(contagem > 10) {
                     clearInterval(interval);
                     finalizarSorteio();
                 }
@@ -72,15 +83,17 @@
             do { novoNum = Math.floor(Math.random() * 99) + 1; } while (sorteados.includes(novoNum));
 
             sorteados.push(novoNum);
+            // Salva no navegador
+            localStorage.setItem('bingo_sorteados', JSON.stringify(sorteados));
+            
             btnSortear.innerText = novoNum;
+            btnSortear.classList.add('sorteado-ativo');
             document.getElementById('num-' + novoNum).classList.add('sorteado');
             
-            // Falar número
             let msg = new SpeechSynthesisUtterance(novoNum.toString());
             msg.lang = 'pt-BR';
             window.speechSynthesis.speak(msg);
 
-            // Libera após 3 segundos
             setTimeout(() => {
                 sorteando = false;
                 btnSortear.disabled = false;
@@ -90,7 +103,9 @@
         document.getElementById('btn-reset').addEventListener('click', () => {
             if(confirm("Tem certeza absoluta que deseja reiniciar a partida?")) {
                 sorteados = [];
+                localStorage.removeItem('bingo_sorteados');
                 btnSortear.innerText = "SORTEAR";
+                btnSortear.classList.remove('sorteado-ativo');
                 document.querySelectorAll('.num').forEach(el => el.classList.remove('sorteado'));
             }
         });
