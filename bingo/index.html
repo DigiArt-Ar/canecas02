@@ -3,6 +3,115 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <title>Bingo</title>
+    <style>
+        * { box-sizing: border-box; }
+        body { 
+            margin: 0; background: #2c3e50; color: white; 
+            height: 100vh; width: 100vw; overflow: hidden;
+            display: flex; align-items: center; justify-content: center;
+        }
+
+        .container { 
+            display: flex; width: 90vw; height: 85vh; gap: 30px; align-items: center; justify-content: center;
+        }
+
+        .col-esquerda { width: 30%; display: flex; align-items: center; justify-content: center; }
+        
+        #btn-sortear { 
+            width: 20vh; height: 20vh; border-radius: 50%; border: 6px solid #f1c40f; 
+            background: #e67e22; color: white; font-weight: bold; cursor: pointer;
+            /* O texto nunca sai do botão */
+            font-size: clamp(1rem, 4vh, 6vh); 
+            display: flex; align-items: center; justify-content: center;
+        }
+
+        .col-direita { width: 60%; display: flex; flex-direction: column; align-items: center; gap: 15px; }
+        #grid-numeros { 
+            display: grid; grid-template-columns: repeat(10, 1fr); gap: 5px; 
+            width: 100%; max-width: 600px;
+        }
+        .num { 
+            background: #34495e; border-radius: 50%; aspect-ratio: 1/1; 
+            display: flex; align-items: center; justify-content: center; font-size: 2vh;
+        }
+        .sorteado { background: #2ecc71; transform: scale(1.1); }
+
+        #btn-reset { 
+            padding: 10px 20px; background: #c0392b; border: none; color: white; 
+            cursor: pointer; border-radius: 5px; font-weight: bold;
+        }
+    </style>
+</head>
+<body>
+
+<div class="container">
+    <div class="col-esquerda">
+        <button id="btn-sortear">SORTEAR</button>
+    </div>
+    <div class="col-direita">
+        <div id="grid-numeros"></div>
+        <button id="btn-reset">REINICIAR SORTEIO</button>
+    </div>
+</div>
+
+<script>
+    const btn = document.getElementById('btn-sortear');
+    const grid = document.getElementById('grid-numeros');
+    let sorteados = [];
+    let travado = false;
+
+    for(let i=1; i<=99; i++) {
+        let d = document.createElement('div');
+        d.className = 'num'; d.id = 'n'+i; d.innerText = i;
+        grid.appendChild(d);
+    }
+
+    btn.onclick = () => {
+        if(travado || sorteados.length >= 99) return;
+        travado = true;
+        
+        // Animação de 2 segundos
+        let cont = 0;
+        let anim = setInterval(() => {
+            btn.innerText = Math.floor(Math.random() * 99) + 1;
+            if(++cont > 10) {
+                clearInterval(anim);
+                sortearFinal();
+            }
+        }, 150);
+    };
+
+    function sortearFinal() {
+        let num = Math.floor(Math.random() * 99) + 1;
+        while(sorteados.includes(num)) num = Math.floor(Math.random() * 99) + 1;
+        
+        sorteados.push(num);
+        btn.innerText = num;
+        document.getElementById('n'+num).classList.add('sorteado');
+        
+        let msg = new SpeechSynthesisUtterance(num.toString());
+        msg.lang = 'pt-BR';
+        window.speechSynthesis.speak(msg);
+
+        // Só libera após a fala acabar
+        msg.onend = () => { travado = false; };
+    }
+
+    document.getElementById('btn-reset').onclick = () => {
+        if(confirm("Reiniciar sorteio atual?")) {
+            sorteados = [];
+            document.querySelectorAll('.num').forEach(n => n.classList.remove('sorteado'));
+            btn.innerText = "SORTEAR";
+        }
+    };
+</script>
+</body>
+</html><!DOCTYPE html>
+<html lang="pt-br">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
     <title>Bingo em Família</title>
     <style>
         * { box-sizing: border-box; }
