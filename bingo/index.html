@@ -2,11 +2,11 @@
 <html lang="pt-br">
 <head>
     <meta charset="UTF-8">
+    <link rel="manifest" href="manifest.json">
     <title>Bingo em Família</title>
     <style>
         body { font-family: 'Arial', sans-serif; display: flex; background: #2c3e50; color: white; height: 100vh; margin: 0; align-items: center; justify-content: center; gap: 50px; }
         
-        /* Ajuste: Força o alinhamento central vertical */
         #painel-esquerda { text-align: center; width: 350px; display: flex; flex-direction: column; align-items: center; }
         
         #btn-sortear { 
@@ -26,6 +26,15 @@
         .sorteado { background: #2ecc71; color: #fff; transform: scale(1.1); transition: 0.3s; }
         
         #btn-reset { margin-top: 20px; padding: 10px 25px; cursor: pointer; background: #c0392b; color: white; border: none; border-radius: 5px; font-weight: bold; }
+
+        @media screen and (max-width: 900px) {
+            body { flex-direction: column; gap: 10px; overflow-y: auto; }
+            #painel-esquerda { width: 100%; }
+            #btn-sortear { width: 150px; height: 150px; font-size: 2rem !important; }
+            #grid-numeros { grid-template-columns: repeat(10, 30px); gap: 4px; }
+            .num { width: 30px; height: 30px; font-size: 0.8rem; }
+            #btn-reset { margin-top: 10px; }
+        }
     </style>
 </head>
 <body>
@@ -39,6 +48,11 @@
     <div id="grid-numeros"></div>
 
     <script>
+        // Registrar Service Worker para funcionamento offline
+        if ('serviceWorker' in navigator) {
+            navigator.serviceWorker.register('sw.js');
+        }
+
         let sorteados = JSON.parse(localStorage.getItem('bingo_sorteados')) || [];
         let sorteando = false;
         const btnSortear = document.getElementById('btn-sortear');
