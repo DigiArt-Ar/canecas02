@@ -2,37 +2,56 @@
 <html lang="pt-br">
 <head>
     <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
     <title>Bingo em Família</title>
     <style>
-        body { font-family: 'Arial', sans-serif; display: flex; background: #2c3e50; color: white; height: 100vh; margin: 0; align-items: center; justify-content: center; gap: 50px; }
-        
-        #painel-esquerda { text-align: center; width: 350px; }
-        
-        #btn-sortear { 
-            width: 300px; height: 300px; border-radius: 50%; border: 8px solid #f1c40f; 
-            background: #e67e22; color: white; font-size: 3rem; cursor: pointer; 
-            transition: all 0.3s; box-shadow: 0 0 20px rgba(0,0,0,0.5);
+        body { 
+            font-family: 'Arial', sans-serif; background: #2c3e50; color: white; 
+            margin: 0; height: 100vh; display: flex; align-items: center; justify-content: center;
+            overflow: hidden; /* Evita rolagem */
         }
-        #btn-sortear:disabled { background: #95a5a6; cursor: not-allowed; border-color: #7f8c8d; }
         
-        #grid-numeros { display: grid; grid-template-columns: repeat(10, 45px); gap: 8px; }
-        .num { width: 45px; height: 45px; border-radius: 50%; background: #34495e; 
-               display: flex; align-items: center; justify-content: center; font-weight: bold; }
-        .sorteado { background: #2ecc71; color: #fff; transform: scale(1.1); transition: 0.3s; }
-        
-        #btn-reset { margin-top: 20px; padding: 10px 25px; cursor: pointer; background: #c0392b; color: white; border: none; border-radius: 5px; font-weight: bold; }
+        /* Container principal horizontal */
+        .container { display: flex; width: 95vw; height: 90vh; align-items: center; justify-content: space-around; }
+
+        /* Coluna da Esquerda (Sorteio) */
+        #painel-esquerda { text-align: center; flex: 1; }
+        #btn-sortear { 
+            width: 30vw; height: 30vw; max-width: 300px; max-height: 300px;
+            border-radius: 50%; border: 8px solid #f1c40f; 
+            background: #e67e22; color: white; font-size: 6rem; font-weight: bold;
+            cursor: pointer; transition: all 0.3s; box-shadow: 0 0 20px rgba(0,0,0,0.5);
+        }
+        #btn-sortear:disabled { background: #95a5a6; }
+
+        /* Coluna da Direita (Grade) */
+        #painel-direita { display: flex; flex-direction: column; align-items: center; flex: 2; }
+        #grid-numeros { 
+            display: grid; grid-template-columns: repeat(10, 1fr); gap: 5px; 
+            width: 100%; max-width: 600px;
+        }
+        .num { 
+            aspect-ratio: 1/1; background: #34495e; border-radius: 50%;
+            display: flex; align-items: center; justify-content: center; font-weight: bold; font-size: 1vw;
+        }
+        .sorteado { background: #2ecc71; color: white; transform: scale(1.1); }
+
+        #btn-reset { margin-top: 20px; padding: 15px 30px; background: #c0392b; color: white; border: none; border-radius: 10px; cursor: pointer; font-size: 1.2rem; }
     </style>
 </head>
 <body>
 
-    <div id="painel-esquerda">
-        <h1>BINGO EM FAMÍLIA</h1>
-        <button id="btn-sortear">SORTEAR</button>
-        <br>
-        <button id="btn-reset">REINICIAR SORTEIO</button>
-    </div>
+    <div class="container">
+        <div id="painel-esquerda">
+            <h1>BINGO EM FAMÍLIA</h1>
+            <button id="btn-sortear">?</button>
+        </div>
 
-    <div id="grid-numeros"></div>
+        <div id="painel-direita">
+            <div id="grid-numeros"></div>
+            <button id="btn-reset">REINICIAR SORTEIO</button>
+        </div>
+    </div>
 
     <script>
         let sorteados = [];
@@ -40,7 +59,6 @@
         const btnSortear = document.getElementById('btn-sortear');
         const grid = document.getElementById('grid-numeros');
 
-        // Cria a grade
         for(let i=1; i<=99; i++) {
             let div = document.createElement('div');
             div.className = 'num';
@@ -51,46 +69,34 @@
 
         btnSortear.addEventListener('click', () => {
             if(sorteando || sorteados.length >= 99) return;
-            
             sorteando = true;
             btnSortear.disabled = true;
 
             let contagem = 0;
-            // Efeito roleta por 2 segundos
             let interval = setInterval(() => {
                 btnSortear.innerText = Math.floor(Math.random() * 99) + 1;
-                contagem++;
-                if(contagem > 10) { // Finaliza o sorteio
-                    clearInterval(interval);
-                    finalizarSorteio();
-                }
-            }, 200);
+                if(++contagem > 10) { clearInterval(interval); finalizarSorteio(); }
+            }, 150);
         });
 
         function finalizarSorteio() {
             let novoNum;
             do { novoNum = Math.floor(Math.random() * 99) + 1; } while (sorteados.includes(novoNum));
-
             sorteados.push(novoNum);
             btnSortear.innerText = novoNum;
             document.getElementById('num-' + novoNum).classList.add('sorteado');
             
-            // Falar número
             let msg = new SpeechSynthesisUtterance(novoNum.toString());
             msg.lang = 'pt-BR';
             window.speechSynthesis.speak(msg);
 
-            // Libera após 3 segundos
-            setTimeout(() => {
-                sorteando = false;
-                btnSortear.disabled = false;
-            }, 3000);
+            setTimeout(() => { sorteando = false; btnSortear.disabled = false; }, 2000);
         }
 
         document.getElementById('btn-reset').addEventListener('click', () => {
-            if(confirm("Tem certeza absoluta que deseja reiniciar a partida?")) {
+            if(confirm("Deseja mesmo zerar o bingo?")) {
                 sorteados = [];
-                btnSortear.innerText = "SORTEAR";
+                btnSortear.innerText = "?";
                 document.querySelectorAll('.num').forEach(el => el.classList.remove('sorteado'));
             }
         });
