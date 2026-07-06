@@ -92,12 +92,14 @@
             
             let msg = new SpeechSynthesisUtterance(novoNum.toString());
             msg.lang = 'pt-BR';
-            window.speechSynthesis.speak(msg);
-
-            setTimeout(() => {
+            
+            // Alteração cirúrgica: libera o botão no fim da fala
+            msg.onend = () => {
                 sorteando = false;
                 btnSortear.disabled = false;
-            }, 3000);
+            };
+
+            window.speechSynthesis.speak(msg);
         }
 
         document.getElementById('btn-reset').addEventListener('click', () => {
