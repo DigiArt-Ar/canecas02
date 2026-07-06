@@ -3,97 +3,104 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <title>Bingo</title>
+    <title>Bingo em Família</title>
     <style>
-        body { margin: 0; background: #2c3e50; color: white; height: 100vh; overflow: hidden; font-family: sans-serif; display: flex; align-items: center; justify-content: center; }
-        
-        /* Container principal que força a horizontalidade */
-        .app-container { 
-            display: flex; width: 98vw; height: 95vh; gap: 2vw; align-items: center; justify-content: center;
+        * { box-sizing: border-box; }
+        body { 
+            margin: 0; padding: 0; background: #2c3e50; color: white; 
+            height: 100vh; width: 100vw; display: flex; align-items: center; justify-content: center;
+            font-family: sans-serif; overflow: hidden;
         }
 
-        /* Coluna esquerda: Botão de Sorteio (Fixo) */
-        .col-sorteio { width: 30%; display: flex; flex-direction: column; align-items: center; justify-content: center; }
+        /* Container que força a estrutura lado a lado */
+        .container { 
+            display: flex; width: 95vw; height: 90vh; align-items: center; justify-content: center; gap: 20px;
+        }
+
+        /* Esquerda: 30% da tela para o Sorteio */
+        .col-esquerda { width: 30%; display: flex; flex-direction: column; align-items: center; justify-content: center; }
         #btn-sortear { 
-            width: 20vh; height: 20vh; border-radius: 50%; border: 0.8vh solid #f1c40f; 
+            width: 25vh; height: 25vh; border-radius: 50%; border: 8px solid #f1c40f; 
             background: #e67e22; color: white; font-size: 8vh; font-weight: bold; cursor: pointer;
         }
 
-        /* Coluna direita: Grade + Reset */
-        .col-grade { width: 65%; display: flex; flex-direction: column; align-items: center; gap: 1vh; }
+        /* Direita: 70% da tela para Grade + Reset */
+        .col-direita { width: 65%; display: flex; flex-direction: column; align-items: center; }
+        
         #grid-numeros { 
-            display: grid; grid-template-columns: repeat(10, 1fr); gap: 0.6vh; width: 100%;
+            display: grid; grid-template-columns: repeat(10, 1fr); gap: 4px; 
+            width: 100%; max-width: 600px;
         }
         .num { 
             background: #34495e; border-radius: 50%; aspect-ratio: 1/1; 
-            display: flex; align-items: center; justify-content: center; font-size: 1.8vh; font-weight: bold;
+            display: flex; align-items: center; justify-content: center; font-size: 1.5vh; font-weight: bold;
         }
         .sorteado { background: #2ecc71; transform: scale(1.1); }
 
-        /* Reset na grade, conforme pedido */
         #btn-reset { 
-            padding: 1.5vh 3vh; background: #c0392b; border: none; color: white; border-radius: 1vh; 
-            cursor: pointer; font-size: 2vh; margin-top: 1vh;
+            margin-top: 15px; padding: 10px 20px; background: #c0392b; 
+            border: none; color: white; cursor: pointer; border-radius: 5px; font-weight: bold;
         }
     </style>
 </head>
 <body>
 
-<div class="app-container">
-    <div class="col-sorteio">
-        <button id="btn-sortear">SORTEAR</button>
+    <div class="container">
+        <div class="col-esquerda">
+            <button id="btn-sortear">SORTEAR</button>
+        </div>
+        <div class="col-direita">
+            <div id="grid-numeros"></div>
+            <button id="btn-reset">REINICIAR SORTEIO</button>
+        </div>
     </div>
-    <div class="col-grade">
-        <div id="grid-numeros"></div>
-        <button id="btn-reset">REINICIAR SORTEIO</button>
-    </div>
-</div>
 
-<script>
-    const btn = document.getElementById('btn-sortear');
-    const grid = document.getElementById('grid-numeros');
-    let sorteados = [];
-    let travado = false;
+    <script>
+        const btn = document.getElementById('btn-sortear');
+        const grid = document.getElementById('grid-numeros');
+        let sorteados = [];
+        let bloqueado = false;
 
-    // Criar a grade
-    for(let i=1; i<=99; i++) {
-        let d = document.createElement('div');
-        d.className = 'num'; d.id = 'n'+i; d.innerText = i;
-        grid.appendChild(d);
-    }
+        // Gera a grade
+        for(let i=1; i<=99; i++) {
+            let d = document.createElement('div');
+            d.className = 'num'; d.id = 'n'+i; d.innerText = i;
+            grid.appendChild(d);
+        }
 
-    btn.onclick = () => {
-        if(travado || sorteados.length >= 99) return;
-        travado = true;
-        
-        let cont = 0;
-        let anim = setInterval(() => {
-            btn.innerText = Math.floor(Math.random() * 99) + 1;
-            if(++cont > 10) {
-                clearInterval(anim);
-                sortearFinal();
-            }
-        }, 150);
-    };
+        btn.onclick = () => {
+            if(bloqueado || sorteados.length >= 99) return;
+            bloqueado = true;
+            btn.disabled = true;
 
-    function sortearFinal() {
-        let num = Math.floor(Math.random() * 99) + 1;
-        while(sorteados.includes(num)) num = Math.floor(Math.random() * 99) + 1;
-        
-        sorteados.push(num);
-        btn.innerText = num;
-        document.getElementById('n'+num).classList.add('sorteado');
-        
-        let msg = new SpeechSynthesisUtterance(num.toString());
-        msg.lang = 'pt-BR';
-        window.speechSynthesis.speak(msg);
+            let cont = 0;
+            let anim = setInterval(() => {
+                btn.innerText = Math.floor(Math.random() * 99) + 1;
+                if(++cont > 10) {
+                    clearInterval(anim);
+                    finalizarSorteio();
+                }
+            }, 150);
+        };
 
-        setTimeout(() => travado = false, 3000);
-    }
+        function finalizarSorteio() {
+            let num = Math.floor(Math.random() * 99) + 1;
+            while(sorteados.includes(num)) num = Math.floor(Math.random() * 99) + 1;
+            
+            sorteados.push(num);
+            btn.innerText = num;
+            document.getElementById('n'+num).classList.add('sorteado');
+            
+            let msg = new SpeechSynthesisUtterance(num.toString());
+            msg.lang = 'pt-BR';
+            window.speechSynthesis.speak(msg);
 
-    document.getElementById('btn-reset').onclick = () => {
-        if(confirm("Tem certeza que deseja reiniciar o sorteio?")) location.reload();
-    };
-</script>
+            setTimeout(() => { bloqueado = false; btn.disabled = false; }, 3000);
+        }
+
+        document.getElementById('btn-reset').onclick = () => {
+            if(confirm("Tem certeza que deseja reiniciar?")) location.reload();
+        };
+    </script>
 </body>
 </html>
