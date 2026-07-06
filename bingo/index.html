@@ -6,16 +6,16 @@
     <style>
         body { font-family: 'Arial', sans-serif; display: flex; background: #2c3e50; color: white; height: 100vh; margin: 0; align-items: center; justify-content: center; gap: 50px; }
         
-        #painel-esquerda { text-align: center; width: 350px; }
+        /* Ajuste: Força o alinhamento central vertical */
+        #painel-esquerda { text-align: center; width: 350px; display: flex; flex-direction: column; align-items: center; }
         
         #btn-sortear { 
             width: 300px; height: 300px; border-radius: 50%; border: 8px solid #f1c40f; 
             background: #e67e22; color: white; cursor: pointer; 
             transition: all 0.3s; box-shadow: 0 0 20px rgba(0,0,0,0.5);
-            /* Garantimos que o conteúdo seja tratado como círculo */
             font-size: 5rem; font-weight: bold; display: flex; align-items: center; justify-content: center;
         }
-        /* Ajuste do texto inicial */
+        
         #btn-sortear:not(.sorteado-ativo) { font-size: 3rem; }
         
         #btn-sortear:disabled { background: #95a5a6; cursor: not-allowed; border-color: #7f8c8d; }
@@ -33,20 +33,17 @@
     <div id="painel-esquerda">
         <h1>BINGO EM FAMÍLIA</h1>
         <button id="btn-sortear">SORTEAR</button>
-        <br>
         <button id="btn-reset">REINICIAR SORTEIO</button>
     </div>
 
     <div id="grid-numeros"></div>
 
     <script>
-        // Carrega dados salvos
         let sorteados = JSON.parse(localStorage.getItem('bingo_sorteados')) || [];
         let sorteando = false;
         const btnSortear = document.getElementById('btn-sortear');
         const grid = document.getElementById('grid-numeros');
 
-        // Cria a grade e restaura o estado
         for(let i=1; i<=99; i++) {
             let div = document.createElement('div');
             div.className = 'num';
