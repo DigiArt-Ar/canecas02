@@ -1,927 +1,156 @@
-<!DOCTYPE html>
-<html lang="pt-BR">
-<head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Tabela Interativa - Copa do Mundo 2026</title>
-    
-    <link rel="manifest" href="manifest.json">
-    <meta name="theme-color" content="#0f1115">
-
-    <link rel="stylesheet" href="https://cdn.jsdelivr.net/gh/lipis/flag-icons@7.0.0/css/flag-icons.min.css">
-
-    <style>
-        :root {
-            --bg-principal: #0f1115;
-            --bg-card: #161920;
-            --bg-input: #1e222b;
-            --cor-borda: #2a2f3b;
-            --amarelo-destaque: #eff2f7;
-            --laranja-copa: #ff6b00;
-            --verde-sucesso: #00e676;
-            --texto-claro: #f1f3f5;
-            --texto-escuro: #9ea7b3;
-            --trava-vermelha: #ff3838;
-        }
-
-        * {
-            box-sizing: border-box;
-            margin: 0;
-            padding: 0;
-            font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
-        }
-
-        body {
-            background-color: var(--bg-principal);
-            color: var(--texto-claro);
-            padding: 15px;
-        }
-
-        header {
-            text-align: center;
-            margin-bottom: 25px;
-            padding-bottom: 15px;
-            border-bottom: 1px solid var(--cor-borda);
-        }
-
-        header h1 {
-            font-size: 1.5rem;
-            color: var(--laranja-copa);
-            text-transform: uppercase;
-            letter-spacing: 1px;
-        }
-
-        header p {
-            font-size: 0.85rem;
-            color: var(--texto-escuro);
-            margin-top: 5px;
-        }
-
-        .secao-titulo {
-            text-align: center;
-            font-size: 1.3rem;
-            color: var(--laranja-copa);
-            text-transform: uppercase;
-            margin: 30px 0 20px 0;
-            padding: 10px;
-            background-color: rgba(255, 107, 0, 0.05);
-            border-radius: 6px;
-            border: 1px solid rgba(255, 107, 0, 0.15);
-            letter-spacing: 1px;
-        }
-
-        .container-grupos {
-            display: grid;
-            grid-template-columns: repeat(auto-fit, minmax(360px, 1fr));
-            gap: 25px;
-            max-width: 1400px;
-            margin: 0 auto;
-        }
-
-        .card-grupo {
-            background-color: var(--bg-card);
-            border-radius: 12px;
-            border: 1px solid var(--cor-borda);
-            padding: 15px;
-            box-shadow: 0 4px 15px rgba(0,0,0,0.2);
-        }
-
-        .titulo-grupo {
-            font-size: 1.1rem;
-            color: var(--laranja-copa);
-            font-weight: bold;
-            margin-bottom: 12px;
-            padding-bottom: 6px;
-            border-bottom: 2px solid var(--laranja-copa);
-            text-transform: uppercase;
-        }
-
-        .tabela-classificacao {
-            width: 100%;
-            border-collapse: collapse;
-            margin-bottom: 15px;
-            font-size: 0.82rem;
-            text-align: center;
-        }
-
-        .tabela-classificacao th {
-            color: var(--texto-escuro);
-            padding: 6px 2px;
-            font-weight: 600;
-            border-bottom: 1px solid var(--cor-borda);
-        }
-
-        .tabela-classificacao td {
-            padding: 8px 2px;
-            border-bottom: 1px solid rgba(42, 47, 59, 0.4);
-        }
-
-        .align-left {
-            text-align: left;
-            font-weight: bold;
-            color: var(--amarelo-destaque);
-            white-space: nowrap;
-            overflow: hidden;
-            text-overflow: ellipsis;
-            max-width: 110px;
-        }
-
-        .col-ponto {
-            font-weight: bold;
-            color: var(--verde-sucesso);
-        }
-
-        .bloco-jogos {
-            display: flex;
-            flex-direction: column;
-            gap: 8px;
-            border-top: 1px dashed var(--cor-borda);
-            padding-top: 12px;
-        }
-
-        .linha-confronto {
-            display: flex;
-            align-items: center;
-            background-color: rgba(30, 34, 43, 0.4);
-            padding: 8px 10px;
-            border-radius: 6px;
-            font-size: 0.82rem;
-            gap: 6px;
-        }
-
-        .info-data-hora {
-            color: var(--texto-escuro);
-            font-size: 0.75rem;
-            font-weight: 500;
-            min-width: 85px;
-            white-space: nowrap;
-        }
-
-        .time-confronto {
-            display: flex;
-            align-items: center;
-            gap: 6px;
-            flex: 1;
-            white-space: nowrap;
-            overflow: hidden;
-            text-overflow: ellipsis;
-            font-weight: 600;
-        }
-
-        .bandeirinha {
-            display: inline-block;
-            width: 18px;
-            height: 18px;
-            border-radius: 50%;
-            background-size: cover;
-            background-position: center;
-            box-shadow: 0 0 4px rgba(0,0,0,0.4);
-            flex-shrink: 0;
-        }
-
-        .time-confronto input {
-            width: 100%;
-            background: none;
-            border: none;
-            border-bottom: 1px dashed var(--texto-escuro);
-            color: white;
-            font-size: 0.85rem;
-            font-weight: bold;
-            padding: 2px 0;
-        }
-
-        .time-confronto input:focus {
-            outline: none;
-            border-bottom-color: var(--laranja-copa);
-        }
-
-        .time-confronto input:disabled {
-            border-bottom: none;
-            color: var(--amarelo-destaque);
-        }
-
-        .time-direita {
-            flex-direction: row-reverse;
-            text-align: right;
-        }
-        
-        .time-direita input {
-            text-align: right;
-        }
-
-        .area-placar {
-            display: flex;
-            align-items: center;
-            gap: 4px;
-        }
-
-        .input-placar {
-            width: 30px;
-            height: 26px;
-            background-color: var(--bg-input);
-            border: 1px solid var(--cor-borda);
-            color: white;
-            text-align: center;
-            font-weight: bold;
-            font-size: 0.9rem;
-            border-radius: 4px;
-            -moz-appearance: textfield;
-        }
-
-        .input-placar::-webkit-outer-spin-button,
-        .input-placar::-webkit-inner-spin-button {
-            -webkit-appearance: none;
-            margin: 0;
-        }
-
-        .input-placar:focus {
-            border-color: var(--laranja-copa);
-            outline: none;
-        }
-
-        .input-placar:disabled {
-            background-color: rgba(10, 12, 16, 0.6);
-            color: var(--texto-escuro);
-            border-color: transparent;
-            cursor: not-allowed;
-        }
-
-        .vs-separador {
-            color: var(--texto-escuro);
-            font-size: 0.7rem;
-        }
-
-        .btn-trava {
-            background: none;
-            border: none;
-            cursor: pointer;
-            color: var(--texto-escuro);
-            font-size: 0.95rem;
-            padding: 2px 4px;
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            transition: color 0.2s, transform 0.1s;
-        }
-
-        .btn-trava:hover {
-            color: var(--verde-sucesso);
-            transform: scale(1.1);
-        }
-
-        .btn-trava.bloqueado {
-            color: var(--trava-vermelha);
-        }
-
-        .container-matamata {
-            display: grid;
-            grid-template-columns: repeat(auto-fit, minmax(360px, 1fr));
-            gap: 20px;
-            max-width: 1400px;
-            margin: 0 auto 30px auto;
-        }
-
-        .card-fase-mata {
-            background-color: var(--bg-card);
-            border-radius: 12px;
-            border: 1px solid var(--cor-borda);
-            padding: 15px;
-            box-shadow: 0 4px 15px rgba(0,0,0,0.2);
-            display: flex;
-            flex-direction: column;
-            gap: 12px;
-        }
-
-        .container-campeao {
-            max-width: 500px;
-            margin: 0 auto 60px auto;
-            background: linear-gradient(135deg, #1e222b 0%, #161920 100%);
-            border: 2px solid var(--laranja-copa);
-            border-radius: 12px;
-            padding: 20px;
-            text-align: center;
-            box-shadow: 0 0 20px rgba(255, 107, 0, 0.2);
-        }
-
-        .titulo-campeao {
-            font-size: 1.4rem;
-            color: #ffd700;
-            font-weight: bold;
-            text-transform: uppercase;
-            letter-spacing: 2px;
-            margin-bottom: 15px;
-        }
-
-        .box-nome-campeao {
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            gap: 10px;
-            background-color: var(--bg-principal);
-            border: 1px dashed #ffd700;
-            color: #ffd700;
-            font-size: 1.3rem;
-            font-weight: bold;
-            padding: 12px;
-            border-radius: 8px;
-            text-transform: uppercase;
-        }
-    </style>
-</head>
-<body>
-
-    <header>
-        <h1>Tabela Digital - Copa do Mundo 2026</h1>
-        <p>Preencha os jogos das chaves. Insira os placares e clique no cadeado (🔓) para atualizar a tabela e definir o mata-mata!</p>
-    </header>
-
-    <div class="secao-titulo">🏆 Primeira Fase - Grupos</div>
-    <div class="container-grupos" id="wrapper-fase-grupos"></div>
-
-    <div class="secao-titulo">⚔️ Chaveamento Mata-Mata</div>
-    <div class="container-matamata" id="wrapper-mata-mata"></div>
-
-    <div class="container-campeao">
-        <div class="titulo-campeao">⭐ CAMPEÃO ⭐</div>
-        <div class="box-nome-campeao" id="nome-do-campeao">Aguardando a Final...</div>
-    </div>
-
-    <script>
-        const nomesCompletosSelecoes = {
-            "MEX": "México", "AFS": "África do Sul", "COR": "Coreia do Sul", "TCH": "Rep. Tcheca",
-            "CAN": "Canadá", "BOS": "Bósnia", "CAT": "Catar", "SUI": "Suíça",
-            "BRA": "Brasil", "MAR": "Marrocos", "HAI": "Haiti", "SCO": "Escócia",
-            "USA": "EUA", "PAR": "Paraguai", "AUS": "Austrália", "TUR": "Turquia",
-            "ALE": "Alemanha", "CUR": "Curaçao", "CDI": "C. do Marfim", "EQU": "Equador",
-            "HOL": "Holanda", "JAP": "Japão", "SUE": "Suécia", "TUN": "Tunísia",
-            "BEL": "Bélgica", "EGT": "Egito", "IRA": "Irã", "NZE": "Nova Zelândia",
-            "ESP": "Espanha", "CAB": "Cabo Verde", "SAU": "Arábia Saud.", "URU": "Uruguai",
-            "FRA": "França", "SNG": "Senegal", "IRQ": "Iraque", "NOR": "Noruega",
-            "ARG": "Argentina", "ALG": "Argélia", "AST": "Austrália", "JRD": "Jordânia",
-            "POR": "Portugal", "RDC": "RD Congo", "UZB": "Uzbequistão", "COL": "Colômbia",
-            "ING": "Inglaterra", "CRO": "Croácia", "GHA": "Gana", "PAN": "Panamá"
-        };
-
-        const estruturaCopa = {
-            "A": { times: ["MEX", "AFS", "COR", "TCH"], jogos: [{t1:"MEX", t2:"AFS", d:"11/06 16:00"}, {t1:"COR", t2:"TCH", d:"11/06 23:00"}, {t1:"TCH", t2:"AFS", d:"18/06 13:00"}, {t1:"MEX", t2:"COR", d:"18/06 22:00"}, {t1:"AFS", t2:"COR", d:"24/06 22:00"}, {t1:"TCH", t2:"MEX", d:"24/06 22:00"}] },
-            "B": { times: ["CAN", "BOS", "CAT", "SUI"], jogos: [{t1:"CAN", t2:"BOS", d:"12/06 16:00"}, {t1:"CAT", t2:"SUI", d:"13/06 16:00"}, {t1:"SUI", t2:"BOS", d:"18/06 19:00"}, {t1:"CAN", t2:"CAT", d:"18/06 19:00"}, {t1:"BOS", t2:"CAT", d:"24/06 16:00"}, {t1:"SUI", t2:"CAN", d:"24/06 16:00"}] },
-            "C": { times: ["BRA", "MAR", "HAI", "SCO"], jogos: [{t1:"BRA", t2:"MAR", d:"13/06 19:00"}, {t1:"HAI", t2:"SCO", d:"14/06 22:00"}, {t1:"SCO", t2:"MAR", d:"19/06 19:00"}, {t1:"BRA", t2:"HAI", d:"19/06 21:30"}, {t1:"SCO", t2:"BRA", d:"24/06 19:00"}, {t1:"MAR", t2:"HAI", d:"24/06 19:00"}] },
-            "D": { times: ["USA", "PAR", "AUS", "TUR"], jogos: [{t1:"USA", t2:"PAR", d:"12/06 22:00"}, {t1:"AUS", t2:"TUR", d:"14/06 01:00"}, {t1:"USA", t2:"AUS", d:"19/06 16:00"}, {t1:"TUR", t2:"PAR", d:"20/06 01:00"}, {t1:"PAR", t2:"AUS", d:"25/06 23:00"}, {t1:"TUR", t2:"USA", d:"25/06 23:00"}] },
-            "E": { times: ["ALE", "CUR", "CDI", "EQU"], jogos: [{t1:"ALE", t2:"CUR", d:"14/06 14:00"}, {t1:"CDI", t2:"EQU", d:"14/06 20:00"}, {t1:"ALE", t2:"CDI", d:"20/06 17:00"}, {t1:"EQU", t2:"CUR", d:"20/06 21:00"}, {t1:"CUR", t2:"CDI", d:"25/06 17:00"}, {t1:"EQU", t2:"ALE", d:"25/06 17:00"}] },
-            "F": { times: ["HOL", "JAP", "SUE", "TUN"], jogos: [{t1:"HOL", t2:"JAP", d:"14/06 17:00"}, {t1:"SUE", t2:"TUN", d:"14/06 23:00"}, {t1:"HOL", t2:"SUE", d:"20/06 14:00"}, {t1:"TUN", t2:"JAP", d:"21/06 01:00"}, {t1:"JAP", t2:"SUE", d:"25/06 20:00"}, {t1:"TUN", t2:"HOL", d:"25/06 20:00"}] },
-            "G": { times: ["BEL", "EGT", "IRA", "NZE"], jogos: [{t1:"BEL", t2:"EGT", d:"15/06 16:00"}, {t1:"IRA", t2:"NZE", d:"15/06 22:00"}, {t1:"BEL", t2:"IRA", d:"21/06 16:00"}, {t1:"NZE", t2:"EGT", d:"21/06 22:00"}, {t1:"NZE", t2:"BEL", d:"27/06 00:00"}, {t1:"EGT", t2:"IRA", d:"27/06 00:00"}] },
-            "H": { times: ["ESP", "CAB", "SAU", "URU"], jogos: [{t1:"ESP", t2:"CAB", d:"15/06 13:00"}, {t1:"SAU", t2:"URU", d:"15/06 19:00"}, {t1:"ESP", t2:"SAU", d:"21/06 12:00"}, {t1:"URU", t2:"CAB", d:"21/06 19:00"}, {t1:"CAB", t2:"SAU", d:"26/06 21:30"}, {t1:"URU", t2:"ESP", d:"26/06 21:30"}] },
-            "I": { times: ["FRA", "SNG", "IRQ", "NOR"], jogos: [{t1:"FRA", t2:"SNG", d:"16/06 16:00"}, {t1:"IRQ", t2:"NOR", d:"16/06 19:30"}, {t1:"FRA", t2:"IRQ", d:"22/06 18:00"}, {t1:"NOR", t2:"SNG", d:"22/06 21:00"}, {t1:"NOR", t2:"FRA", d:"26/06 16:30"}, {t1:"SNG", t2:"IRQ", d:"26/06 16:30"}] },
-            "J": { times: ["ARG", "ALG", "AST", "JRD"], jogos: [{t1:"ARG", t2:"ALG", d:"16/06 22:00"}, {t1:"AST", t2:"JRD", d:"17/06 01:00"}, {t1:"ARG", t2:"AST", d:"22/06 14:00"}, {t1:"JRD", t2:"ALG", d:"23/06 14:00"}, {t1:"ALG", t2:"AST", d:"27/06 23:00"}, {t1:"JRD", t2:"ARG", d:"27/06 23:00"}] },
-            "K": { times: ["POR", "RDC", "UZB", "COL"], jogos: [{t1:"POR", t2:"RDC", d:"17/06 14:00"}, {t1:"UZB", t2:"COL", d:"17/06 22:00"}, {t1:"POR", t2:"UZB", d:"23/06 14:00"}, {t1:"COL", t2:"RDC", d:"23/06 14:00"}, {t1:"RDC", t2:"UZB", d:"27/06 20:30"}, {t1:"COL", t2:"POR", d:"27/06 20:30"}] },
-            "L": { times: ["ING", "CRO", "GHA", "PAN"], jogos: [{t1:"ING", t2:"CRO", d:"17/06 17:00"}, {t1:"GHA", t2:"PAN", d:"17/06 20:00"}, {t1:"ING", t2:"GHA", d:"23/06 17:00"}, {t1:"PAN", t2:"CRO", d:"23/06 20:00"}, {t1:"CRO", t2:"GHA", d:"27/06 17:00"}, {t1:"PAN", t2:"ING", d:"27/06 17:00"}] }
-        };
-
-        const mapaAutoMata = {
-            "p73": { t1: "2º A", t2: "2º B" }, "p74": { t1: "1º E", t2: "3º A-B-C-D" },
-            "p75": { t1: "1º F", t2: "2º C" }, "p76": { t1: "1º C", t2: "2º F" },
-            "p77": { t1: "1º I", t2: "3º C-D-E-F-G-H" }, "p78": { t1: "2º E", t2: "2º I" },
-            "p79": { t1: "1º A", t2: "3º C-E-F-H" }, "p80": { t1: "1º L", t2: "3º E-H-I-J-K" },
-            "p81": { t1: "1º D", t2: "3º B-E-F-I-J" }, "p82": { t1: "1º G", t2: "3º A-E-H-I-J" },
-            "p83": { t1: "2º K", t2: "2º L" }, "p84": { t1: "1º H", t2: "2º J" },
-            "p85": { t1: "1º B", t2: "3º E-F-G-H-I-J" }, "p86": { t1: "1º J", t2: "2º H" },
-            "p87": { t1: "1º K", t2: "3º D-E-I-J-L" }, "p88": { t1: "2º D", t2: "2º G" }
-        };
-
-        const structureMataMata = {
-            "Segundas de Final": [
-                {id:"p73", d:"Dom 28/06 16:00"}, {id:"p74", d:"Seg 29/06 17:30"}, {id:"p75", d:"Seg 29/06 22:00"}, {id:"p76", d:"Seg 29/06 14:00"},
-                {id:"p77", d:"Ter 30/06 18:00"}, {id:"p78", d:"Ter 30/06 14:00"}, {id:"p79", d:"Ter 30/06 22:00"}, {id:"p80", d:"Qua 01/07 13:00"},
-                {id:"p81", d:"Qua 01/07 21:00"}, {id:"p82", d:"Qua 01/07 17:00"}, {id:"p83", d:"Qui 02/07 20:00"}, {id:"p84", d:"Qui 02/07 16:00"},
-                {id:"p85", d:"Sex 03/07 00:00"}, {id:"p86", d:"Sex 03/07 19:00"}, {id:"p87", d:"Sex 03/07 22:30"}, {id:"p88", d:"Sex 03/07 15:00"}
-            ],
-            "Oitavas de Final": [
-                {id:"p89", d:"Sáb 04/07 18:00", orig: ["p74", "p77"]},
-                {id:"p90", d:"Sáb 04/07 14:00", orig: ["p73", "p75"]},
-                {id:"p91", d:"Dom 05/07 17:00", orig: ["p76", "p78"]},
-                {id:"p92", d:"Dom 05/07 21:00", orig: ["p79", "p80"]},
-                {id:"p93", d:"Seg 06/07 16:00", orig: ["p83", "p84"]},
-                {id:"p94", d:"Seg 06/07 21:00", orig: ["p81", "p82"]},
-                {id:"p95", d:"Ter 07/07 13:00", orig: ["p86", "p88"]},
-                {id:"p96", d:"Ter 07/07 17:00", orig: ["p85", "p87"]}
-            ],
-            "Quartas de Final": [
-                {id:"p97", d:"Qui 09/07 17:00", orig: ["p89", "p90"]},
-                {id:"p98", d:"Sex 10/07 16:00", orig: ["p93", "p94"]},
-                {id:"p99", d:"Sáb 11/07 18:00", orig: ["p91", "p92"]},
-                {id:"p100", d:"Sáb 11/07 22:00", orig: ["p95", "p96"]}
-            ],
-            "Semifinal": [
-                {id:"p101", d:"Ter 14/07 16:00 / Dallas", orig: ["p97", "p98"]},
-                {id:"p102", d:"Qua 15/07 16:00 / Atlanta", orig: ["p99", "p100"]}
-            ],
-            "Decisão do 3º Lugar": [
-                {id:"p103", d:"Sáb 18/07 18:00 / Miami", orig: ["p101", "p102"], tipo: "perdedores"}
-            ],
-            "Grande Final": [
-                {id:"p104", d:"Dom 19/07 16:00 / N. York", orig: ["p101", "p102"], tipo: "vencedores"}
-            ]
-        };
-
-        let databaseGrupos = {};
-        let databaseMataMata = {};
-        let classificadosGruposGlobal = {}; 
-
-        function carregarDados() {
-            try {
-                const memoriaGrupos = localStorage.getItem('copa_2026_grupos');
-                const memoriaMata = localStorage.getItem('copa_2026_matamata');
-                if (memoriaGrupos) databaseGrupos = JSON.parse(memoriaGrupos);
-                if (memoriaMata) databaseMataMata = JSON.parse(memoriaMata);
-            } catch (e) { console.error(e); }
-        }
-
-        function salvarDados() {
-            try {
-                localStorage.setItem('copa_2026_grupos', JSON.stringify(databaseGrupos));
-                localStorage.setItem('copa_2026_matamata', JSON.stringify(databaseMataMata));
-            } catch (e) { console.error(e); }
-        }
-
-        function obterNomeCompleto(sigla) {
-            if (!sigla) return "";
-            return nomesCompletosSelecoes[sigla.toUpperCase()] || sigla;
-        }
-
-        function pegarClasseBandeira(sigla) {
-            if (!sigla || sigla.includes("º") || sigla.includes("-")) return "";
-            let cod = sigla.toLowerCase().trim();
-            if (cod === "ale") return "fi fi-de";
-            if (cod === "hol") return "fi fi-nl";
-            if (cod === "ing") return "fi fi-gb-eng";
-            if (cod === "sco") return "fi fi-gb-sct";
-            if (cod === "afs") return "fi fi-za";
-            if (cod === "cor") return "fi fi-kr";
-            if (cod === "tch") return "fi fi-cz";
-            if (cod === "bos") return "fi fi-ba";
-            if (cod === "cat") return "fi fi-qa";
-            if (cod === "sui") return "fi fi-ch";
-            if (cod === "mar") return "fi fi-ma";
-            if (cod === "hai") return "fi fi-ht";
-            if (cod === "usa") return "fi fi-us";
-            if (cod === "par") return "fi fi-py";
-            if (cod === "aus") return "fi fi-au";
-            if (cod === "tur") return "fi fi-tr";
-            if (cod === "cur") return "fi fi-cw";
-            if (cod === "cdi") return "fi fi-ci";
-            if (cod === "equ") return "fi fi-ec";
-            if (cod === "jap") return "fi fi-jp";
-            if (cod === "sue") return "fi fi-se";
-            if (cod === "tun") return "fi fi-tn";
-            if (cod === "bel") return "fi fi-be";
-            if (cod === "egt") return "fi fi-eg";
-            if (cod === "ira") return "fi fi-ir";
-            if (cod === "nze") return "fi fi-nz";
-            if (cod === "esp") return "fi fi-es";
-            if (cod === "cab") return "fi fi-cv";
-            if (cod === "sau") return "fi fi-sa";
-            if (cod === "uru") return "fi fi-uy";
-            if (cod === "fra") return "fi fi-fr";
-            if (cod === "sng") return "fi fi-sn";
-            if (cod === "irq") return "fi fi-iq";
-            if (cod === "nor") return "fi fi-no";
-            if (cod === "arg") return "fi fi-ar";
-            if (cod === "alg") return "fi fi-dz";
-            if (cod === "ast") return "fi fi-au";
-            if (cod === "jrd") return "fi fi-jo";
-            if (cod === "por") return "fi fi-pt";
-            if (cod === "rdc") return "fi fi-cd";
-            if (cod === "uzb") return "fi fi-uz";
-            if (cod === "col") return "fi fi-co";
-            if (cod === "cro") return "fi fi-hr";
-            if (cod === "gha") return "fi fi-gh";
-            if (cod === "pan") return "fi fi-pa";
-            return "fi fi-" + cod.substring(0, 2);
-        }
-
-        function encontrarSiglaPorNome(nome) {
-            if (!nome) return "";
-            for (let [sigla, nCompleto] of Object.entries(nomesCompletosSelecoes)) {
-                if (nCompleto.toLowerCase() === nome.toLowerCase() || sigla.toLowerCase() === nome.toLowerCase()) {
-                    return sigla;
-                }
-            }
-            return "";
-        }
-
-        function toggleTravaGrupo(grupoId, jogoIdx) {
-            const chave = `${grupoId}_${jogoIdx}`;
-            if (!databaseGrupos[chave]) databaseGrupos[chave] = { p1: "", p2: "", travado: false };
-            const jogo = databaseGrupos[chave];
-
-            if (jogo.travado) {
-                jogo.travado = false;
-                salvarDados();
-                atualizarInputsGrupoInterface(grupoId, jogoIdx, false);
-                processarGrupo(grupoId);
-                calcularPassagemAutomaticaFaseGrupos();
-                return;
-            }
-
-            if (jogo.p1 === "" || jogo.p2 === "" || jogo.p1 === null || jogo.p2 === null) {
-                alert("Insira o placar completo antes de fechar o cadeado.");
-                return;
-            }
-
-            jogo.travado = true;
-            salvarDados();
-            atualizarInputsGrupoInterface(grupoId, jogoIdx, true);
-            processarGrupo(grupoId);
-            calcularPassagemAutomaticaFaseGrupos();
-        }
-
-        function atualizarInputsGrupoInterface(grupoId, jogoIdx, travado) {
-            const inp1 = document.getElementById(`input-${grupoId}-${jogoIdx}-1`);
-            const inp2 = document.getElementById(`input-${grupoId}-${jogoIdx}-2`);
-            const btn = document.getElementById(`btn-${grupoId}-${jogoIdx}`);
-            if (inp1) inp1.disabled = travado;
-            if (inp2) inp2.disabled = travado;
-            if (btn) {
-                btn.className = `btn-trava ${travado ? 'bloqueado' : ''}`;
-                btn.innerHTML = travado ? "🔒" : "🔓";
-            }
-        }
-
-        function alterarPlacarGrupo(grupoId, jogoIdx, campo, valor) {
-            const chave = `${grupoId}_${jogoIdx}`;
-            if (!databaseGrupos[chave]) databaseGrupos[chave] = { p1: "", p2: "", travado: false };
-            if (databaseGrupos[chave].travado) return;
-
-            databaseGrupos[chave][campo] = valor !== "" ? parseInt(valor) : "";
-            salvarDados();
-            processarGrupo(grupoId);
-        }
-
-        function processarGrupo(grupoId) {
-            const dadosGrupo = estruturaCopa[grupoId];
-            let stats = {};
-
-            dadosGrupo.times.forEach(t => {
-                stats[t] = { pts: 0, v: 0, e: 0, d: 0, gp: 0, gc: 0, sg: 0 };
-            });
-
-            dadosGrupo.jogos.forEach((j, idx) => {
-                const chave = `${grupoId}_${idx}`;
-                const jogo = databaseGrupos[chave];
-
-                if (jogo && jogo.travado && PatternPlacar(jogo.p1) !== "" && PatternPlacar(jogo.p2) !== "") {
-                    const g1 = PatternPlacar(jogo.p1); const g2 = PatternPlacar(jogo.p2);
-                    stats[j.t1].gp += g1; stats[j.t1].gc += g2;
-                    stats[j.t2].gp += g2; stats[j.t2].gc += g1;
-
-                    if (g1 > g2) {
-                        stats[j.t1].pts += 3; stats[j.t1].v += 1; stats[j.t2].d += 1;
-                    } else if (g1 < g2) {
-                        stats[j.t2].pts += 3; stats[j.t2].v += 1; stats[j.t1].d += 1;
-                    } else {
-                        stats[j.t1].pts += 1; stats[j.t1].e += 1;
-                        stats[j.t2].pts += 1; stats[j.t2].e += 1;
-                    }
-                }
-            });
-
-            dadosGrupo.times.forEach(t => stats[t].sg = stats[t].gp - stats[t].gc);
-
-            let ranking = [...dadosGrupo.times];
-            ranking.sort((a, b) => {
-                if (stats[b].pts !== stats[a].pts) return stats[b].pts - stats[a].pts;
-                if (stats[b].sg !== stats[a].sg) return stats[b].sg - stats[a].sg;
-                return stats[b].gp - stats[a].gp;
-            });
-
-            classificadosGruposGlobal[grupoId] = { primeiro: ranking[0], segundo: ranking[1] };
-
-            const tbody = document.getElementById(`tbody-${grupoId}`);
-            if (!tbody) return;
-            tbody.innerHTML = "";
-
-            ranking.forEach((time, pos) => {
-                const s = stats[time];
-                const tr = document.createElement('tr');
-                const nomeExibicao = obterNomeCompleto(time);
-
-                tr.innerHTML = `
-                    <td>${pos + 1}º</td>
-                    <td class="align-left" title="${nomeExibicao}">${nomeExibicao}</td>
-                    <td class="col-ponto">${s.pts}</td>
-                    <td>${s.v}</td>
-                    <td>${s.e}</td>
-                    <td>${s.gp}</td>
-                    <td>${s.sg}</td>
-                `;
-                tbody.appendChild(tr);
-            });
-        }
-
-        function PatternPlacar(v) { return v === "" || isNaN(v) ? 0 : parseInt(v); }
-
-        function calcularPassagemAutomaticaFaseGrupos() {
-            Object.keys(mapaAutoMata).forEach(idJogo => {
-                const regra = mapaAutoMata[idJogo];
-                if (!databaseMataMata[idJogo]) databaseMataMata[idJogo] = { t1: "", t2: "", p1: "", p2: "", travado: false };
-                
-                if (!databaseMataMata[idJogo].travado) {
-                    if (regra.t1.includes("1º") || regra.t1.includes("2º")) {
-                        const g = regra.t1.split(" ")[1];
-                        const pos = regra.t1.split(" ")[0];
-                        let grupoPronto = true;
-                        for(let i=0; i<6; i++) {
-                            if(!databaseGrupos[`${g}_${i}`]?.travado) { grupoPronto = false; break; }
-                        }
-                        if (grupoPronto && classificadosGruposGlobal[g]) {
-                            const siglaTime = pos === "1º" ? classificadosGruposGlobal[g].primeiro : classificadosGruposGlobal[g].segundo;
-                            databaseMataMata[idJogo].t1 = obterNomeCompleto(siglaTime);
-                            const bandEl = document.getElementById(`band-m-t1-${idJogo}`);
-                            if (bandEl) bandEl.className = `bandeirinha ${pegarClasseBandeira(siglaTime)}`;
-                        } else { 
-                            databaseMataMata[idJogo].t1 = ""; 
-                            const bandEl = document.getElementById(`band-m-t1-${idJogo}`);
-                            if (bandEl) bandEl.className = "bandeirinha";
-                        }
-                        const el = document.getElementById(`m-t1-${idJogo}`); if(el) el.value = databaseMataMata[idJogo].t1;
-                    }
-                    
-                    if (regra.t2.includes("1º") || regra.t2.includes("2º")) {
-                        const g = regra.t2.split(" ")[1];
-                        const pos = regra.t2.split(" ")[0];
-                        let grupoPronto = true;
-                        for(let i=0; i<6; i++) {
-                            if(!databaseGrupos[`${g}_${i}`]?.travado) { grupoPronto = false; break; }
-                        }
-                        if (grupoPronto && classificadosGruposGlobal[g]) {
-                            const siglaTime = pos === "1º" ? classificadosGruposGlobal[g].primeiro : classificadosGruposGlobal[g].segundo;
-                            databaseMataMata[idJogo].t2 = obterNomeCompleto(siglaTime);
-                            const bandEl = document.getElementById(`band-m-t2-${idJogo}`);
-                            if (bandEl) bandEl.className = `bandeirinha ${pegarClasseBandeira(siglaTime)}`;
-                        } else { 
-                            databaseMataMata[idJogo].t2 = ""; 
-                            const bandEl = document.getElementById(`band-m-t2-${idJogo}`);
-                            if (bandEl) bandEl.className = "bandeirinha";
-                        }
-                        const el = document.getElementById(`m-t2-${idJogo}`); if(el) el.value = databaseMataMata[idJogo].t2;
-                    }
-                }
-            });
-            salvarDados();
-        }
-
-        function alterarTextoMata(jogoId, campo, valor) {
-            if (!databaseMataMata[jogoId]) databaseMataMata[jogoId] = { t1:"", t2:"", p1:"", p2:"", travado: false };
-            if (databaseMataMata[jogoId].travado) return;
-            databaseMataMata[jogoId][campo] = valor;
-
-            const sFnd = encontrarSiglaPorNome(valor);
-            const sufixoTime = campo === "t1" ? "t1" : "t2";
-            const bandEl = document.getElementById(`band-m-${sufixoTime}-${jogoId}`);
-            if (bandEl) bandEl.className = sFnd ? `bandeirinha ${pegarClasseBandeira(sFnd)}` : "bandeirinha";
-
-            salvarDados();
-        }
-
-        function alterarPlacarMata(jogoId, campo, valor) {
-            if (!databaseMataMata[jogoId]) databaseMataMata[jogoId] = { t1:"", t2:"", p1:"", p2:"", travado: false };
-            if (databaseMataMata[jogoId].travado) return;
-            databaseMataMata[jogoId][campo] = valor !== "" ? parseInt(valor) : "";
-            salvarDados();
-        }
-
-        function toggleTravaMata(jogoId) {
-            if (!databaseMataMata[jogoId]) databaseMataMata[jogoId] = { t1:"", t2:"", p1:"", p2:"", travado: false };
-            const jogo = databaseMataMata[jogoId];
-
-            if (jogo.travado) {
-                jogo.travado = false;
-                salvarDados();
-                atualizarInputsMataInterface(jogoId, false);
-                if (jogoId === "p104") atualizarPainelCampeao("");
-                return;
-            }
-
-            if (jogo.t1 === "" || jogo.t2 === "" || jogo.p1 === "" || jogo.p2 === "") {
-                alert("Preencha as equipes e os placares do mata-mata antes de travar.");
-                return;
-            }
-
-            jogo.travado = true;
-            salvarDados();
-            atualizarInputsMataInterface(jogoId, true);
-            calcularVencedorMataEAvancar(jogoId);
-        }
-
-        function atualizarInputsMataInterface(jogoId, travado) {
-            const inTime1 = document.getElementById(`m-t1-${jogoId}`);
-            const inTime2 = document.getElementById(`m-t2-${jogoId}`);
-            const inPlac1 = document.getElementById(`m-p1-${jogoId}`);
-            const inPlac2 = document.getElementById(`m-p2-${jogoId}`);
-            const btn = document.getElementById(`btn-m-${jogoId}`);
-
-            if(inTime1) inTime1.disabled = travado; 
-            if(inTime2) inTime2.disabled = travado;
-            if(inPlac1) inPlac1.disabled = travado; 
-            if(inPlac2) inPlac2.disabled = travado;
-            if(btn) {
-                btn.className = `btn-trava ${travado ? 'bloqueado' : ''}`;
-                btn.innerHTML = travado ? "🔒" : "🔓";
-            }
-        }
-
-        function calcularVencedorMataEAvancar(jogoId) {
-            const jogo = databaseMataMata[jogoId];
-            if (!jogo || !jogo.travado) return;
-
-            let vencedor = "";
-            let perdedor = "";
-
-            if (jogo.p1 > jogo.p2) {
-                vencedor = jogo.t1; perdedor = jogo.t2;
-            } else if (jogo.p2 > jogo.p1) {
-                vencedor = jogo.t2; perdedor = jogo.t1;
-            } else {
-                let escolha = prompt(`Empate!\nDigite 1 para: ${jogo.t1}\nDigite 2 para: ${jogo.t2}`);
-                if(escolha === "2") { vencedor = jogo.t2; perdedor = jogo.t1; } 
-                else { vencedor = jogo.t1; perdedor = jogo.t2; }
-            }
-
-            if (jogoId === "p104") {
-                atualizarPainelCampeao(vencedor);
-                return;
-            }
-
-            Object.keys(structureMataMata).forEach(fase => {
-                structureMataMata[fase].forEach(confronto => {
-                    if (confronto.orig) {
-                        const targetTipo = confronto.tipo || "vencedores";
-
-                        if (confronto.orig[0] === jogoId) {
-                            if (!databaseMataMata[confronto.id]) databaseMataMata[confronto.id] = { t1:"", t2:"", p1:"", p2:"", travado:false };
-                            if (!databaseMataMata[confronto.id].travado) {
-                                const herdeiro = (targetTipo === "perdedores") ? perdedor : vencedor;
-                                databaseMataMata[confronto.id].t1 = herdeiro;
-                                const el = document.getElementById(`m-t1-${confronto.id}`); if(el) el.value = herdeiro;
-                                
-                                const sH = encontrarSiglaPorNome(herdeiro);
-                                const bandEl = document.getElementById(`band-m-t1-${confronto.id}`);
-                                if(bandEl) bandEl.className = sH ? `bandeirinha ${pegarClasseBandeira(sH)}` : "bandeirinha";
-                            }
-                        } else if (confronto.orig[1] === jogoId) {
-                            if (!databaseMataMata[confronto.id]) databaseMataMata[confronto.id] = { t1:"", t2:"", p1:"", p2:"", travado:false };
-                            if (!databaseMataMata[confronto.id].travado) {
-                                const herdeiro = (targetTipo === "perdedores") ? perdedor : vencedor;
-                                databaseMataMata[confronto.id].t2 = herdeiro;
-                                const el = document.getElementById(`m-t2-${confronto.id}`); if(el) el.value = herdeiro;
-                                
-                                const sH = encontrarSiglaPorNome(herdeiro);
-                                const bandEl = document.getElementById(`band-m-t2-${confronto.id}`);
-                                if(bandEl) bandEl.className = sH ? `bandeirinha ${pegarClasseBandeira(sH)}` : "bandeirinha";
-                            }
-                        }
-                    }
-                });
-            });
-            salvarDados();
-        }
-
-        function atualizarPainelCampeao(nome) {
-            const el = document.getElementById("nome-do-campeao");
-            if(!el) return;
-            
-            if(nome) {
-                const sC = encontrarSiglaPorNome(nome);
-                const bClass = pegarClasseBandeira(sC);
-                el.innerHTML = `<span class="bandeirinha ${bClass}"></span> 🏆 ${nome} 🏆 <span class="bandeirinha ${bClass}"></span>`;
-            } else {
-                el.innerText = "Aguardando a Final...";
-            }
-        }
-
-        function renderizarGrupos() {
-            const wrapper = document.getElementById('wrapper-fase-grupos');
-            if(!wrapper) return;
-            wrapper.innerHTML = "";
-
-            Object.keys(estruturaCopa).forEach(grupoId => {
-                const dadosGrupo = estruturaCopa[grupoId];
-                const card = document.createElement('div');
-                card.className = 'card-grupo';
-                
-                let blocoJogosHtml = '';
-                dadosGrupo.jogos.forEach((j, idx) => {
-                    const chave = `${grupoId}_${idx}`;
-                    const val1 = databaseGrupos[chave]?.p1 ?? "";
-                    const val2 = databaseGrupos[chave]?.p2 ?? "";
-                    const travado = databaseGrupos[chave]?.travado ?? false;
-
-                    blocoJogosHtml += `
-                        <div class="linha-confronto">
-                            <span class="info-data-hora">${j.d}</span>
-                            <span class="time-confronto" title="${obterNomeCompleto(j.t1)}">
-                                <span class="bandeirinha ${pegarClasseBandeira(j.t1)}"></span>
-                                ${j.t1.toUpperCase()}
-                            </span>
-                            <div class="area-placar">
-                                <input type="number" id="input-${grupoId}-${idx}-1" class="input-placar" value="${val1}" ${travado ? 'disabled' : ''} oninput="alterarPlacarGrupo('${grupoId}', ${idx}, 'p1', this.value)">
-                                <span class="vs-separador">x</span>
-                                <input type="number" id="input-${grupoId}-${idx}-2" class="input-placar" value="${val2}" ${travado ? 'disabled' : ''} oninput="alterarPlacarGrupo('${grupoId}', ${idx}, 'p2', this.value)">
-                            </div>
-                            <span class="time-confronto time-direita" title="${obterNomeCompleto(j.t2)}">
-                                <span class="bandeirinha ${pegarClasseBandeira(j.t2)}"></span>
-                                ${j.t2.toUpperCase()}
-                            </span>
-                            <button id="btn-${grupoId}-${idx}" class="btn-trava ${travado ? 'bloqueado' : ''}" onclick="toggleTravaGrupo('${grupoId}', ${idx})">
-                                ${travado ? '🔒' : '🔓'}
-                            </button>
-                        </div>
-                    `;
-                });
-
-                card.innerHTML = `
-                    <div class="titulo-grupo">Grupo ${grupoId}</div>
-                    <table class="tabela-classificacao">
-                        <thead>
-                            <tr>
-                                <th>Pos</th>
-                                <th style="text-align:left">Seleção</th>
-                                <th>P</th>
-                                <th>V</th>
-                                <th>E</th>
-                                <th>GP</th>
-                                <th>SG</th>
-                            </tr>
-                        </thead>
-                        <tbody id="tbody-${grupoId}"></tbody>
-                    </table>
-                    <div class="bloco-jogos">${blocoJogosHtml}</div>
-                `;
-                wrapper.appendChild(card);
-                processarGrupo(grupoId);
-            });
-        }
-
-        function renderizarMataMata() {
-            const wrapper = document.getElementById('wrapper-mata-mata');
-            if(!wrapper) return;
-            wrapper.innerHTML = "";
-
-            Object.keys(structureMataMata).forEach(faseNome => {
-                const cardFase = document.createElement('div');
-                cardFase.className = 'card-fase-mata';
-                
-                let htmlTituloFase = `<div class="titulo-grupo">${faseNome}</div>`;
-                let htmlConfrontos = '';
-
-                structureMataMata[faseNome].forEach(c => {
-                    const dadosSalvos = databaseMataMata[c.id] || { t1:"", t2:"", p1:"", p2:"", travado:false };
-                    const travado = dadosSalvos.travado;
-
-                    const s1 = encontrarSiglaPorNome(dadosSalvos.t1);
-                    const s2 = encontrarSiglaPorNome(dadosSalvos.t2);
-
-                    htmlConfrontos += `
-                        <div class="linha-confronto">
-                            <span class="info-data-hora">${c.d}</span>
-                            <span class="time-confronto">
-                                <span id="band-m-t1-${c.id}" class="bandeirinha ${pegarClasseBandeira(s1)}"></span>
-                                <input type="text" id="m-t1-${c.id}" value="${dadosSalvos.t1}" placeholder="Equipe A" ${travado ? 'disabled' : ''} onchange="alterarTextoMata('${c.id}', 't1', this.value)">
-                            </span>
-                            <div class="area-placar">
-                                <input type="number" id="m-p1-${c.id}" class="input-placar" value="${dadosSalvos.p1 ?? ""}" ${travado ? 'disabled' : ''} oninput="alterarPlacarMata('${c.id}', 'p1', this.value)">
-                                <span class="vs-separador">x</span>
-                                <input type="number" id="m-p2-${c.id}" class="input-placar" value="${dadosSalvos.p2 ?? ""}" ${travado ? 'disabled' : ''} oninput="alterarPlacarMata('${c.id}', 'p2', this.value)">
-                            </div>
-                            <span class="time-confronto time-direita">
-                                <span id="band-m-t2-${c.id}" class="bandeirinha ${pegarClasseBandeira(s2)}"></span>
-                                <input type="text" id="m-t2-${c.id}" value="${dadosSalvos.t2}" placeholder="Equipe B" ${travado ? 'disabled' : ''} onchange="alterarTextoMata('${c.id}', 't2', this.value)">
-                            </span>
-                            <button id="btn-m-${c.id}" class="btn-trava ${travado ? 'bloqueado' : ''}" onclick="toggleTravaMata('${c.id}')">
-                                ${travado ? '🔒' : '🔓'}
-                            </button>
-                        </div>
-                    `;
-                });
-
-                cardFase.innerHTML = htmlTituloFase + htmlConfrontos;
-                wrapper.appendChild(cardFase);
-
-                structureMataMata[faseNome].forEach(c => {
-                    const dadosSalvos = databaseMataMata[c.id];
-                    if (dadosSalvos && dadosSalvos.travado) {
-                        atualizarInputsMataInterface(c.id, true);
-                        if (c.id === "p104") atualizarPainelCampeao(dadosSalvos.p1 > dadosSalvos.p2 ? dadosSalvos.t1 : dadosSalvos.t2);
-                    }
-                });
-            });
-        }
-
-        // INICIALIZAÇÃO DO APP
-        carregarDados();
-        renderizarGrupos();
-        calcularPassagemAutomaticaFaseGrupos();
-        renderizarMataMata();
-    </script>
-</body>
-</html>
+import 'package:flutter/material.dart';
+
+void main() {
+  runApp(const MyApp());
+}
+
+class MyApp extends StatelessWidget {
+  const MyApp({super.key});
+
+  @override
+  Widget build(BuildContext context) {
+    return MaterialApp(
+      debugShowCheckedModeBanner: false,
+      theme: ThemeData.dark().copyWith(
+        scaffoldBackgroundColor: const Color(0xFF0D0D0D),
+      ),
+      home: const HomeScreen(),
+    );
+  }
+}
+
+class HomeScreen extends StatelessWidget {
+  const HomeScreen({super.key});
+
+  @override
+  Widget build(BuildContext context) {
+    return Scaffold(
+      body: SafeArea(
+        child: Stack(
+          children: [
+            // Cabeçalho com Ícones
+            Positioned(
+              top: 16,
+              right: 20,
+              child: Row(
+                children: [
+                  IconButton(
+                    icon: const Icon(Icons.settings, color: Colors.white70, size: 28),
+                    onPressed: () {
+                      // Exibir diálogo com Código do Aparelho / Configurações
+                    },
+                  ),
+                  const SizedBox(width: 10),
+                  IconButton(
+                    icon: const Icon(Icons.close, color: Colors.white70, size: 28),
+                    onPressed: () {
+                      // Ação de fechar
+                    },
+                  ),
+                ],
+              ),
+            ),
+
+            // Conteúdo Central
+            Center(
+              child: Column(
+                mainAxisAlignment: MainAxisAlignment.center,
+                children: [
+                  const Text(
+                    'TV Player',
+                    style: TextStyle(
+                      color: Colors.white,
+                      fontSize: 32,
+                      fontWeight: FontWeight.bold,
+                      letterSpacing: 2.0,
+                    ),
+                  ),
+                  const SizedBox(height: 40),
+
+                  // Linha com os 3 Quadrados
+                  Row(
+                    mainAxisAlignment: MainAxisAlignment.center,
+                    children: [
+                      _buildMenuCard(
+                        icon: Icons.tv,
+                        label: 'CANAIS',
+                        onTap: () {
+                          // Navegar para lista de Canais ao vivo
+                        },
+                      ),
+                      const SizedBox(width: 24),
+                      _buildMenuCard(
+                        icon: Icons.movie_outlined,
+                        label: 'FILMES',
+                        onTap: () {
+                          // Navegar para galeria de Filmes
+                        },
+                      ),
+                      const SizedBox(width: 24),
+                      _buildMenuCard(
+                        icon: Icons.video_collection_outlined,
+                        label: 'SÉRIES',
+                        onTap: () {
+                          // Navegar para catálogo de Séries
+                        },
+                      ),
+                    ],
+                  ),
+                ],
+              ),
+            ),
+          ],
+        ),
+      ),
+    );
+  }
+
+  Widget _buildMenuCard({
+    required IconData icon,
+    required String label,
+    required VoidCallback onTap,
+  }) {
+    return InkWell(
+      onTap: onTap,
+      borderRadius: BorderRadius.circular(20),
+      child: Container(
+        width: 160,
+        height: 170,
+        decoration: BoxDecoration(
+          color: const Color(0xFF181818),
+          borderRadius: BorderRadius.circular(20),
+          border: Border.all(color: Colors.white12, width: 1.5),
+          boxShadow: [
+            BoxShadow(
+              color: Colors.black.withOpacity(0.4),
+              blurRadius: 10,
+              offset: const Offset(0, 4),
+            ),
+          ],
+        ),
+        child: Column(
+          mainAxisAlignment: MainAxisAlignment.center,
+          children: [
+            Icon(icon, size: 54, color: Colors.white),
+            const SizedBox(height: 16),
+            Text(
+              label,
+              style: const TextStyle(
+                color: Colors.white70,
+                fontSize: 14,
+                fontWeight: FontWeight.bold,
+                letterSpacing: 1.5,
+              ),
+            ),
+            const SizedBox(height: 6),
+            Container(
+              width: 24,
+              height: 2,
+              color: Colors.white24,
+            ),
+          ],
+        ),
+      ),
+    );
+  }
+}
