@@ -309,6 +309,7 @@
 
     let playlistData = [];
     let currentScreen = 'main';
+    let hlsInstance = null;
 
     document.addEventListener('click', function enableFullscreen() {
       const elem = document.documentElement;
@@ -349,49 +350,36 @@
       });
     }
 
-    // Baixar o arquivo M3U diretamente (IP de uso residencial) ou via proxy se falhar
+    // Baixa o M3U de forma segura via Worker para evitar erro de Mixed Content
     async function fetchAndParseM3u(url) {
-      let rawContent = '';
-
-      // Tentativa 1: Busca Direta do Navegador
       try {
-        console.log("Tentando baixar a lista diretamente no navegador...");
-        const response = await fetch(url, { mode: 'cors' });
-        if (response.ok) {
-          rawContent = await response.text();
+        console.log("Solicitando processamento via Cloudflare Worker...");
+        const workerUrl = 'https://proxy-tv.djmauriciobarcellos.workers.dev/?url=' + encodeURIComponent(url);
+        
+        const response = await fetch(workerUrl);
+        if (!response.ok) {
+          throw new Error("Erro na comunicação com o Worker. Status: " + response.status);
+        }
+
+        const rawContent = await response.text();
+        console.log("Tamanho do M3U recebido (caracteres):", rawContent.length);
+
+        if (rawContent && rawContent.length > 50) {
+          playlistData = parseM3U(rawContent);
+          console.log("Lista processada! Total de itens:", playlistData.length);
+
+          if (playlistData.length > 0 && currentScreen === 'content') {
+            openCategory('channels');
+          }
+        } else {
+          console.error("Conteúdo M3U retornado está vazio ou inválido.");
         }
       } catch (e) {
-        console.warn("Busca direta bloqueada por CORS ou rede. Tentando via Worker...");
-      }
-
-      // Tentativa 2: Via Cloudflare Worker se a direta falhar
-      if (!rawContent) {
-        try {
-          const workerUrl = 'https://proxy-tv.djmauriciobarcellos.workers.dev/?url=' + encodeURIComponent(url);
-          const response = await fetch(workerUrl);
-          if (response.ok) {
-            rawContent = await response.text();
-          }
-        } catch (e) {
-          console.error("Erro na busca via Worker:", e);
-        }
-      }
-
-      // Processa o conteúdo retornado
-      if (rawContent && rawContent.length > 0) {
-        console.log("Tamanho do M3U recebido (caracteres):", rawContent.length);
-        playlistData = parseM3U(rawContent);
-        console.log("Lista processada! Total de itens:", playlistData.length);
-
-        if (playlistData.length > 0 && currentScreen === 'content') {
-          openCategory('channels');
-        }
-      } else {
-        console.error("Erro ao carregar a lista M3U de todas as fontes.");
+        console.error("Erro ao carregar a lista:", e);
       }
     }
 
-    // Processador otimizado de estrutura M3U / M3U_PLUS
+    // Processador de estrutura M3U
     function parseM3U(m3uText) {
       if (!m3uText) return [];
 
@@ -464,6 +452,7 @@
 
       if (groups.length === 0) {
         sidebar.innerHTML = '<div class="category-item">Aguardando lista...</div>';
+        document.getElementById('itemGrid').innerHTML = '';
         return;
       }
 
@@ -502,12 +491,25 @@
       const video = document.getElementById('videoPlayer');
       overlay.style.display = 'block';
 
-      if (Hls.isSupported() && (url.includes('.m3u8') || url.includes('output=ts'))) {
-        const hls = new Hls();
-        hls.loadSource(url);
-        hls.attachMedia(video);
+      // Destrói a instância anterior para evitar vazamento de memória e travamento de áudio/vídeo
+      if (hlsInstance) {
+        hlsInstance.destroy();
+        hlsInstance = null;
+      }
+
+      if (Hls.isSupported()) {
+        hlsInstance = new Hls();
+        hlsInstance.loadSource(url);
+        hlsInstance.attachMedia(video);
+        hlsInstance.on(Hls.Events.MANIFEST_PARSED, function() {
+          video.play().catch(() => {});
+        });
+      } else if (video.canPlayType('application/vnd.apple.mpegurl')) {
+        video.src = url;
+        video.play().catch(() => {});
       } else {
         video.src = url;
+        video.play().catch(() => {});
       }
     }
 
@@ -515,6 +517,12 @@
       const overlay = document.getElementById('playerOverlay');
       const video = document.getElementById('videoPlayer');
       video.pause();
+      
+      if (hlsInstance) {
+        hlsInstance.destroy();
+        hlsInstance = null;
+      }
+
       video.src = '';
       overlay.style.display = 'none';
       currentScreen = 'content';
