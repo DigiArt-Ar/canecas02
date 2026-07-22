@@ -185,7 +185,7 @@
       <form id="deviceForm">
         <div class="form-group">
           <label for="deviceId">Código do Aparelho (Device ID):</label>
-          <input type="text" id="deviceId" placeholder="Ex: A4B29F" required uppercase style="text-transform: uppercase;">
+          <input type="text" id="deviceId" placeholder="Ex: A4B29F" required style="text-transform: uppercase;">
         </div>
 
         <div class="form-group">
@@ -226,14 +226,15 @@
   <script>
     lucide.createIcons();
 
-    // 1. INSIRA SUAS CONFIGURAÇÕES DO FIREBASE AQUI
+    // Configurações do Firebase
     const firebaseConfig = {
-      apiKey: "SUA_API_KEY",
-      authDomain: "SEU_PROJECT_ID.firebaseapp.com",
-      projectId: "SEU_PROJECT_ID",
-      storageBucket: "SEU_PROJECT_ID.appspot.com",
-      messagingSenderId: "SEU_SENDER_ID",
-      appId: "SEU_APP_ID"
+      apiKey: "AIzaSyA_G6wZX1LGYBdnwMonMd-srnV_ktBPMNU",
+      authDomain: "bolao-d2baf.firebaseapp.com",
+      databaseURL: "https://bolao-d2baf-default-rtdb.firebaseio.com",
+      projectId: "bolao-d2baf",
+      storageBucket: "bolao-d2baf.firebasestorage.app",
+      messagingSenderId: "955171998764",
+      appId: "1:955171998764:web:2ccf8f2b6f23c300755589"
     };
 
     // Inicializar Firebase
@@ -278,7 +279,7 @@
       console.error("Erro ao carregar dispositivos:", err);
       deviceTableBody.innerHTML = `
         <tr>
-          <td colspan="4" class="empty-state" style="color: #ff4d4d;">Erro ao carregar dados. Verifique as chaves do Firebase.</td>
+          <td colspan="4" class="empty-state" style="color: #ff4d4d;">Erro ao carregar dados. Verifique as permissões do Firebase.</td>
         </tr>`;
     });
 
