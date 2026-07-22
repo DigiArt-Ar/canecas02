@@ -364,33 +364,47 @@
       });
     }
 
-    // Baixar e processar o arquivo de lista M3U (com Proxy para evitar bloqueio de CORS e HTTP)
+    // Baixar e processar o arquivo de lista M3U com múltiplos proxies de reserva
     async function fetchAndParseM3u(url) {
-      try {
-        const proxyUrl = 'https://corsproxy.io/?' + encodeURIComponent(url);
-        const response = await fetch(proxyUrl);
-        const text = await response.text();
+      const proxies = [
+        (u) => `https://api.allorigins.win/raw?url=${encodeURIComponent(u)}`,
+        (u) => `https://thingproxy.freeboard.io/fetch/${u}`,
+        (u) => u // Conexão direta sem proxy
+      ];
+
+      let text = null;
+
+      for (const getProxyUrl of proxies) {
+        try {
+          const targetUrl = getProxyUrl(url);
+          console.log("Tentando carregar lista via:", targetUrl);
+          const response = await fetch(targetUrl);
+          
+          if (response.ok) {
+            text = await response.text();
+            if (text && text.includes('#EXTINF')) {
+              break; // Sucesso ao obter a lista
+            }
+          }
+        } catch (e) {
+          console.warn("Proxy falhou ou foi bloqueado, tentando o próximo...", e);
+        }
+      }
+
+      if (text) {
         playlistData = parseM3U(text);
-        
         console.log("Lista carregada com sucesso! Total de itens:", playlistData.length);
 
-        // Se a tela de conteúdo já estiver aberta, atualiza a lista exibida
+        // Se a tela de conteúdo já estiver aberta, atualiza
         if (currentScreen === 'content') {
           openCategory('channels');
         }
-      } catch (error) {
-        console.error("Erro ao carregar via proxy, tentando conexão direta...", error);
-        try {
-          const responseDirect = await fetch(url);
-          const textDirect = await responseDirect.text();
-          playlistData = parseM3U(textDirect);
-        } catch (e) {
-          console.error("Erro final ao carregar lista M3U:", e);
-        }
+      } else {
+        console.error("Não foi possível carregar a lista M3U em nenhum dos proxies.");
       }
     }
 
-    // Função de leitor M3U simples
+    // Leitor e extrator de itens M3U
     function parseM3U(m3uText) {
       const lines = m3uText.split('\n');
       const result = [];
@@ -399,9 +413,11 @@
       lines.forEach(line => {
         line = line.trim();
         if (line.startsWith('#EXTINF:')) {
-          const groupMatch = line.match(/group-title="([^"]+)"/);
+          // Extrai o grupo do canal tratando aspas e espaços
+          const groupMatch = line.match(/group-title="([^"]+)"/) || line.match(/group-title=([^\s,]+)/);
           const nameParts = line.split(',');
-          currentItem.group = groupMatch ? groupMatch[1] : 'Geral';
+          
+          currentItem.group = groupMatch ? groupMatch[1].trim() : 'Geral';
           currentItem.name = nameParts[nameParts.length - 1].trim();
         } else if (line && !line.startsWith('#')) {
           currentItem.url = line;
