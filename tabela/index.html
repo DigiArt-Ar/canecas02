@@ -349,49 +349,45 @@
       });
     }
 
-    // Baixar e processar o arquivo M3U com fallback automático
+    // Baixar o arquivo M3U diretamente (IP de uso residencial) ou via proxy se falhar
     async function fetchAndParseM3u(url) {
-      const workerUrl = 'https://proxy-tv.djmauriciobarcellos.workers.dev/?url=' + encodeURIComponent(url);
-      const fallbackUrl = 'https://corsproxy.io/?' + encodeURIComponent(url);
-
       let rawContent = '';
 
-      // Tentativa 1: Via Cloudflare Worker próprio
+      // Tentativa 1: Busca Direta do Navegador
       try {
-        console.log("Tentativa 1: Baixando M3U pelo Cloudflare Worker...");
-        const response = await fetch(workerUrl);
+        console.log("Tentando baixar a lista diretamente no navegador...");
+        const response = await fetch(url, { mode: 'cors' });
         if (response.ok) {
           rawContent = await response.text();
-          console.log("Tamanho recebido pelo Worker (caracteres):", rawContent.length);
         }
       } catch (e) {
-        console.warn("Falha na tentativa 1 via Worker:", e);
+        console.warn("Busca direta bloqueada por CORS ou rede. Tentando via Worker...");
       }
 
-      // Tentativa 2: Se o Worker retornou 0 caracteres (bloqueio do servidor IPTV), usa o Corsproxy
-      if (!rawContent || rawContent.length === 0) {
+      // Tentativa 2: Via Cloudflare Worker se a direta falhar
+      if (!rawContent) {
         try {
-          console.log("Tentativa 2: Servidor bloqueou o Worker. Redirecionando via Corsproxy...");
-          const fallbackResp = await fetch(fallbackUrl);
-          if (fallbackResp.ok) {
-            rawContent = await fallbackResp.text();
-            console.log("Tamanho recebido pelo Corsproxy (caracteres):", rawContent.length);
+          const workerUrl = 'https://proxy-tv.djmauriciobarcellos.workers.dev/?url=' + encodeURIComponent(url);
+          const response = await fetch(workerUrl);
+          if (response.ok) {
+            rawContent = await response.text();
           }
         } catch (e) {
-          console.error("Falha na tentativa 2 via Corsproxy:", e);
+          console.error("Erro na busca via Worker:", e);
         }
       }
 
-      // Processa a lista caso tenha recebido o texto
+      // Processa o conteúdo retornado
       if (rawContent && rawContent.length > 0) {
+        console.log("Tamanho do M3U recebido (caracteres):", rawContent.length);
         playlistData = parseM3U(rawContent);
-        console.log("Lista processada com sucesso! Total de itens encontrados:", playlistData.length);
+        console.log("Lista processada! Total de itens:", playlistData.length);
 
         if (playlistData.length > 0 && currentScreen === 'content') {
           openCategory('channels');
         }
       } else {
-        console.error("Não foi possível carregar a lista M3U por nenhuma das rotas.");
+        console.error("Erro ao carregar a lista M3U de todas as fontes.");
       }
     }
 
