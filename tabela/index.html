@@ -360,32 +360,33 @@
         
         if (response.ok) {
           const rawContent = await response.text();
-          
-          // Exibe os primeiros caracteres recebidos para inspeção
-          console.log("Resposta recebida do servidor:", rawContent.substring(0, 300));
+          console.log("Tamanho do texto recebido (caracteres):", rawContent.length);
 
-          if (rawContent && rawContent.includes('#EXTINF')) {
+          if (rawContent && rawContent.length > 0) {
             playlistData = parseM3U(rawContent);
-            console.log("Lista carregada com sucesso! Total de itens:", playlistData.length);
+            console.log("Lista processada! Total de itens encontrados:", playlistData.length);
 
-            if (currentScreen === 'content') {
-              openCategory('channels');
+            if (playlistData.length > 0) {
+              if (currentScreen === 'content') {
+                openCategory('channels');
+              }
+            } else {
+              console.error("Nenhum item foi extraído do arquivo M3U.");
             }
             return;
-          } else {
-            console.error("Conteúdo recebido não possui a marcação #EXTINF.");
           }
         }
+        console.error("Servidor retornou resposta vazia ou erro HTTP:", response.status);
       } catch (e) {
         console.error("Erro na requisição via Worker:", e);
       }
     }
 
-    // Processador da estrutura M3U / M3U_PLUS
+    // Processador otimizado de estrutura M3U / M3U_PLUS
     function parseM3U(m3uText) {
       if (!m3uText) return [];
 
-      const lines = m3uText.replace(/\r\n/g, '\n').replace(/\r/g, '\n').split('\n');
+      const lines = m3uText.split(/\r?\n/);
       const items = [];
       let currentGroup = 'Geral';
       let currentName = '';
