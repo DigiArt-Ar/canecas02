@@ -1,0 +1,321 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Painel de Controle - Admin</title>
+  
+  <!-- Lucide Icons -->
+  <script src="https://unpkg.com/lucide@latest"></script>
+  
+  <!-- Firebase App & Firestore SDKs (v9 Compat) -->
+  <script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-app-compat.js"></script>
+  <script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-firestore-compat.js"></script>
+
+  <style>
+    * {
+      box-sizing: border-box;
+      margin: 0;
+      padding: 0;
+      font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
+    }
+
+    body {
+      background-color: #0d0d0d;
+      color: #ffffff;
+      min-height: 100vh;
+      padding: 30px;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+    }
+
+    .container {
+      width: 100%;
+      max-width: 800px;
+    }
+
+    header {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      margin-bottom: 30px;
+      border-bottom: 1px solid #222;
+      padding-bottom: 15px;
+    }
+
+    h1 {
+      font-size: 1.8rem;
+      font-weight: 700;
+      letter-spacing: 1px;
+    }
+
+    .card {
+      background: #181818;
+      border: 1px solid #282828;
+      border-radius: 12px;
+      padding: 24px;
+      margin-bottom: 30px;
+      box-shadow: 0 8px 20px rgba(0,0,0,0.4);
+    }
+
+    .card h2 {
+      font-size: 1.2rem;
+      margin-bottom: 20px;
+      color: #cccccc;
+    }
+
+    .form-group {
+      margin-bottom: 15px;
+    }
+
+    label {
+      display: block;
+      font-size: 0.85rem;
+      color: #aaaaaa;
+      margin-bottom: 6px;
+    }
+
+    input[type="text"] {
+      width: 100%;
+      padding: 12px;
+      background: #0d0d0d;
+      border: 1px solid #333;
+      border-radius: 8px;
+      color: #fff;
+      font-size: 0.95rem;
+      transition: border-color 0.2s;
+    }
+
+    input[type="text"]:focus {
+      outline: none;
+      border-color: #00ff88;
+    }
+
+    .btn-submit {
+      width: 100%;
+      padding: 12px;
+      background: #00ff88;
+      color: #000000;
+      border: none;
+      border-radius: 8px;
+      font-weight: bold;
+      font-size: 1rem;
+      cursor: pointer;
+      transition: background 0.2s, transform 0.1s;
+    }
+
+    .btn-submit:hover {
+      background: #00cc6a;
+    }
+
+    .btn-submit:active {
+      transform: scale(0.99);
+    }
+
+    /* Tabela de Dispositivos Cadastrados */
+    table {
+      width: 100%;
+      border-collapse: collapse;
+      margin-top: 10px;
+    }
+
+    th, td {
+      padding: 14px;
+      text-align: left;
+      border-bottom: 1px solid #222;
+      font-size: 0.9rem;
+    }
+
+    th {
+      color: #888888;
+      font-weight: 600;
+    }
+
+    .badge-code {
+      background: #000000;
+      color: #00ff88;
+      padding: 4px 8px;
+      border-radius: 6px;
+      font-family: monospace;
+      font-weight: bold;
+      border: 1px solid rgba(0, 255, 136, 0.2);
+    }
+
+    .url-text {
+      max-width: 300px;
+      white-space: nowrap;
+      overflow: hidden;
+      text-overflow: ellipsis;
+      color: #aaa;
+    }
+
+    .btn-delete {
+      background: none;
+      border: none;
+      color: #ff4d4d;
+      cursor: pointer;
+      padding: 4px;
+      border-radius: 4px;
+      transition: background 0.2s;
+    }
+
+    .btn-delete:hover {
+      background: rgba(255, 77, 77, 0.1);
+    }
+
+    .empty-state {
+      text-align: center;
+      padding: 30px;
+      color: #666;
+    }
+  </style>
+</head>
+<body>
+
+  <div class="container">
+    <header>
+      <h1>Painel de Controle</h1>
+      <span style="font-size: 0.85rem; color: #888;">Gerenciador M3U</span>
+    </header>
+
+    <!-- Formulário de Cadastro / Atualização -->
+    <div class="card">
+      <h2>Cadastrar ou Atualizar Aparelho</h2>
+      <form id="deviceForm">
+        <div class="form-group">
+          <label for="deviceId">Código do Aparelho (Device ID):</label>
+          <input type="text" id="deviceId" placeholder="Ex: A4B29F" required uppercase style="text-transform: uppercase;">
+        </div>
+
+        <div class="form-group">
+          <label for="clientName">Nome / Identificação (Opcional):</label>
+          <input type="text" id="clientName" placeholder="Ex: Celular do Carlos / TV Sala">
+        </div>
+
+        <div class="form-group">
+          <label for="m3uUrl">URL da Lista M3U:</label>
+          <input type="text" id="m3uUrl" placeholder="https://exemplo.com/lista.m3u" required>
+        </div>
+
+        <button type="submit" class="btn-submit" id="btnSave">Salvar Dispositivo</button>
+      </form>
+    </div>
+
+    <!-- Lista de Aparelhos Cadastrados -->
+    <div class="card">
+      <h2>Dispositivos Cadastrados</h2>
+      <table>
+        <thead>
+          <tr>
+            <th>Código</th>
+            <th>Nome</th>
+            <th>URL M3U</th>
+            <th style="text-align: right;">Ações</th>
+          </tr>
+        </thead>
+        <tbody id="deviceTableBody">
+          <tr>
+            <td colspan="4" class="empty-state">Carregando dispositivos...</td>
+          </tr>
+        </tbody>
+      </table>
+    </div>
+  </div>
+
+  <script>
+    lucide.createIcons();
+
+    // 1. INSIRA SUAS CONFIGURAÇÕES DO FIREBASE AQUI
+    const firebaseConfig = {
+      apiKey: "SUA_API_KEY",
+      authDomain: "SEU_PROJECT_ID.firebaseapp.com",
+      projectId: "SEU_PROJECT_ID",
+      storageBucket: "SEU_PROJECT_ID.appspot.com",
+      messagingSenderId: "SEU_SENDER_ID",
+      appId: "SEU_APP_ID"
+    };
+
+    // Inicializar Firebase
+    firebase.initializeApp(firebaseConfig);
+    const db = firebase.firestore();
+
+    const deviceForm = document.getElementById('deviceForm');
+    const deviceTableBody = document.getElementById('deviceTableBody');
+
+    // Escutar alterações no banco de dados em tempo real
+    db.collection('dispositivos').onSnapshot(snapshot => {
+      deviceTableBody.innerHTML = '';
+
+      if (snapshot.empty) {
+        deviceTableBody.innerHTML = `
+          <tr>
+            <td colspan="4" class="empty-state">Nenhum aparelho cadastrado ainda.</td>
+          </tr>`;
+        return;
+      }
+
+      snapshot.forEach(doc => {
+        const data = doc.data();
+        const tr = document.createElement('tr');
+
+        tr.innerHTML = `
+          <td><span class="badge-code">${doc.id}</span></td>
+          <td>${data.nome || 'Sem Nome'}</td>
+          <td class="url-text" title="${data.m3uUrl}">${data.m3uUrl}</td>
+          <td style="text-align: right;">
+            <button class="btn-delete" onclick="deleteDevice('${doc.id}')" title="Excluir">
+              <i data-lucide="trash-2" size="18"></i>
+            </button>
+          </td>
+        `;
+
+        deviceTableBody.appendChild(tr);
+      });
+
+      lucide.createIcons();
+    }, err => {
+      console.error("Erro ao carregar dispositivos:", err);
+      deviceTableBody.innerHTML = `
+        <tr>
+          <td colspan="4" class="empty-state" style="color: #ff4d4d;">Erro ao carregar dados. Verifique as chaves do Firebase.</td>
+        </tr>`;
+    });
+
+    // Salvar ou Atualizar Aparelho
+    deviceForm.addEventListener('submit', async (e) => {
+      e.preventDefault();
+
+      const deviceId = document.getElementById('deviceId').value.trim().toUpperCase();
+      const clientName = document.getElementById('clientName').value.trim();
+      const m3uUrl = document.getElementById('m3uUrl').value.trim();
+
+      if (!deviceId || !m3uUrl) return;
+
+      try {
+        await db.collection('dispositivos').doc(deviceId).set({
+          nome: clientName,
+          m3uUrl: m3uUrl,
+          atualizadoEm: firebase.firestore.FieldValue.serverTimestamp()
+        });
+
+        deviceForm.reset();
+        alert(`Aparelho ${deviceId} salvo com sucesso!`);
+      } catch (error) {
+        alert("Erro ao salvar no Firebase: " + error.message);
+      }
+    });
+
+    // Deletar Aparelho
+    async function deleteDevice(id) {
+      if (confirm(`Tem certeza que deseja remover o aparelho ${id}?`)) {
+        try {
+          await db.collection('dispositivos').doc(id).delete();
+        } catch (error) {
+          alert("Erro ao excluir: " + error.message);
+        }
+      }
+    }
+  </script>
+</body>
+</html>
