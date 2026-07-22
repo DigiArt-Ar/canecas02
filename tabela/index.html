@@ -16,6 +16,10 @@
   <script src="https://cdn.jsdelivr.net/npm/hls.js@latest"></script>
   <!-- Lucide Icons -->
   <script src="https://unpkg.com/lucide@latest"></script>
+
+  <!-- Firebase App & Firestore SDKs (v9 Compat) -->
+  <script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-app-compat.js"></script>
+  <script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-firestore-compat.js"></script>
   
   <style>
     * {
@@ -299,6 +303,21 @@
   <script>
     lucide.createIcons();
 
+    // Configurações do seu Firebase (Projeto Bolão)
+    const firebaseConfig = {
+      apiKey: "AIzaSyA_G6wZX1LGYBdnwMonMd-srnV_ktBPMNU",
+      authDomain: "bolao-d2baf.firebaseapp.com",
+      databaseURL: "https://bolao-d2baf-default-rtdb.firebaseio.com",
+      projectId: "bolao-d2baf",
+      storageBucket: "bolao-d2baf.firebasestorage.app",
+      messagingSenderId: "955171998764",
+      appId: "1:955171998764:web:2ccf8f2b6f23c300755589"
+    };
+
+    // Inicializar Firebase
+    firebase.initializeApp(firebaseConfig);
+    const db = firebase.firestore();
+
     let playlistData = [];
     let currentScreen = 'main';
 
@@ -327,7 +346,64 @@
       return id;
     }
 
-    document.getElementById('displayDeviceId').innerText = getDeviceId();
+    const deviceId = getDeviceId();
+    document.getElementById('displayDeviceId').innerText = deviceId;
+
+    // Sincronizar e escutar alterações no Firebase para este Aparelho
+    function syncWithFirebase() {
+      db.collection('dispositivos').doc(deviceId).onSnapshot(doc => {
+        if (doc.exists && doc.data().m3uUrl) {
+          const m3uUrl = doc.data().m3uUrl;
+          console.log("URL M3U recebida do Firebase:", m3uUrl);
+          fetchAndParseM3u(m3uUrl);
+        } else {
+          console.log("Aparelho aguardando cadastro no Painel Admin.");
+        }
+      }, err => {
+        console.error("Erro ao conectar no Firebase:", err);
+      });
+    }
+
+    // Baixar e processar o arquivo de lista M3U
+    async function fetchAndParseM3u(url) {
+      try {
+        const response = await fetch(url);
+        const text = await response.text();
+        playlistData = parseM3U(text);
+        
+        // Se a tela de conteúdo já estiver aberta, atualiza a lista exibida
+        if (currentScreen === 'content') {
+          openCategory('channels');
+        }
+      } catch (error) {
+        console.error("Erro ao carregar a lista M3U:", error);
+      }
+    }
+
+    // Função de leitor M3U simples
+    function parseM3U(m3uText) {
+      const lines = m3uText.split('\n');
+      const result = [];
+      let currentItem = {};
+
+      lines.forEach(line => {
+        line = line.trim();
+        if (line.startsWith('#EXTINF:')) {
+          const groupMatch = line.match(/group-title="([^"]+)"/);
+          const nameParts = line.split(',');
+          currentItem.group = groupMatch ? groupMatch[1] : 'Geral';
+          currentItem.name = nameParts[nameParts.length - 1].trim();
+        } else if (line && !line.startsWith('#')) {
+          currentItem.url = line;
+          if (currentItem.name && currentItem.url) {
+            result.push({ ...currentItem });
+          }
+          currentItem = {};
+        }
+      });
+
+      return result;
+    }
 
     // Navegação Voltar
     function goBack() {
@@ -418,6 +494,11 @@
       overlay.style.display = 'none';
       currentScreen = 'content';
     }
+
+    // Iniciar a busca automática assim que o app carrega
+    window.addEventListener('DOMContentLoaded', () => {
+      syncWithFirebase();
+    });
   </script>
 </body>
 </html>
