@@ -1,156 +1,478 @@
-import 'package:flutter/material.dart';
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>TV Player - Web App</title>
+  <!-- HLS.js para reprodução de canais/vídeos m3u8 -->
+  <script src="https://cdn.jsdelivr.net/npm/hls.js@latest"></script>
+  <!-- Lucide Icons -->
+  <script src="https://unpkg.com/lucide@latest"></script>
+  <style>
+    * {
+      box-sizing: border-box;
+      margin: 0;
+      padding: 0;
+      font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
+      user-select: none;
+    }
 
-void main() {
-  runApp(const MyApp());
-}
+    body {
+      background-color: #0d0d0d;
+      color: #ffffff;
+      height: 100vh;
+      overflow: hidden;
+      display: flex;
+      flex-direction: column;
+    }
 
-class MyApp extends StatelessWidget {
-  const MyApp({super.key});
+    /* Cabeçalho */
+    header {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      padding: 20px 30px;
+      position: absolute;
+      top: 0;
+      width: 100%;
+      z-index: 10;
+    }
 
-  @override
-  Widget build(BuildContext context) {
-    return MaterialApp(
-      debugShowCheckedModeBanner: false,
-      theme: ThemeData.dark().copyWith(
-        scaffoldBackgroundColor: const Color(0xFF0D0D0D),
-      ),
-      home: const HomeScreen(),
-    );
-  }
-}
+    .header-actions {
+      display: flex;
+      gap: 15px;
+    }
 
-class HomeScreen extends StatelessWidget {
-  const HomeScreen({super.key});
+    .btn-icon {
+      background: none;
+      border: none;
+      color: #a0a0a0;
+      cursor: pointer;
+      transition: color 0.2s, transform 0.2s;
+    }
 
-  @override
-  Widget build(BuildContext context) {
-    return Scaffold(
-      body: SafeArea(
-        child: Stack(
-          children: [
-            // Cabeçalho com Ícones
-            Positioned(
-              top: 16,
-              right: 20,
-              child: Row(
-                children: [
-                  IconButton(
-                    icon: const Icon(Icons.settings, color: Colors.white70, size: 28),
-                    onPressed: () {
-                      // Exibir diálogo com Código do Aparelho / Configurações
-                    },
-                  ),
-                  const SizedBox(width: 10),
-                  IconButton(
-                    icon: const Icon(Icons.close, color: Colors.white70, size: 28),
-                    onPressed: () {
-                      // Ação de fechar
-                    },
-                  ),
-                ],
-              ),
-            ),
+    .btn-icon:hover {
+      color: #ffffff;
+      transform: scale(1.1);
+    }
 
-            // Conteúdo Central
-            Center(
-              child: Column(
-                mainAxisAlignment: MainAxisAlignment.center,
-                children: [
-                  const Text(
-                    'TV Player',
-                    style: TextStyle(
-                      color: Colors.white,
-                      fontSize: 32,
-                      fontWeight: FontWeight.bold,
-                      letterSpacing: 2.0,
-                    ),
-                  ),
-                  const SizedBox(height: 40),
+    /* Tela Principal - Grid de 3 Cards */
+    .main-screen {
+      flex: 1;
+      display: flex;
+      flex-direction: column;
+      justify-content: center;
+      align-items: center;
+    }
 
-                  // Linha com os 3 Quadrados
-                  Row(
-                    mainAxisAlignment: MainAxisAlignment.center,
-                    children: [
-                      _buildMenuCard(
-                        icon: Icons.tv,
-                        label: 'CANAIS',
-                        onTap: () {
-                          // Navegar para lista de Canais ao vivo
-                        },
-                      ),
-                      const SizedBox(width: 24),
-                      _buildMenuCard(
-                        icon: Icons.movie_outlined,
-                        label: 'FILMES',
-                        onTap: () {
-                          // Navegar para galeria de Filmes
-                        },
-                      ),
-                      const SizedBox(width: 24),
-                      _buildMenuCard(
-                        icon: Icons.video_collection_outlined,
-                        label: 'SÉRIES',
-                        onTap: () {
-                          // Navegar para catálogo de Séries
-                        },
-                      ),
-                    ],
-                  ),
-                ],
-              ),
-            ),
-          ],
-        ),
-      ),
-    );
-  }
+    .app-title {
+      font-size: 2.2rem;
+      font-weight: 700;
+      letter-spacing: 3px;
+      margin-bottom: 40px;
+      text-transform: uppercase;
+    }
 
-  Widget _buildMenuCard({
-    required IconData icon,
-    required String label,
-    required VoidCallback onTap,
-  }) {
-    return InkWell(
-      onTap: onTap,
-      borderRadius: BorderRadius.circular(20),
-      child: Container(
-        width: 160,
-        height: 170,
-        decoration: BoxDecoration(
-          color: const Color(0xFF181818),
-          borderRadius: BorderRadius.circular(20),
-          border: Border.all(color: Colors.white12, width: 1.5),
-          boxShadow: [
-            BoxShadow(
-              color: Colors.black.withOpacity(0.4),
-              blurRadius: 10,
-              offset: const Offset(0, 4),
-            ),
-          ],
-        ),
-        child: Column(
-          mainAxisAlignment: MainAxisAlignment.center,
-          children: [
-            Icon(icon, size: 54, color: Colors.white),
-            const SizedBox(height: 16),
-            Text(
-              label,
-              style: const TextStyle(
-                color: Colors.white70,
-                fontSize: 14,
-                fontWeight: FontWeight.bold,
-                letterSpacing: 1.5,
-              ),
-            ),
-            const SizedBox(height: 6),
-            Container(
-              width: 24,
-              height: 2,
-              color: Colors.white24,
-            ),
-          ],
-        ),
-      ),
-    );
-  }
-}
+    .card-container {
+      display: flex;
+      gap: 25px;
+    }
+
+    .menu-card {
+      background-color: #181818;
+      border: 1.5px solid rgba(255, 255, 255, 0.08);
+      border-radius: 20px;
+      width: 170px;
+      height: 180px;
+      display: flex;
+      flex-direction: column;
+      justify-content: center;
+      align-items: center;
+      cursor: pointer;
+      box-shadow: 0 10px 25px rgba(0,0,0,0.5);
+      transition: all 0.25s ease;
+    }
+
+    .menu-card:hover {
+      background-color: #222222;
+      border-color: rgba(255, 255, 255, 0.3);
+      transform: translateY(-5px);
+    }
+
+    .menu-card i {
+      margin-bottom: 15px;
+    }
+
+    .card-label {
+      font-size: 0.9rem;
+      font-weight: 700;
+      letter-spacing: 2px;
+      color: #cccccc;
+    }
+
+    .card-divider {
+      width: 24px;
+      height: 2px;
+      background-color: rgba(255, 255, 255, 0.2);
+      margin-top: 8px;
+    }
+
+    /* Navegação Interna / Conteúdo de Canais */
+    .content-screen {
+      display: none;
+      flex: 1;
+      margin-top: 70px;
+      height: calc(100vh - 70px);
+    }
+
+    .sidebar {
+      width: 300px;
+      background: #141414;
+      border-right: 1px solid #222;
+      display: flex;
+      flex-direction: column;
+      overflow-y: auto;
+    }
+
+    .category-item {
+      padding: 15px 20px;
+      border-bottom: 1px solid #1a1a1a;
+      cursor: pointer;
+      font-size: 0.95rem;
+      color: #aaa;
+    }
+
+    .category-item:hover, .category-item.active {
+      background: #222;
+      color: #fff;
+      font-weight: bold;
+    }
+
+    .item-grid {
+      flex: 1;
+      padding: 20px;
+      overflow-y: auto;
+      display: grid;
+      grid-template-columns: repeat(auto-fill, minmax(180px, 1fr));
+      gap: 15px;
+      align-content: start;
+    }
+
+    .channel-item {
+      background: #181818;
+      border: 1px solid #252525;
+      border-radius: 10px;
+      padding: 15px;
+      text-align: center;
+      cursor: pointer;
+      transition: 0.2s;
+    }
+
+    .channel-item:hover {
+      border-color: #555;
+      background: #252525;
+    }
+
+    /* Reprodutor de Vídeo */
+    .player-overlay {
+      display: none;
+      position: fixed;
+      top: 0;
+      left: 0;
+      width: 100vw;
+      height: 100vh;
+      background: #000;
+      z-index: 100;
+    }
+
+    video {
+      width: 100%;
+      height: 100%;
+    }
+
+    .close-player {
+      position: absolute;
+      top: 20px;
+      right: 20px;
+      z-index: 101;
+      background: rgba(0,0,0,0.6);
+      padding: 10px;
+      border-radius: 50%;
+    }
+
+    /* Modal de Configurações / Device ID */
+    .modal {
+      display: none;
+      position: fixed;
+      top: 0; left: 0; width: 100%; height: 100%;
+      background: rgba(0,0,0,0.8);
+      justify-content: center;
+      align-items: center;
+      z-index: 50;
+    }
+
+    .modal-content {
+      background: #1a1a1a;
+      padding: 30px;
+      border-radius: 15px;
+      width: 400px;
+      border: 1px solid #333;
+    }
+
+    .device-id-box {
+      background: #000;
+      padding: 12px;
+      border-radius: 8px;
+      text-align: center;
+      font-size: 1.4rem;
+      font-weight: bold;
+      color: #00ff88;
+      letter-spacing: 3px;
+      margin: 15px 0;
+    }
+
+    input[type="text"] {
+      width: 100%;
+      padding: 10px;
+      border-radius: 6px;
+      border: 1px solid #333;
+      background: #0d0d0d;
+      color: #fff;
+      margin-bottom: 15px;
+    }
+
+    .btn-primary {
+      width: 100%;
+      padding: 12px;
+      background: #ffffff;
+      color: #000000;
+      border: none;
+      border-radius: 6px;
+      font-weight: bold;
+      cursor: pointer;
+    }
+  </style>
+</head>
+<body>
+
+  <!-- Cabeçalho -->
+  <header>
+    <div></div>
+    <div class="header-actions">
+      <button class="btn-icon" onclick="openSettings()" title="Configurações">
+        <i data-lucide="settings" size="28"></i>
+      </button>
+      <button class="btn-icon" onclick="showMainScreen()" title="Início">
+        <i data-lucide="x" size="28"></i>
+      </button>
+    </div>
+  </header>
+
+  <!-- Tela Inicial (3 Quadrados) -->
+  <div class="main-screen" id="mainScreen">
+    <h1 class="app-title">TV Player</h1>
+    <div class="card-container">
+      <div class="menu-card" onclick="openCategory('channels')">
+        <i data-lucide="tv" size="52"></i>
+        <span class="card-label">CANAIS</span>
+        <div class="card-divider"></div>
+      </div>
+      <div class="menu-card" onclick="openCategory('movies')">
+        <i data-lucide="clapperboard" size="52"></i>
+        <span class="card-label">FILMES</span>
+        <div class="card-divider"></div>
+      </div>
+      <div class="menu-card" onclick="openCategory('series')">
+        <i data-lucide="layers" size="52"></i>
+        <span class="card-label">SÉRIES</span>
+        <div class="card-divider"></div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Tela de Conteúdo (Menu Lateral e Lista) -->
+  <div class="content-screen" id="contentScreen">
+    <div class="sidebar" id="sidebar"></div>
+    <div class="item-grid" id="itemGrid"></div>
+  </div>
+
+  <!-- Reprodutor de Vídeo -->
+  <div class="player-overlay" id="playerOverlay">
+    <button class="btn-icon close-player" onclick="closePlayer()">
+      <i data-lucide="x" size="24"></i>
+    </button>
+    <video id="videoPlayer" controls autoplay></video>
+  </div>
+
+  <!-- Modal de Configurações -->
+  <div class="modal" id="settingsModal">
+    <div class="modal-content">
+      <h2>Configurações do Aparelho</h2>
+      <p style="margin-top: 10px; color: #888; font-size: 0.85rem;">Código do seu dispositivo para vincular no painel:</p>
+      <div class="device-id-box" id="deviceIdDisplay">------</div>
+
+      <label style="font-size: 0.85rem; color: #aaa;">Link M3U Direto (Para Teste Manual):</label>
+      <input type="text" id="m3uUrlInput" placeholder="https://exemplo.com/lista.m3u" style="margin-top: 5px;">
+
+      <button class="btn-primary" onclick="saveM3uUrl()">Carregar Lista</button>
+      <button class="btn-primary" onclick="closeSettings()" style="background: transparent; color: #888; margin-top: 5px;">Fechar</button>
+    </div>
+  </div>
+
+  <script>
+    // Inicialização de Ícones
+    lucide.createIcons();
+
+    // Estado da Aplicação
+    let playlistData = [];
+    let currentType = 'channels'; // channels, movies, series
+
+    // Gerar ou Recuperar Código Único do Dispositivo
+    function getDeviceId() {
+      let id = localStorage.getItem('DEVICE_ID');
+      if (!id) {
+        id = Math.random().toString(36).substring(2, 8).toUpperCase();
+        localStorage.setItem('DEVICE_ID', id);
+      }
+      return id;
+    }
+
+    document.getElementById('deviceIdDisplay').innerText = getDeviceId();
+
+    // Navegação
+    function openSettings() {
+      document.getElementById('settingsModal').style.display = 'flex';
+      const savedUrl = localStorage.getItem('M3U_URL') || '';
+      document.getElementById('m3uUrlInput').value = savedUrl;
+    }
+
+    function closeSettings() {
+      document.getElementById('settingsModal').style.display = 'none';
+    }
+
+    function showMainScreen() {
+      document.getElementById('mainScreen').style.display = 'flex';
+      document.getElementById('contentScreen').style.display = 'none';
+    }
+
+    // Leitura e Processamento da Lista M3U
+    async function saveM3uUrl() {
+      const url = document.getElementById('m3uUrlInput').value.trim();
+      if (!url) return alert('Por favor, informe uma URL válida.');
+
+      localStorage.setItem('M3U_URL', url);
+      closeSettings();
+      await fetchAndParseM3u(url);
+    }
+
+    async function fetchAndParseM3u(url) {
+      try {
+        const response = await fetch(url);
+        const text = await response.text();
+        playlistData = parseM3U(text);
+        alert('Lista M3U carregada com sucesso!');
+      } catch (err) {
+        alert('Erro ao carregar a lista M3U. Verifique a URL ou permissões de CORS.');
+      }
+    }
+
+    function parseM3U(m3uText) {
+      const lines = m3uText.split('\n');
+      const items = [];
+      let currentItem = null;
+
+      for (let line of lines) {
+        line = line.trim();
+        if (line.startsWith('#EXTINF:')) {
+          const name = line.split(',')[1] || 'Sem Nome';
+          const groupMatch = line.match(/group-title="([^"]+)"/);
+          const group = groupMatch ? groupMatch[1] : 'Geral';
+          
+          currentItem = { name, group, url: '' };
+        } else if (line && !line.startsWith('#') && currentItem) {
+          currentItem.url = line;
+          items.push(currentItem);
+          currentItem = null;
+        }
+      }
+      return items;
+    }
+
+    // Renderização das Categorias e Conteúdo
+    function openCategory(type) {
+      currentType = type;
+      document.getElementById('mainScreen').style.display = 'none';
+      document.getElementById('contentScreen').style.display = 'flex';
+
+      const sidebar = document.getElementById('sidebar');
+      sidebar.innerHTML = '';
+
+      // Agrupar por Pastas
+      const groups = [...new Set(playlistData.map(item => item.group))];
+      
+      if (groups.length === 0) {
+        sidebar.innerHTML = '<div class="category-item">Nenhuma pasta encontrada</div>';
+        return;
+      }
+
+      groups.forEach((group, index) => {
+        const div = document.createElement('div');
+        div.className = `category-item ${index === 0 ? 'active' : ''}`;
+        div.innerText = group;
+        div.onclick = () => {
+          document.querySelectorAll('.category-item').forEach(el => el.classList.remove('active'));
+          div.classList.add('active');
+          renderItems(group);
+        };
+        sidebar.appendChild(div);
+      });
+
+      renderItems(groups[0]);
+    }
+
+    function renderItems(groupName) {
+      const grid = document.getElementById('itemGrid');
+      grid.innerHTML = '';
+
+      const filtered = playlistData.filter(item => item.group === groupName);
+
+      filtered.forEach(item => {
+        const div = document.createElement('div');
+        div.className = 'channel-item';
+        div.innerText = item.name;
+        div.onclick = () => playStream(item.url);
+        grid.appendChild(div);
+      });
+    }
+
+    // Execução do Player de Vídeo
+    function playStream(url) {
+      const overlay = document.getElementById('playerOverlay');
+      const video = document.getElementById('videoPlayer');
+      overlay.style.display = 'block';
+
+      if (Hls.isSupported() && url.includes('.m3u8')) {
+        const hls = new Hls();
+        hls.loadSource(url);
+        hls.attachMedia(video);
+      } else {
+        video.src = url;
+      }
+    }
+
+    function closePlayer() {
+      const overlay = document.getElementById('playerOverlay');
+      const video = document.getElementById('videoPlayer');
+      video.pause();
+      video.src = '';
+      overlay.style.display = 'none';
+    }
+
+    // Carregar Lista Existente se houver
+    window.onload = () => {
+      const savedUrl = localStorage.getItem('M3U_URL');
+      if (savedUrl) fetchAndParseM3u(savedUrl);
+    };
+  </script>
+</body>
+</html>
