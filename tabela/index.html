@@ -3,11 +3,20 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+  
+  <!-- Configurações para ocultar navegador e rodar como App Nativo -->
+  <meta name="mobile-web-app-capable" content="yes">
+  <meta name="apple-mobile-web-app-capable" content="yes">
+  <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+  <meta name="theme-color" content="#0d0d0d">
+  
   <title>TV Player</title>
+  
   <!-- HLS.js para vídeos m3u8 -->
   <script src="https://cdn.jsdelivr.net/npm/hls.js@latest"></script>
   <!-- Lucide Icons -->
   <script src="https://unpkg.com/lucide@latest"></script>
+  
   <style>
     * {
       box-sizing: border-box;
@@ -17,7 +26,6 @@
       user-select: none;
     }
 
-    /* Layout Base */
     body {
       background-color: #0d0d0d;
       color: #ffffff;
@@ -53,7 +61,6 @@
       z-index: 10;
     }
 
-    /* Exibição Fixo do Código do Aparelho */
     .device-id-badge {
       display: flex;
       align-items: center;
@@ -89,7 +96,7 @@
       transform: scale(1.05);
     }
 
-    /* Tela Principal - Grid de 3 Cards */
+    /* Tela Principal */
     .main-screen {
       flex: 1;
       display: flex;
@@ -242,12 +249,10 @@
 
   <!-- Cabeçalho -->
   <header>
-    <!-- Código do Aparelho Exibido Aqui -->
     <div class="device-id-badge">
       CÓDIGO: <span id="displayDeviceId">------</span>
     </div>
 
-    <!-- Botão Voltar (Aparece ao entrar nas categorias) -->
     <button class="btn-back" id="btnBackHeader" onclick="goBack()" style="display: none;">
       <i data-lucide="arrow-left" size="22"></i>
       <span>Voltar</span>
@@ -276,7 +281,7 @@
     </div>
   </div>
 
-  <!-- Tela de Conteúdo (Pastas e Canais) -->
+  <!-- Tela de Conteúdo -->
   <div class="content-screen" id="contentScreen">
     <div class="sidebar" id="sidebar"></div>
     <div class="item-grid" id="itemGrid"></div>
@@ -295,14 +300,24 @@
     lucide.createIcons();
 
     let playlistData = [];
-    let currentScreen = 'main'; // 'main', 'content', 'player'
+    let currentScreen = 'main';
 
-    // Tentar travar a orientação para Landscape no carregamento
+    // Ativar Tela Cheia no primeiro toque/clique do usuário
+    document.addEventListener('click', function enableFullscreen() {
+      const elem = document.documentElement;
+      if (elem.requestFullscreen) {
+        elem.requestFullscreen().catch(() => {});
+      } else if (elem.webkitRequestFullscreen) {
+        elem.webkitRequestFullscreen();
+      }
+    }, { once: true });
+
+    // Travar orientação
     if (screen.orientation && screen.orientation.lock) {
       screen.orientation.lock('landscape').catch(() => {});
     }
 
-    // Gerar / Mostrar Código Único do Aparelho
+    // Gerar ID do Aparelho
     function getDeviceId() {
       let id = localStorage.getItem('DEVICE_ID');
       if (!id) {
@@ -314,7 +329,7 @@
 
     document.getElementById('displayDeviceId').innerText = getDeviceId();
 
-    // Navegação (Voltar)
+    // Navegação Voltar
     function goBack() {
       if (currentScreen === 'content') {
         document.getElementById('mainScreen').style.display = 'flex';
@@ -324,7 +339,7 @@
       }
     }
 
-    // Suporte ao Botão Voltar do Controle Remoto (Tecla ESC ou Backspace)
+    // Atalhos para Controle Remoto
     document.addEventListener('keydown', (e) => {
       if (e.key === 'Escape' || e.key === 'Backspace' || e.keyCode === 10009 || e.keyCode === 27) {
         if (currentScreen === 'player') {
