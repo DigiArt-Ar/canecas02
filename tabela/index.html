@@ -2,9 +2,9 @@
 <html lang="pt-BR">
 <head>
   <meta charset="UTF-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>TV Player - Web App</title>
-  <!-- HLS.js para reprodução de canais/vídeos m3u8 -->
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+  <title>TV Player</title>
+  <!-- HLS.js para vídeos m3u8 -->
   <script src="https://cdn.jsdelivr.net/npm/hls.js@latest"></script>
   <!-- Lucide Icons -->
   <script src="https://unpkg.com/lucide@latest"></script>
@@ -17,13 +17,28 @@
       user-select: none;
     }
 
+    /* Layout Base */
     body {
       background-color: #0d0d0d;
       color: #ffffff;
       height: 100vh;
+      width: 100vw;
       overflow: hidden;
       display: flex;
       flex-direction: column;
+    }
+
+    /* Trava/Força Orientação Horizontal se a tela for muito alta (vertical) */
+    @media screen and (orientation: portrait) {
+      body {
+        transform: rotate(90deg);
+        transform-origin: bottom left;
+        position: absolute;
+        top: -100vw;
+        left: 0;
+        height: 100vw;
+        width: 100vh;
+      }
     }
 
     /* Cabeçalho */
@@ -31,29 +46,47 @@
       display: flex;
       justify-content: space-between;
       align-items: center;
-      padding: 20px 30px;
+      padding: 15px 25px;
       position: absolute;
       top: 0;
       width: 100%;
       z-index: 10;
     }
 
-    .header-actions {
+    /* Exibição Fixo do Código do Aparelho */
+    .device-id-badge {
       display: flex;
-      gap: 15px;
+      align-items: center;
+      gap: 8px;
+      background: rgba(255, 255, 255, 0.05);
+      border: 1px solid rgba(255, 255, 255, 0.15);
+      padding: 6px 14px;
+      border-radius: 20px;
+      font-size: 0.85rem;
+      color: #aaaaaa;
     }
 
-    .btn-icon {
+    .device-id-badge span {
+      color: #00ff88;
+      font-weight: bold;
+      letter-spacing: 1.5px;
+    }
+
+    .btn-back {
       background: none;
       border: none;
       color: #a0a0a0;
       cursor: pointer;
+      display: flex;
+      align-items: center;
+      gap: 6px;
+      font-size: 0.9rem;
       transition: color 0.2s, transform 0.2s;
     }
 
-    .btn-icon:hover {
+    .btn-back:hover {
       color: #ffffff;
-      transform: scale(1.1);
+      transform: scale(1.05);
     }
 
     /* Tela Principal - Grid de 3 Cards */
@@ -69,7 +102,7 @@
       font-size: 2.2rem;
       font-weight: 700;
       letter-spacing: 3px;
-      margin-bottom: 40px;
+      margin-bottom: 30px;
       text-transform: uppercase;
     }
 
@@ -82,8 +115,8 @@
       background-color: #181818;
       border: 1.5px solid rgba(255, 255, 255, 0.08);
       border-radius: 20px;
-      width: 170px;
-      height: 180px;
+      width: 160px;
+      height: 170px;
       display: flex;
       flex-direction: column;
       justify-content: center;
@@ -93,18 +126,19 @@
       transition: all 0.25s ease;
     }
 
-    .menu-card:hover {
+    .menu-card:hover, .menu-card:focus {
       background-color: #222222;
-      border-color: rgba(255, 255, 255, 0.3);
+      border-color: rgba(255, 255, 255, 0.4);
       transform: translateY(-5px);
+      outline: none;
     }
 
     .menu-card i {
-      margin-bottom: 15px;
+      margin-bottom: 12px;
     }
 
     .card-label {
-      font-size: 0.9rem;
+      font-size: 0.85rem;
       font-weight: 700;
       letter-spacing: 2px;
       color: #cccccc;
@@ -117,16 +151,16 @@
       margin-top: 8px;
     }
 
-    /* Navegação Interna / Conteúdo de Canais */
+    /* Navegação Interna */
     .content-screen {
       display: none;
       flex: 1;
-      margin-top: 70px;
-      height: calc(100vh - 70px);
+      margin-top: 60px;
+      height: calc(100vh - 60px);
     }
 
     .sidebar {
-      width: 300px;
+      width: 280px;
       background: #141414;
       border-right: 1px solid #222;
       display: flex;
@@ -138,7 +172,7 @@
       padding: 15px 20px;
       border-bottom: 1px solid #1a1a1a;
       cursor: pointer;
-      font-size: 0.95rem;
+      font-size: 0.9rem;
       color: #aaa;
     }
 
@@ -153,7 +187,7 @@
       padding: 20px;
       overflow-y: auto;
       display: grid;
-      grid-template-columns: repeat(auto-fill, minmax(180px, 1fr));
+      grid-template-columns: repeat(auto-fill, minmax(160px, 1fr));
       gap: 15px;
       align-content: start;
     }
@@ -165,6 +199,7 @@
       padding: 15px;
       text-align: center;
       cursor: pointer;
+      font-size: 0.85rem;
       transition: 0.2s;
     }
 
@@ -173,7 +208,7 @@
       background: #252525;
     }
 
-    /* Reprodutor de Vídeo */
+    /* Player de Vídeo */
     .player-overlay {
       display: none;
       position: fixed;
@@ -190,66 +225,16 @@
       height: 100%;
     }
 
-    .close-player {
+    .btn-player-back {
       position: absolute;
       top: 20px;
-      right: 20px;
+      left: 20px;
       z-index: 101;
       background: rgba(0,0,0,0.6);
-      padding: 10px;
-      border-radius: 50%;
-    }
-
-    /* Modal de Configurações / Device ID */
-    .modal {
-      display: none;
-      position: fixed;
-      top: 0; left: 0; width: 100%; height: 100%;
-      background: rgba(0,0,0,0.8);
-      justify-content: center;
-      align-items: center;
-      z-index: 50;
-    }
-
-    .modal-content {
-      background: #1a1a1a;
-      padding: 30px;
-      border-radius: 15px;
-      width: 400px;
-      border: 1px solid #333;
-    }
-
-    .device-id-box {
-      background: #000;
-      padding: 12px;
-      border-radius: 8px;
-      text-align: center;
-      font-size: 1.4rem;
-      font-weight: bold;
-      color: #00ff88;
-      letter-spacing: 3px;
-      margin: 15px 0;
-    }
-
-    input[type="text"] {
-      width: 100%;
-      padding: 10px;
-      border-radius: 6px;
-      border: 1px solid #333;
-      background: #0d0d0d;
-      color: #fff;
-      margin-bottom: 15px;
-    }
-
-    .btn-primary {
-      width: 100%;
-      padding: 12px;
-      background: #ffffff;
-      color: #000000;
-      border: none;
-      border-radius: 6px;
-      font-weight: bold;
-      cursor: pointer;
+      color: white;
+      padding: 8px 16px;
+      border-radius: 20px;
+      border: 1px solid rgba(255,255,255,0.2);
     }
   </style>
 </head>
@@ -257,40 +242,41 @@
 
   <!-- Cabeçalho -->
   <header>
-    <div></div>
-    <div class="header-actions">
-      <button class="btn-icon" onclick="openSettings()" title="Configurações">
-        <i data-lucide="settings" size="28"></i>
-      </button>
-      <button class="btn-icon" onclick="showMainScreen()" title="Início">
-        <i data-lucide="x" size="28"></i>
-      </button>
+    <!-- Código do Aparelho Exibido Aqui -->
+    <div class="device-id-badge">
+      CÓDIGO: <span id="displayDeviceId">------</span>
     </div>
+
+    <!-- Botão Voltar (Aparece ao entrar nas categorias) -->
+    <button class="btn-back" id="btnBackHeader" onclick="goBack()" style="display: none;">
+      <i data-lucide="arrow-left" size="22"></i>
+      <span>Voltar</span>
+    </button>
   </header>
 
   <!-- Tela Inicial (3 Quadrados) -->
   <div class="main-screen" id="mainScreen">
     <h1 class="app-title">TV Player</h1>
     <div class="card-container">
-      <div class="menu-card" onclick="openCategory('channels')">
-        <i data-lucide="tv" size="52"></i>
+      <div class="menu-card" tabindex="1" onclick="openCategory('channels')">
+        <i data-lucide="tv" size="48"></i>
         <span class="card-label">CANAIS</span>
         <div class="card-divider"></div>
       </div>
-      <div class="menu-card" onclick="openCategory('movies')">
-        <i data-lucide="clapperboard" size="52"></i>
+      <div class="menu-card" tabindex="2" onclick="openCategory('movies')">
+        <i data-lucide="clapperboard" size="48"></i>
         <span class="card-label">FILMES</span>
         <div class="card-divider"></div>
       </div>
-      <div class="menu-card" onclick="openCategory('series')">
-        <i data-lucide="layers" size="52"></i>
+      <div class="menu-card" tabindex="3" onclick="openCategory('series')">
+        <i data-lucide="layers" size="48"></i>
         <span class="card-label">SÉRIES</span>
         <div class="card-divider"></div>
       </div>
     </div>
   </div>
 
-  <!-- Tela de Conteúdo (Menu Lateral e Lista) -->
+  <!-- Tela de Conteúdo (Pastas e Canais) -->
   <div class="content-screen" id="contentScreen">
     <div class="sidebar" id="sidebar"></div>
     <div class="item-grid" id="itemGrid"></div>
@@ -298,36 +284,25 @@
 
   <!-- Reprodutor de Vídeo -->
   <div class="player-overlay" id="playerOverlay">
-    <button class="btn-icon close-player" onclick="closePlayer()">
-      <i data-lucide="x" size="24"></i>
+    <button class="btn-back btn-player-back" onclick="closePlayer()">
+      <i data-lucide="arrow-left" size="20"></i>
+      <span>Voltar</span>
     </button>
     <video id="videoPlayer" controls autoplay></video>
   </div>
 
-  <!-- Modal de Configurações -->
-  <div class="modal" id="settingsModal">
-    <div class="modal-content">
-      <h2>Configurações do Aparelho</h2>
-      <p style="margin-top: 10px; color: #888; font-size: 0.85rem;">Código do seu dispositivo para vincular no painel:</p>
-      <div class="device-id-box" id="deviceIdDisplay">------</div>
-
-      <label style="font-size: 0.85rem; color: #aaa;">Link M3U Direto (Para Teste Manual):</label>
-      <input type="text" id="m3uUrlInput" placeholder="https://exemplo.com/lista.m3u" style="margin-top: 5px;">
-
-      <button class="btn-primary" onclick="saveM3uUrl()">Carregar Lista</button>
-      <button class="btn-primary" onclick="closeSettings()" style="background: transparent; color: #888; margin-top: 5px;">Fechar</button>
-    </div>
-  </div>
-
   <script>
-    // Inicialização de Ícones
     lucide.createIcons();
 
-    // Estado da Aplicação
     let playlistData = [];
-    let currentType = 'channels'; // channels, movies, series
+    let currentScreen = 'main'; // 'main', 'content', 'player'
 
-    // Gerar ou Recuperar Código Único do Dispositivo
+    // Tentar travar a orientação para Landscape no carregamento
+    if (screen.orientation && screen.orientation.lock) {
+      screen.orientation.lock('landscape').catch(() => {});
+    }
+
+    // Gerar / Mostrar Código Único do Aparelho
     function getDeviceId() {
       let id = localStorage.getItem('DEVICE_ID');
       if (!id) {
@@ -337,81 +312,42 @@
       return id;
     }
 
-    document.getElementById('deviceIdDisplay').innerText = getDeviceId();
+    document.getElementById('displayDeviceId').innerText = getDeviceId();
 
-    // Navegação
-    function openSettings() {
-      document.getElementById('settingsModal').style.display = 'flex';
-      const savedUrl = localStorage.getItem('M3U_URL') || '';
-      document.getElementById('m3uUrlInput').value = savedUrl;
-    }
-
-    function closeSettings() {
-      document.getElementById('settingsModal').style.display = 'none';
-    }
-
-    function showMainScreen() {
-      document.getElementById('mainScreen').style.display = 'flex';
-      document.getElementById('contentScreen').style.display = 'none';
-    }
-
-    // Leitura e Processamento da Lista M3U
-    async function saveM3uUrl() {
-      const url = document.getElementById('m3uUrlInput').value.trim();
-      if (!url) return alert('Por favor, informe uma URL válida.');
-
-      localStorage.setItem('M3U_URL', url);
-      closeSettings();
-      await fetchAndParseM3u(url);
-    }
-
-    async function fetchAndParseM3u(url) {
-      try {
-        const response = await fetch(url);
-        const text = await response.text();
-        playlistData = parseM3U(text);
-        alert('Lista M3U carregada com sucesso!');
-      } catch (err) {
-        alert('Erro ao carregar a lista M3U. Verifique a URL ou permissões de CORS.');
+    // Navegação (Voltar)
+    function goBack() {
+      if (currentScreen === 'content') {
+        document.getElementById('mainScreen').style.display = 'flex';
+        document.getElementById('contentScreen').style.display = 'none';
+        document.getElementById('btnBackHeader').style.display = 'none';
+        currentScreen = 'main';
       }
     }
 
-    function parseM3U(m3uText) {
-      const lines = m3uText.split('\n');
-      const items = [];
-      let currentItem = null;
-
-      for (let line of lines) {
-        line = line.trim();
-        if (line.startsWith('#EXTINF:')) {
-          const name = line.split(',')[1] || 'Sem Nome';
-          const groupMatch = line.match(/group-title="([^"]+)"/);
-          const group = groupMatch ? groupMatch[1] : 'Geral';
-          
-          currentItem = { name, group, url: '' };
-        } else if (line && !line.startsWith('#') && currentItem) {
-          currentItem.url = line;
-          items.push(currentItem);
-          currentItem = null;
+    // Suporte ao Botão Voltar do Controle Remoto (Tecla ESC ou Backspace)
+    document.addEventListener('keydown', (e) => {
+      if (e.key === 'Escape' || e.key === 'Backspace' || e.keyCode === 10009 || e.keyCode === 27) {
+        if (currentScreen === 'player') {
+          closePlayer();
+        } else if (currentScreen === 'content') {
+          goBack();
         }
       }
-      return items;
-    }
+    });
 
-    // Renderização das Categorias e Conteúdo
     function openCategory(type) {
-      currentType = type;
+      currentScreen = 'content';
       document.getElementById('mainScreen').style.display = 'none';
       document.getElementById('contentScreen').style.display = 'flex';
+      document.getElementById('btnBackHeader').style.display = 'flex';
 
       const sidebar = document.getElementById('sidebar');
       sidebar.innerHTML = '';
 
-      // Agrupar por Pastas
       const groups = [...new Set(playlistData.map(item => item.group))];
-      
+
       if (groups.length === 0) {
-        sidebar.innerHTML = '<div class="category-item">Nenhuma pasta encontrada</div>';
+        sidebar.innerHTML = '<div class="category-item">Aguardando lista do painel...</div>';
         return;
       }
 
@@ -433,7 +369,6 @@
     function renderItems(groupName) {
       const grid = document.getElementById('itemGrid');
       grid.innerHTML = '';
-
       const filtered = playlistData.filter(item => item.group === groupName);
 
       filtered.forEach(item => {
@@ -445,8 +380,8 @@
       });
     }
 
-    // Execução do Player de Vídeo
     function playStream(url) {
+      currentScreen = 'player';
       const overlay = document.getElementById('playerOverlay');
       const video = document.getElementById('videoPlayer');
       overlay.style.display = 'block';
@@ -466,13 +401,8 @@
       video.pause();
       video.src = '';
       overlay.style.display = 'none';
+      currentScreen = 'content';
     }
-
-    // Carregar Lista Existente se houver
-    window.onload = () => {
-      const savedUrl = localStorage.getItem('M3U_URL');
-      if (savedUrl) fetchAndParseM3u(savedUrl);
-    };
   </script>
 </body>
 </html>
