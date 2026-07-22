@@ -4,7 +4,7 @@
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
   
-  <!-- Configurações para ocultar navegador e rodar como App Nativo -->
+  <!-- Configurações para rodar como WebApp -->
   <meta name="mobile-web-app-capable" content="yes">
   <meta name="apple-mobile-web-app-capable" content="yes">
   <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
@@ -40,7 +40,6 @@
       flex-direction: column;
     }
 
-    /* Trava/Força Orientação Horizontal se a tela for muito alta (vertical) */
     @media screen and (orientation: portrait) {
       body {
         transform: rotate(90deg);
@@ -53,7 +52,6 @@
       }
     }
 
-    /* Cabeçalho */
     header {
       display: flex;
       justify-content: space-between;
@@ -100,7 +98,6 @@
       transform: scale(1.05);
     }
 
-    /* Tela Principal */
     .main-screen {
       flex: 1;
       display: flex;
@@ -162,7 +159,6 @@
       margin-top: 8px;
     }
 
-    /* Navegação Interna */
     .content-screen {
       display: none;
       flex: 1;
@@ -219,7 +215,6 @@
       background: #252525;
     }
 
-    /* Player de Vídeo */
     .player-overlay {
       display: none;
       position: fixed;
@@ -251,7 +246,6 @@
 </head>
 <body>
 
-  <!-- Cabeçalho -->
   <header>
     <div class="device-id-badge">
       CÓDIGO: <span id="displayDeviceId">------</span>
@@ -263,7 +257,6 @@
     </button>
   </header>
 
-  <!-- Tela Inicial (3 Quadrados) -->
   <div class="main-screen" id="mainScreen">
     <h1 class="app-title">TV Player</h1>
     <div class="card-container">
@@ -285,13 +278,11 @@
     </div>
   </div>
 
-  <!-- Tela de Conteúdo -->
   <div class="content-screen" id="contentScreen">
     <div class="sidebar" id="sidebar"></div>
     <div class="item-grid" id="itemGrid"></div>
   </div>
 
-  <!-- Reprodutor de Vídeo -->
   <div class="player-overlay" id="playerOverlay">
     <button class="btn-back btn-player-back" onclick="closePlayer()">
       <i data-lucide="arrow-left" size="20"></i>
@@ -303,7 +294,6 @@
   <script>
     lucide.createIcons();
 
-    // Configurações do seu Firebase (Projeto Bolão)
     const firebaseConfig = {
       apiKey: "AIzaSyA_G6wZX1LGYBdnwMonMd-srnV_ktBPMNU",
       authDomain: "bolao-d2baf.firebaseapp.com",
@@ -314,14 +304,12 @@
       appId: "1:955171998764:web:2ccf8f2b6f23c300755589"
     };
 
-    // Inicializar Firebase
     firebase.initializeApp(firebaseConfig);
     const db = firebase.firestore();
 
     let playlistData = [];
     let currentScreen = 'main';
 
-    // Ativar Tela Cheia no primeiro toque/clique do usuário
     document.addEventListener('click', function enableFullscreen() {
       const elem = document.documentElement;
       if (elem.requestFullscreen) {
@@ -331,12 +319,10 @@
       }
     }, { once: true });
 
-    // Travar orientação
     if (screen.orientation && screen.orientation.lock) {
       screen.orientation.lock('landscape').catch(() => {});
     }
 
-    // Gerar ID do Aparelho
     function getDeviceId() {
       let id = localStorage.getItem('DEVICE_ID');
       if (!id) {
@@ -349,7 +335,6 @@
     const deviceId = getDeviceId();
     document.getElementById('displayDeviceId').innerText = deviceId;
 
-    // Sincronizar e escutar alterações no Firebase para este Aparelho
     function syncWithFirebase() {
       db.collection('dispositivos').doc(deviceId).onSnapshot(doc => {
         if (doc.exists && doc.data().m3uUrl) {
@@ -364,74 +349,93 @@
       });
     }
 
-    // Baixar e processar o arquivo de lista M3U com múltiplos proxies de reserva
+    // Leitor HTTP avançado com fallback de proxy
     async function fetchAndParseM3u(url) {
-      const proxies = [
-        (u) => `https://api.allorigins.win/raw?url=${encodeURIComponent(u)}`,
-        (u) => `https://thingproxy.freeboard.io/fetch/${u}`,
-        (u) => u // Conexão direta sem proxy
+      const proxyList = [
+        `https://api.allorigins.win/get?url=${encodeURIComponent(url)}`,
+        `https://contentsproxy.handlebars.workers.dev/?url=${encodeURIComponent(url)}`,
+        url
       ];
 
-      let text = null;
+      let rawContent = null;
 
-      for (const getProxyUrl of proxies) {
+      for (const targetUrl of proxyList) {
         try {
-          const targetUrl = getProxyUrl(url);
-          console.log("Tentando carregar lista via:", targetUrl);
-          const response = await fetch(targetUrl);
-          
-          if (response.ok) {
-            text = await response.text();
-            if (text && text.includes('#EXTINF')) {
-              break; // Sucesso ao obter a lista
+          console.log("Baixando M3U via:", targetUrl);
+          const res = await fetch(targetUrl);
+          if (res.ok) {
+            if (targetUrl.includes('allorigins.win/get')) {
+              const json = await res.json();
+              rawContent = json.contents;
+            } else {
+              rawContent = await res.text();
+            }
+
+            if (rawContent && rawContent.includes('#EXTINF')) {
+              console.log("M3U baixada com sucesso!");
+              break;
             }
           }
         } catch (e) {
-          console.warn("Proxy falhou ou foi bloqueado, tentando o próximo...", e);
+          console.warn("Tentativa falhou, tentando próxima rota...", e);
         }
       }
 
-      if (text) {
-        playlistData = parseM3U(text);
-        console.log("Lista carregada com sucesso! Total de itens:", playlistData.length);
+      if (rawContent) {
+        playlistData = parseM3U(rawContent);
+        console.log("Total de itens processados:", playlistData.length);
 
-        // Se a tela de conteúdo já estiver aberta, atualiza
         if (currentScreen === 'content') {
           openCategory('channels');
         }
       } else {
-        console.error("Não foi possível carregar a lista M3U em nenhum dos proxies.");
+        console.error("Falha ao obter conteúdo da M3U.");
       }
     }
 
-    // Leitor e extrator de itens M3U
+    // Processador de estrutura M3U / M3U_PLUS
     function parseM3U(m3uText) {
-      const lines = m3uText.split('\n');
-      const result = [];
-      let currentItem = {};
+      if (!m3uText) return [];
 
-      lines.forEach(line => {
-        line = line.trim();
+      const lines = m3uText.replace(/\r\n/g, '\n').replace(/\r/g, '\n').split('\n');
+      const items = [];
+      let currentGroup = 'Geral';
+      let currentName = '';
+
+      for (let i = 0; i < lines.length; i++) {
+        const line = lines[i].trim();
+
         if (line.startsWith('#EXTINF:')) {
-          // Extrai o grupo do canal tratando aspas e espaços
+          // Extrai o grupo do canal
           const groupMatch = line.match(/group-title="([^"]+)"/) || line.match(/group-title=([^\s,]+)/);
-          const nameParts = line.split(',');
-          
-          currentItem.group = groupMatch ? groupMatch[1].trim() : 'Geral';
-          currentItem.name = nameParts[nameParts.length - 1].trim();
-        } else if (line && !line.startsWith('#')) {
-          currentItem.url = line;
-          if (currentItem.name && currentItem.url) {
-            result.push({ ...currentItem });
+          if (groupMatch) {
+            currentGroup = groupMatch[1].replace(/"/g, '').trim();
+          } else {
+            currentGroup = 'Geral';
           }
-          currentItem = {};
-        }
-      });
 
-      return result;
+          // Extrai o nome do canal
+          const nameIdx = line.lastIndexOf(',');
+          if (nameIdx !== -1) {
+            currentName = line.substring(nameIdx + 1).trim();
+          } else {
+            currentName = 'Sem Nome';
+          }
+        } else if (line && !line.startsWith('#')) {
+          if (currentName) {
+            items.push({
+              name: currentName,
+              group: currentGroup,
+              url: line
+            });
+            currentName = '';
+          }
+        }
+      }
+
+      return items;
     }
 
-    // Navegação Voltar
     function goBack() {
       if (currentScreen === 'content') {
         document.getElementById('mainScreen').style.display = 'flex';
@@ -441,7 +445,6 @@
       }
     }
 
-    // Atalhos para Controle Remoto
     document.addEventListener('keydown', (e) => {
       if (e.key === 'Escape' || e.key === 'Backspace' || e.keyCode === 10009 || e.keyCode === 27) {
         if (currentScreen === 'player') {
@@ -464,7 +467,7 @@
       const groups = [...new Set(playlistData.map(item => item.group))];
 
       if (groups.length === 0) {
-        sidebar.innerHTML = '<div class="category-item">Aguardando lista do painel...</div>';
+        sidebar.innerHTML = '<div class="category-item">Nenhum canal encontrado...</div>';
         return;
       }
 
@@ -503,7 +506,7 @@
       const video = document.getElementById('videoPlayer');
       overlay.style.display = 'block';
 
-      if (Hls.isSupported() && url.includes('.m3u8')) {
+      if (Hls.isSupported() && (url.includes('.m3u8') || url.includes('output=ts'))) {
         const hls = new Hls();
         hls.loadSource(url);
         hls.attachMedia(video);
@@ -521,7 +524,6 @@
       currentScreen = 'content';
     }
 
-    // Iniciar a busca automática assim que o app carrega
     window.addEventListener('DOMContentLoaded', () => {
       syncWithFirebase();
     });
