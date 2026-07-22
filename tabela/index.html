@@ -364,19 +364,29 @@
       });
     }
 
-    // Baixar e processar o arquivo de lista M3U
+    // Baixar e processar o arquivo de lista M3U (com Proxy para evitar bloqueio de CORS e HTTP)
     async function fetchAndParseM3u(url) {
       try {
-        const response = await fetch(url);
+        const proxyUrl = 'https://corsproxy.io/?' + encodeURIComponent(url);
+        const response = await fetch(proxyUrl);
         const text = await response.text();
         playlistData = parseM3U(text);
         
+        console.log("Lista carregada com sucesso! Total de itens:", playlistData.length);
+
         // Se a tela de conteúdo já estiver aberta, atualiza a lista exibida
         if (currentScreen === 'content') {
           openCategory('channels');
         }
       } catch (error) {
-        console.error("Erro ao carregar a lista M3U:", error);
+        console.error("Erro ao carregar via proxy, tentando conexão direta...", error);
+        try {
+          const responseDirect = await fetch(url);
+          const textDirect = await responseDirect.text();
+          playlistData = parseM3U(textDirect);
+        } catch (e) {
+          console.error("Erro final ao carregar lista M3U:", e);
+        }
       }
     }
 
