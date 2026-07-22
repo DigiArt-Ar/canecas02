@@ -349,51 +349,34 @@
       });
     }
 
-    // Leitor HTTP avançado com fallback de proxy
+    // Baixar e processar o arquivo M3U via Cloudflare Worker próprio
     async function fetchAndParseM3u(url) {
-      const proxyList = [
-        `https://api.allorigins.win/get?url=${encodeURIComponent(url)}`,
-        `https://contentsproxy.handlebars.workers.dev/?url=${encodeURIComponent(url)}`,
-        url
-      ];
+      const myWorkerUrl = 'https://proxy-tv.djmauriciobarcellos.workers.dev/?url=';
+      const targetUrl = myWorkerUrl + encodeURIComponent(url);
 
-      let rawContent = null;
+      try {
+        console.log("Baixando M3U pelo Cloudflare Worker...");
+        const response = await fetch(targetUrl);
+        
+        if (response.ok) {
+          const rawContent = await response.text();
+          if (rawContent && rawContent.includes('#EXTINF')) {
+            playlistData = parseM3U(rawContent);
+            console.log("Lista carregada com sucesso! Total de itens:", playlistData.length);
 
-      for (const targetUrl of proxyList) {
-        try {
-          console.log("Baixando M3U via:", targetUrl);
-          const res = await fetch(targetUrl);
-          if (res.ok) {
-            if (targetUrl.includes('allorigins.win/get')) {
-              const json = await res.json();
-              rawContent = json.contents;
-            } else {
-              rawContent = await res.text();
+            if (currentScreen === 'content') {
+              openCategory('channels');
             }
-
-            if (rawContent && rawContent.includes('#EXTINF')) {
-              console.log("M3U baixada com sucesso!");
-              break;
-            }
+            return;
           }
-        } catch (e) {
-          console.warn("Tentativa falhou, tentando próxima rota...", e);
         }
-      }
-
-      if (rawContent) {
-        playlistData = parseM3U(rawContent);
-        console.log("Total de itens processados:", playlistData.length);
-
-        if (currentScreen === 'content') {
-          openCategory('channels');
-        }
-      } else {
-        console.error("Falha ao obter conteúdo da M3U.");
+        console.error("O servidor retornou um conteúdo inválido.");
+      } catch (e) {
+        console.error("Erro na requisição via Worker:", e);
       }
     }
 
-    // Processador de estrutura M3U / M3U_PLUS
+    // Processador da estrutura M3U / M3U_PLUS
     function parseM3U(m3uText) {
       if (!m3uText) return [];
 
@@ -406,7 +389,6 @@
         const line = lines[i].trim();
 
         if (line.startsWith('#EXTINF:')) {
-          // Extrai o grupo do canal
           const groupMatch = line.match(/group-title="([^"]+)"/) || line.match(/group-title=([^\s,]+)/);
           if (groupMatch) {
             currentGroup = groupMatch[1].replace(/"/g, '').trim();
@@ -414,7 +396,6 @@
             currentGroup = 'Geral';
           }
 
-          // Extrai o nome do canal
           const nameIdx = line.lastIndexOf(',');
           if (nameIdx !== -1) {
             currentName = line.substring(nameIdx + 1).trim();
@@ -467,7 +448,7 @@
       const groups = [...new Set(playlistData.map(item => item.group))];
 
       if (groups.length === 0) {
-        sidebar.innerHTML = '<div class="category-item">Nenhum canal encontrado...</div>';
+        sidebar.innerHTML = '<div class="category-item">Aguardando lista...</div>';
         return;
       }
 
