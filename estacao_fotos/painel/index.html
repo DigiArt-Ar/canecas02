@@ -5,7 +5,6 @@
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>DigiArt AR - Painel do Operador</title>
 
-  <!-- Script para gerar QR Code -->
   <script src="https://cdnjs.cloudflare.com/ajax/libs/qrcodejs/1.0.0/qrcode.min.js"></script>
 
   <style>
@@ -107,16 +106,17 @@
       cursor: not-allowed;
     }
 
-    /* 2. PAINEL DO OPERADOR AO VIVO */
+    /* 2. PAINEL DO OPERADOR AO VIVO (COM ESCALA AJUSTADA PARA CABER TUDO) */
     #dashboardContainer {
       width: 100%;
       height: 100vh;
       display: none;
       flex-direction: column;
+      zoom: 0.9; /* Reduz levemente a escala para não cortar os botões inferiores */
     }
 
     header {
-      height: 80px;
+      height: 75px;
       background-color: #121212;
       border-bottom: 2px solid #00FF00;
       display: flex;
@@ -220,8 +220,8 @@
     .main-content {
       flex: 1;
       display: flex;
-      padding: 15px;
-      gap: 15px;
+      padding: 12px;
+      gap: 12px;
       overflow: hidden;
     }
 
@@ -240,7 +240,7 @@
       flex-direction: column;
       align-items: center;
       justify-content: space-between;
-      padding: 15px;
+      padding: 12px;
       position: relative;
     }
 
@@ -248,7 +248,7 @@
       align-self: flex-start;
       font-size: 0.9rem;
       color: #00FF00;
-      margin-bottom: 10px;
+      margin-bottom: 8px;
     }
 
     .highlight-viewer {
@@ -270,9 +270,9 @@
     /* BOTÕES DA FOTO SELECIONADA */
     .action-bar {
       display: flex;
-      gap: 15px;
+      gap: 12px;
       width: 100%;
-      margin-top: 15px;
+      margin-top: 10px;
     }
 
     .btn-action-print {
@@ -280,7 +280,7 @@
       background-color: #00FF00;
       color: #000;
       border: none;
-      padding: 14px;
+      padding: 12px;
       border-radius: 8px;
       font-weight: bold;
       font-size: 1rem;
@@ -296,7 +296,7 @@
       background-color: #331010;
       color: #ff4d4d;
       border: 1px solid #ff4d4d;
-      padding: 14px;
+      padding: 12px;
       border-radius: 8px;
       font-weight: bold;
       font-size: 0.9rem;
@@ -316,14 +316,14 @@
       flex: 1.2;
       display: flex;
       flex-direction: column;
-      gap: 15px;
+      gap: 12px;
     }
 
     .qrcode-box {
       background-color: #141414;
       border: 1px solid #333;
       border-radius: 12px;
-      padding: 12px;
+      padding: 10px;
       display: flex;
       align-items: center;
       justify-content: space-around;
@@ -348,17 +348,17 @@
       border-radius: 12px;
       display: flex;
       flex-direction: column;
-      padding: 15px;
+      padding: 12px;
     }
 
     .queue-header {
-      margin-bottom: 12px;
-      padding-bottom: 8px;
+      margin-bottom: 10px;
+      padding-bottom: 6px;
       border-bottom: 1px solid #222;
     }
 
     .queue-header h2 {
-      font-size: 1rem;
+      font-size: 0.95rem;
       color: #fff;
     }
 
@@ -367,16 +367,16 @@
       overflow-y: auto;
       display: flex;
       flex-direction: column;
-      gap: 10px;
+      gap: 8px;
     }
 
     .queue-item {
       background-color: #1c1c1c;
       border: 1px solid #333;
       border-radius: 8px;
-      padding: 10px;
+      padding: 8px;
       display: flex;
-      gap: 12px;
+      gap: 10px;
       align-items: center;
       cursor: pointer;
       transition: border-color 0.2s;
@@ -388,8 +388,8 @@
     }
 
     .queue-thumb {
-      width: 50px;
-      height: 70px;
+      width: 45px;
+      height: 60px;
       object-fit: cover;
       border-radius: 4px;
       background-color: #000;
@@ -413,7 +413,6 @@
 </head>
 <body>
 
-  <!-- 1. TELA DE CONFIGURAÇÃO DO EVENTO -->
   <div id="setupScreen">
     <div class="setup-card">
       <h1>DigiArt AR</h1>
@@ -438,7 +437,6 @@
     </div>
   </div>
 
-  <!-- 2. PAINEL DO OPERADOR AO VIVO -->
   <div id="dashboardContainer">
     <header>
       <div class="logo-area">
@@ -480,7 +478,6 @@
             <p style="color:#555;">Aguardando fotos dos convidados...</p>
           </div>
 
-          <!-- AÇÕES PARA A FOTO DESTAQUE -->
           <div class="action-bar">
             <button class="btn-action-print" id="btnActionPrint" disabled>🖨️ IMPRIMIR FOTO</button>
             <button class="btn-action-delete" id="btnActionDelete" disabled>🗑️ EXCLUIR</button>
@@ -504,7 +501,6 @@
     </div>
   </div>
 
-  <!-- LÓGICA E FIREBASE -->
   <script type="module">
     import { initializeApp } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-app.js";
     import { getFirestore, collection, query, orderBy, onSnapshot, updateDoc, doc, setDoc, deleteDoc } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-firestore.js";
@@ -684,7 +680,6 @@
       if (unsubscribeSnapshot) unsubscribeSnapshot();
 
       const fotosRef = collection(db, "eventos", currentEventId, "fotos");
-      // MUDANÇA CRUCIAL: 'asc' ordena da mais antiga para a mais recente (ordem de chegada real)
       const q = query(fotosRef, orderBy("criadoEm", "asc"));
 
       unsubscribeSnapshot = onSnapshot(q, (snapshot) => {
@@ -723,7 +718,7 @@
           queueList.appendChild(item);
         });
 
-        // Se houver fotos e nenhuma estiver selecionada, seleciona a PRIMEIRA da fila (a mais antiga)
+        // Se houver fotos e nenhuma estiver selecionada, seleciona a PRIMEIRA da fila
         if (pendentesArray.length > 0) {
           if (!fotoSelecionadaAtual || !pendentesArray.some(f => f.id === fotoSelecionadaAtual.id)) {
             selecionarFotoParaDestaque(pendentesArray[0]);
@@ -740,7 +735,6 @@
       btnActionPrint.disabled = false;
       btnActionDelete.disabled = false;
 
-      // Marca visualmente o item selecionado
       document.querySelectorAll(".queue-item").forEach(el => el.classList.remove("selected"));
     }
 
@@ -771,7 +765,7 @@
       }
     });
 
-    // IMPRESSÃO SILENCIOSA
+    // IMPRESSÃO SILENCIOSA E PREENCHIMENTO TOTAL DO PAPEL
     async function executarImpressao(id, url) {
       let iframe = document.getElementById("printFrame");
       if (!iframe) {
@@ -789,12 +783,29 @@
       const docIframe = iframe.contentWindow.document;
       docIframe.open();
       docIframe.write(`
+        <!DOCTYPE html>
         <html>
           <head>
             <style>
-              @page { margin: 0; size: auto; }
-              body { margin: 0; display: flex; justify-content: center; align-items: center; background: #fff; }
-              img { max-width: 100%; max-height: 100vh; object-fit: contain; }
+              @page {
+                margin: 0 !important;
+                padding: 0 !important;
+                size: auto;
+              }
+              html, body {
+                margin: 0 !important;
+                padding: 0 !important;
+                width: 100% !important;
+                height: 100% !important;
+                overflow: hidden !important;
+                background-color: #ffffff;
+              }
+              img {
+                width: 100vw !important;
+                height: 100vh !important;
+                object-fit: cover !important;
+                display: block;
+              }
             </style>
           </head>
           <body>
