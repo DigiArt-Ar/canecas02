@@ -136,7 +136,6 @@
       color: #888;
     }
 
-    /* BLOCO DE DADOS DO EVENTO */
     .event-info-box {
       background-color: #1a1a1a;
       border: 1px solid #333;
@@ -201,7 +200,6 @@
       color: #00FF00;
     }
 
-    /* BOTÃO FINALIZAR EVENTO */
     .btn-finish {
       background-color: #2a0a0a;
       color: #ff4d4d;
@@ -241,22 +239,21 @@
       display: flex;
       flex-direction: column;
       align-items: center;
-      justify-content: center;
+      justify-content: space-between;
       padding: 15px;
       position: relative;
     }
 
     .highlight-section h2 {
-      position: absolute;
-      top: 12px;
-      left: 15px;
+      align-self: flex-start;
       font-size: 0.9rem;
       color: #00FF00;
+      margin-bottom: 10px;
     }
 
     .highlight-viewer {
+      flex: 1;
       width: 100%;
-      height: 100%;
       display: flex;
       align-items: center;
       justify-content: center;
@@ -268,6 +265,51 @@
       max-height: 100%;
       object-fit: contain;
       border-radius: 6px;
+    }
+
+    /* BOTÕES DA FOTO SELECIONADA */
+    .action-bar {
+      display: flex;
+      gap: 15px;
+      width: 100%;
+      margin-top: 15px;
+    }
+
+    .btn-action-print {
+      flex: 2;
+      background-color: #00FF00;
+      color: #000;
+      border: none;
+      padding: 14px;
+      border-radius: 8px;
+      font-weight: bold;
+      font-size: 1rem;
+      cursor: pointer;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      gap: 8px;
+    }
+
+    .btn-action-delete {
+      flex: 1;
+      background-color: #331010;
+      color: #ff4d4d;
+      border: 1px solid #ff4d4d;
+      padding: 14px;
+      border-radius: 8px;
+      font-weight: bold;
+      font-size: 0.9rem;
+      cursor: pointer;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      gap: 8px;
+    }
+
+    .btn-action-print:disabled, .btn-action-delete:disabled {
+      opacity: 0.4;
+      cursor: not-allowed;
     }
 
     .right-column {
@@ -332,10 +374,17 @@
       background-color: #1c1c1c;
       border: 1px solid #333;
       border-radius: 8px;
-      padding: 8px;
+      padding: 10px;
       display: flex;
-      gap: 10px;
+      gap: 12px;
       align-items: center;
+      cursor: pointer;
+      transition: border-color 0.2s;
+    }
+
+    .queue-item:hover, .queue-item.selected {
+      border-color: #00FF00;
+      background-color: #242424;
     }
 
     .queue-thumb {
@@ -351,20 +400,14 @@
     }
 
     .queue-info p {
-      font-size: 0.8rem;
-      color: #aaa;
-      margin-bottom: 5px;
+      font-size: 0.85rem;
+      color: #fff;
+      font-weight: bold;
     }
 
-    .btn-print {
-      background-color: #00FF00;
-      color: #000;
-      border: none;
-      padding: 6px 12px;
-      border-radius: 6px;
-      font-weight: bold;
-      font-size: 0.8rem;
-      cursor: pointer;
+    .queue-info span {
+      font-size: 0.75rem;
+      color: #888;
     }
   </style>
 </head>
@@ -403,7 +446,6 @@
         <span>Estação de Fotos</span>
       </div>
 
-      <!-- DADOS DETALHADOS DO EVENTO -->
       <div class="event-info-box">
         <span>Evento Ativo</span>
         <strong id="infoEventId">---</strong>
@@ -426,16 +468,22 @@
         </div>
       </div>
 
-      <!-- BOTÃO DE FINALIZAR -->
       <button class="btn-finish" id="btnFinishEvent">FINALIZAR EVENTO</button>
     </header>
 
     <div class="main-content">
       <div class="left-column">
         <section class="highlight-section">
-          <h2>📸 Última Foto Capturada</h2>
+          <h2>📸 Visualizador de Foto Selecionada</h2>
+          
           <div class="highlight-viewer" id="highlightViewer">
             <p style="color:#555;">Aguardando fotos dos convidados...</p>
+          </div>
+
+          <!-- AÇÕES PARA A FOTO DESTAQUE -->
+          <div class="action-bar">
+            <button class="btn-action-print" id="btnActionPrint" disabled>🖨️ IMPRIMIR FOTO</button>
+            <button class="btn-action-delete" id="btnActionDelete" disabled>🗑️ EXCLUIR</button>
           </div>
         </section>
       </div>
@@ -448,7 +496,7 @@
 
         <section class="queue-section">
           <div class="queue-header">
-            <h2>Fila de Impressão</h2>
+            <h2>Fila de Impressão (Ordem de Chegada)</h2>
           </div>
           <div class="queue-list" id="queueList"></div>
         </section>
@@ -459,7 +507,7 @@
   <!-- LÓGICA E FIREBASE -->
   <script type="module">
     import { initializeApp } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-app.js";
-    import { getFirestore, collection, query, orderBy, onSnapshot, updateDoc, doc, setDoc, getDoc } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-firestore.js";
+    import { getFirestore, collection, query, orderBy, onSnapshot, updateDoc, doc, setDoc, deleteDoc } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-firestore.js";
 
     const firebaseConfig = {
       apiKey: "AIzaSyB9cempkBujGI2cOzpNLmMWzYEp1nrOogI",
@@ -492,10 +540,14 @@
     const countQueue = document.getElementById("countQueue");
     const countPrinted = document.getElementById("countPrinted");
 
+    const btnActionPrint = document.getElementById("btnActionPrint");
+    const btnActionDelete = document.getElementById("btnActionDelete");
+
     let currentEventId = "";
     let totalImpressas = 0;
     let timerInterval = null;
     let unsubscribeSnapshot = null;
+    let fotoSelecionadaAtual = null; // { id, fotoUrl }
 
     function converterParaBase64(file) {
       return new Promise((resolve, reject) => {
@@ -506,15 +558,14 @@
       });
     }
 
-    // AVISO ANTES DE FECHAR OU ATUALIZAR A PÁGINA
+    // AVISO ANTES DE ATUALIZAR A PÁGINA
     window.addEventListener("beforeunload", (e) => {
       if (currentEventId) {
         e.preventDefault();
-        e.returnValue = ""; // Mostra o alerta padrão do navegador
+        e.returnValue = "";
       }
     });
 
-    // VERIFICA SE JÁ EXISTE UM EVENTO EM ANDAMENTO (PROTEÇÃO F5)
     async function restaurarSessaoAtiva() {
       const eventoSalvo = localStorage.getItem("digiart_evento_ativo");
       const tempoFimSalvo = localStorage.getItem("digiart_tempo_fim");
@@ -565,14 +616,12 @@
         const horas = parseInt(inputEventHours.value) || 4;
         const tempoFimTimestamp = Date.now() + (horas * 3600 * 1000);
 
-        // Salva na nuvem
         await setDoc(doc(db, "eventos", currentEventId), {
           nome: currentEventId,
           molduraUrl: molduraBase64,
           criadoEm: agora
         }, { merge: true });
 
-        // Salva localmente para proteção contra F5
         localStorage.setItem("digiart_evento_ativo", currentEventId);
         localStorage.setItem("digiart_tempo_fim", tempoFimTimestamp);
         localStorage.setItem("digiart_data_inicio", agora.toISOString());
@@ -589,7 +638,7 @@
 
       } catch (erro) {
         console.error("Erro ao iniciar evento:", erro);
-        alert("Erro no Firestore. Verifique se publicou as Regras no Firestore!");
+        alert("Erro no Firestore!");
         btnStartEvent.innerText = "INICIAR EVENTO";
         btnStartEvent.disabled = false;
       }
@@ -597,9 +646,8 @@
 
     // FINALIZAR EVENTO
     btnFinishEvent.addEventListener("click", () => {
-      const confirma = confirm(`Tem certeza que deseja FINALIZAR o evento "${currentEventId}"?\n\nO painel voltará para a tela inicial.`);
+      const confirma = confirm(`Tem certeza que deseja FINALIZAR o evento "${currentEventId}"?`);
       if (confirma) {
-        // Limpa Estado Local
         localStorage.removeItem("digiart_evento_ativo");
         localStorage.removeItem("digiart_tempo_fim");
         localStorage.removeItem("digiart_data_inicio");
@@ -609,10 +657,9 @@
 
         currentEventId = "";
         totalImpressas = 0;
-        countPrinted.innerText = "0";
-        countQueue.innerText = "0";
+        fotoSelecionadaAtual = null;
+        limparDestaque();
 
-        // Transiciona Telas
         dashboardContainer.style.display = "none";
         setupScreen.style.display = "flex";
         btnStartEvent.innerText = "INICIAR EVENTO";
@@ -632,15 +679,18 @@
       });
     }
 
+    // MONITORAR FILA (ORDEM DE CHEGADA: ASC)
     function monitorarFotos() {
       if (unsubscribeSnapshot) unsubscribeSnapshot();
 
       const fotosRef = collection(db, "eventos", currentEventId, "fotos");
-      const q = query(fotosRef, orderBy("criadoEm", "desc"));
+      // MUDANÇA CRUCIAL: 'asc' ordena da mais antiga para a mais recente (ordem de chegada real)
+      const q = query(fotosRef, orderBy("criadoEm", "asc"));
 
       unsubscribeSnapshot = onSnapshot(q, (snapshot) => {
         queueList.innerHTML = "";
         let contadorPendentes = 0;
+        let pendentesArray = [];
 
         snapshot.forEach((docSnap) => {
           const foto = docSnap.data();
@@ -648,38 +698,80 @@
 
           if (foto.status === "pendente") {
             contadorPendentes++;
-
-            const item = document.createElement("div");
-            item.className = "queue-item";
-            item.innerHTML = `
-              <img src="${foto.fotoUrl}" class="queue-thumb" alt="Miniatura">
-              <div class="queue-info">
-                <p>Recebida agora</p>
-                <button class="btn-print" data-id="${foto.id}" data-url="${foto.fotoUrl}">IMPRIMIR</button>
-              </div>
-            `;
-            queueList.appendChild(item);
+            pendentesArray.push(foto);
           }
         });
 
         countQueue.innerText = contadorPendentes;
 
-        if (!snapshot.empty) {
-          const ultimaFoto = snapshot.docs[0].data();
-          highlightViewer.innerHTML = `<img src="${ultimaFoto.fotoUrl}" alt="Última Foto">`;
-        }
+        // Renderiza itens da fila
+        pendentesArray.forEach((foto, idx) => {
+          const item = document.createElement("div");
+          item.className = `queue-item ${fotoSelecionadaAtual && fotoSelecionadaAtual.id === foto.id ? 'selected' : ''}`;
+          item.innerHTML = `
+            <img src="${foto.fotoUrl}" class="queue-thumb" alt="Miniatura">
+            <div class="queue-info">
+              <p>Foto #${idx + 1}</p>
+              <span>Aguardando impressão</span>
+            </div>
+          `;
 
-        document.querySelectorAll(".btn-print").forEach(btn => {
-          btn.addEventListener("click", async (e) => {
-            const fotoId = e.target.getAttribute("data-id");
-            const fotoUrl = e.target.getAttribute("data-url");
-            await executarImpressao(fotoId, fotoUrl);
+          item.addEventListener("click", () => {
+            selecionarFotoParaDestaque(foto);
           });
+
+          queueList.appendChild(item);
         });
+
+        // Se houver fotos e nenhuma estiver selecionada, seleciona a PRIMEIRA da fila (a mais antiga)
+        if (pendentesArray.length > 0) {
+          if (!fotoSelecionadaAtual || !pendentesArray.some(f => f.id === fotoSelecionadaAtual.id)) {
+            selecionarFotoParaDestaque(pendentesArray[0]);
+          }
+        } else {
+          limparDestaque();
+        }
       });
     }
 
-    // IMPRESSÃO SILENCIOSA / DIRETA COM IFRAME INVISÍVEL
+    function selecionarFotoParaDestaque(foto) {
+      fotoSelecionadaAtual = foto;
+      highlightViewer.innerHTML = `<img src="${foto.fotoUrl}" alt="Foto Destaque">`;
+      btnActionPrint.disabled = false;
+      btnActionDelete.disabled = false;
+
+      // Marca visualmente o item selecionado
+      document.querySelectorAll(".queue-item").forEach(el => el.classList.remove("selected"));
+    }
+
+    function limparDestaque() {
+      fotoSelecionadaAtual = null;
+      highlightViewer.innerHTML = `<p style="color:#555;">Aguardando fotos dos convidados...</p>`;
+      btnActionPrint.disabled = true;
+      btnActionDelete.disabled = true;
+    }
+
+    // BOTAO IMPRIMIR FOTO DA TELA PRINCIPAL
+    btnActionPrint.addEventListener("click", async () => {
+      if (!fotoSelecionadaAtual) return;
+
+      const { id, fotoUrl } = fotoSelecionadaAtual;
+      await executarImpressao(id, fotoUrl);
+    });
+
+    // BOTAO EXCLUIR FOTO DA TELA PRINCIPAL
+    btnActionDelete.addEventListener("click", async () => {
+      if (!fotoSelecionadaAtual) return;
+
+      const confirma = confirm("Deseja realmente excluir esta foto da fila?");
+      if (confirma) {
+        const fotoRef = doc(db, "eventos", currentEventId, "fotos", fotoSelecionadaAtual.id);
+        await deleteDoc(fotoRef);
+        limparDestaque();
+      }
+    });
+
+    // IMPRESSÃO SILENCIOSA
     async function executarImpressao(id, url) {
       let iframe = document.getElementById("printFrame");
       if (!iframe) {
@@ -717,11 +809,11 @@
 
       totalImpressas++;
       countPrinted.innerText = totalImpressas;
+      limparDestaque();
     }
 
     function iniciarCronometroComSegundos(segundosTotais) {
       if (timerInterval) clearInterval(timerInterval);
-
       let tempoRestante = segundosTotais;
 
       const atualizarTela = () => {
@@ -743,7 +835,6 @@
       timerInterval = setInterval(atualizarTela, 1000);
     }
 
-    // CHECA AO CARREGAR A PÁGINA SE DEVE RESTAURAR A SESSÃO
     window.addEventListener("DOMContentLoaded", () => {
       restaurarSessaoAtiva();
     });
