@@ -123,6 +123,7 @@
       justify-content: space-between;
       align-items: center;
       padding: 0 25px;
+      gap: 15px;
     }
 
     .logo-area h1 {
@@ -198,6 +199,24 @@
     .stat-card h3 {
       font-size: 1.1rem;
       color: #00FF00;
+    }
+
+    /* BOTÃO FINALIZAR EVENTO */
+    .btn-finish {
+      background-color: #2a0a0a;
+      color: #ff4d4d;
+      border: 1px solid #ff4d4d;
+      padding: 10px 16px;
+      border-radius: 8px;
+      font-weight: bold;
+      font-size: 0.85rem;
+      cursor: pointer;
+      transition: all 0.2s ease;
+    }
+
+    .btn-finish:hover {
+      background-color: #ff4d4d;
+      color: #000000;
     }
 
     .main-content {
@@ -406,6 +425,9 @@
           <h3 id="countPrinted">0</h3>
         </div>
       </div>
+
+      <!-- BOTÃO DE FINALIZAR -->
+      <button class="btn-finish" id="btnFinishEvent">FINALIZAR EVENTO</button>
     </header>
 
     <div class="main-content">
@@ -437,7 +459,7 @@
   <!-- LÓGICA E FIREBASE -->
   <script type="module">
     import { initializeApp } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-app.js";
-    import { getFirestore, collection, query, orderBy, onSnapshot, updateDoc, doc, setDoc } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-firestore.js";
+    import { getFirestore, collection, query, orderBy, onSnapshot, updateDoc, doc, setDoc, getDoc } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-firestore.js";
 
     const firebaseConfig = {
       apiKey: "AIzaSyB9cempkBujGI2cOzpNLmMWzYEp1nrOogI",
@@ -460,6 +482,7 @@
     const inputEventHours = document.getElementById("inputEventHours");
     const inputFrameFile = document.getElementById("inputFrameFile");
     const btnStartEvent = document.getElementById("btnStartEvent");
+    const btnFinishEvent = document.getElementById("btnFinishEvent");
 
     const infoEventId = document.getElementById("infoEventId");
     const infoEventDate = document.getElementById("infoEventDate");
@@ -471,6 +494,8 @@
 
     let currentEventId = "";
     let totalImpressas = 0;
+    let timerInterval = null;
+    let unsubscribeSnapshot = null;
 
     function converterParaBase64(file) {
       return new Promise((resolve, reject) => {
@@ -481,7 +506,43 @@
       });
     }
 
-    // BOTÃO DE INICIAR EVENTO
+    // AVISO ANTES DE FECHAR OU ATUALIZAR A PÁGINA
+    window.addEventListener("beforeunload", (e) => {
+      if (currentEventId) {
+        e.preventDefault();
+        e.returnValue = ""; // Mostra o alerta padrão do navegador
+      }
+    });
+
+    // VERIFICA SE JÁ EXISTE UM EVENTO EM ANDAMENTO (PROTEÇÃO F5)
+    async function restaurarSessaoAtiva() {
+      const eventoSalvo = localStorage.getItem("digiart_evento_ativo");
+      const tempoFimSalvo = localStorage.getItem("digiart_tempo_fim");
+      const dataInicioSalva = localStorage.getItem("digiart_data_inicio");
+
+      if (eventoSalvo) {
+        currentEventId = eventoSalvo;
+        
+        setupScreen.style.display = "none";
+        dashboardContainer.style.display = "flex";
+
+        infoEventId.innerText = currentEventId;
+        if (dataInicioSalva) {
+          const dt = new Date(dataInicioSalva);
+          infoEventDate.innerText = `Início: ${dt.toLocaleDateString('pt-BR')} ${dt.toLocaleTimeString('pt-BR', {hour: '2-digit', minute:'2-digit'})}`;
+        }
+
+        gerarQRCodeCliente(currentEventId);
+        monitorarFotos();
+
+        if (tempoFimSalvo) {
+          const restanteSegundos = Math.max(0, Math.floor((parseInt(tempoFimSalvo) - Date.now()) / 1000));
+          iniciarCronometroComSegundos(restanteSegundos);
+        }
+      }
+    }
+
+    // INICIAR EVENTO
     btnStartEvent.addEventListener("click", async () => {
       const eventIdRaw = inputEventId.value.trim().toLowerCase().replace(/\s+/g, '-');
       if (!eventIdRaw) {
@@ -501,28 +562,59 @@
         }
 
         const agora = new Date();
+        const horas = parseInt(inputEventHours.value) || 4;
+        const tempoFimTimestamp = Date.now() + (horas * 3600 * 1000);
 
-        // Salva direto no Firestore (Não depende do Storage!)
+        // Salva na nuvem
         await setDoc(doc(db, "eventos", currentEventId), {
           nome: currentEventId,
           molduraUrl: molduraBase64,
           criadoEm: agora
         }, { merge: true });
 
+        // Salva localmente para proteção contra F5
+        localStorage.setItem("digiart_evento_ativo", currentEventId);
+        localStorage.setItem("digiart_tempo_fim", tempoFimTimestamp);
+        localStorage.setItem("digiart_data_inicio", agora.toISOString());
+
         setupScreen.style.display = "none";
         dashboardContainer.style.display = "flex";
 
-        // Exibe Dados do Evento no Header
         infoEventId.innerText = currentEventId;
         infoEventDate.innerText = `Início: ${agora.toLocaleDateString('pt-BR')} ${agora.toLocaleTimeString('pt-BR', {hour: '2-digit', minute:'2-digit'})}`;
 
         gerarQRCodeCliente(currentEventId);
-        iniciarCronometro(parseInt(inputEventHours.value) || 4);
+        iniciarCronometroComSegundos(horas * 3600);
         monitorarFotos();
 
       } catch (erro) {
         console.error("Erro ao iniciar evento:", erro);
         alert("Erro no Firestore. Verifique se publicou as Regras no Firestore!");
+        btnStartEvent.innerText = "INICIAR EVENTO";
+        btnStartEvent.disabled = false;
+      }
+    });
+
+    // FINALIZAR EVENTO
+    btnFinishEvent.addEventListener("click", () => {
+      const confirma = confirm(`Tem certeza que deseja FINALIZAR o evento "${currentEventId}"?\n\nO painel voltará para a tela inicial.`);
+      if (confirma) {
+        // Limpa Estado Local
+        localStorage.removeItem("digiart_evento_ativo");
+        localStorage.removeItem("digiart_tempo_fim");
+        localStorage.removeItem("digiart_data_inicio");
+
+        if (timerInterval) clearInterval(timerInterval);
+        if (unsubscribeSnapshot) unsubscribeSnapshot();
+
+        currentEventId = "";
+        totalImpressas = 0;
+        countPrinted.innerText = "0";
+        countQueue.innerText = "0";
+
+        // Transiciona Telas
+        dashboardContainer.style.display = "none";
+        setupScreen.style.display = "flex";
         btnStartEvent.innerText = "INICIAR EVENTO";
         btnStartEvent.disabled = false;
       }
@@ -541,10 +633,12 @@
     }
 
     function monitorarFotos() {
+      if (unsubscribeSnapshot) unsubscribeSnapshot();
+
       const fotosRef = collection(db, "eventos", currentEventId, "fotos");
       const q = query(fotosRef, orderBy("criadoEm", "desc"));
 
-      onSnapshot(q, (snapshot) => {
+      unsubscribeSnapshot = onSnapshot(q, (snapshot) => {
         queueList.innerHTML = "";
         let contadorPendentes = 0;
 
@@ -625,9 +719,12 @@
       countPrinted.innerText = totalImpressas;
     }
 
-    function iniciarCronometro(horas) {
-      let tempoRestante = horas * 3600;
-      setInterval(() => {
+    function iniciarCronometroComSegundos(segundosTotais) {
+      if (timerInterval) clearInterval(timerInterval);
+
+      let tempoRestante = segundosTotais;
+
+      const atualizarTela = () => {
         if (tempoRestante > 0) {
           tempoRestante--;
           let h = Math.floor(tempoRestante / 3600);
@@ -637,9 +734,19 @@
             String(h).padStart(2, '0') + ":" + 
             String(m).padStart(2, '0') + ":" + 
             String(s).padStart(2, '0');
+        } else {
+          countdownTimer.innerText = "00:00:00";
         }
-      }, 1000);
+      };
+
+      atualizarTela();
+      timerInterval = setInterval(atualizarTela, 1000);
     }
+
+    // CHECA AO CARREGAR A PÁGINA SE DEVE RESTAURAR A SESSÃO
+    window.addEventListener("DOMContentLoaded", () => {
+      restaurarSessaoAtiva();
+    });
   </script>
 </body>
 </html>
