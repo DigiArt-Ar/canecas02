@@ -1,0 +1,598 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>DigiArt AR - Painel do Operador</title>
+
+  <!-- Biblioteca para gerar o QR Code na tela -->
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/qrcodejs/1.0.0/qrcode.min.js"></script>
+  
+  <style>
+    * {
+      box-sizing: border-box;
+      margin: 0;
+      padding: 0;
+      user-select: none;
+    }
+
+    body, html {
+      width: 100%;
+      height: 100vh;
+      background-color: #0b0b0b;
+      color: #ffffff;
+      font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
+      overflow: hidden;
+    }
+
+    /* ------------------------------------------------------------- */
+    /* 1. TELA DE CONFIGURAÇÃO INICIAL (FORMULÁRIO) */
+    /* ------------------------------------------------------------- */
+    .setup-screen {
+      width: 100%;
+      height: 100vh;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      background-color: #000000;
+      position: absolute;
+      top: 0; left: 0;
+      z-index: 200;
+    }
+
+    .setup-card {
+      background-color: #141414;
+      border: 2px solid #00FF00;
+      border-radius: 16px;
+      padding: 30px;
+      width: 100%;
+      max-width: 480px;
+      box-shadow: 0 0 20px rgba(0, 255, 0, 0.15);
+    }
+
+    .setup-card h1 {
+      color: #00FF00;
+      font-size: 1.8rem;
+      margin-bottom: 5px;
+      text-align: center;
+    }
+
+    .setup-card p {
+      color: #aaa;
+      font-size: 0.9rem;
+      margin-bottom: 25px;
+      text-align: center;
+    }
+
+    .form-group {
+      margin-bottom: 18px;
+    }
+
+    .form-group label {
+      display: block;
+      font-size: 0.85rem;
+      color: #00FF00;
+      margin-bottom: 8px;
+      font-weight: bold;
+    }
+
+    .form-group input {
+      width: 100%;
+      padding: 12px;
+      border-radius: 8px;
+      border: 1px solid #333;
+      background-color: #1c1c1c;
+      color: #fff;
+      font-size: 1rem;
+      outline: none;
+    }
+
+    .form-group input:focus {
+      border-color: #00FF00;
+    }
+
+    .btn-start {
+      width: 100%;
+      padding: 14px;
+      border-radius: 8px;
+      border: none;
+      background-color: #00FF00;
+      color: #000;
+      font-size: 1.1rem;
+      font-weight: bold;
+      cursor: pointer;
+      margin-top: 10px;
+      transition: transform 0.1s ease;
+    }
+
+    .btn-start:active {
+      transform: scale(0.98);
+    }
+
+    /* ------------------------------------------------------------- */
+    /* 2. PAINEL DO OPERADOR DA FESTA (AO VIVO) */
+    /* ------------------------------------------------------------- */
+    .dashboard-container {
+      width: 100%;
+      height: 100vh;
+      display: flex;
+      flex-direction: column;
+    }
+
+    header {
+      height: 80px;
+      background-color: #121212;
+      border-bottom: 2px solid #00FF00;
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      padding: 0 25px;
+    }
+
+    .logo-area h1 {
+      color: #00FF00;
+      font-size: 1.4rem;
+    }
+
+    .logo-area span {
+      font-size: 0.85rem;
+      color: #888;
+    }
+
+    .timer-box {
+      background-color: #1a1a1a;
+      border: 1px solid #333;
+      padding: 6px 18px;
+      border-radius: 8px;
+      text-align: center;
+    }
+
+    .timer-box span {
+      display: block;
+      font-size: 0.7rem;
+      color: #aaa;
+      text-transform: uppercase;
+    }
+
+    .timer-box h2 {
+      color: #00FF00;
+      font-size: 1.3rem;
+      font-family: monospace;
+    }
+
+    .stats-box {
+      display: flex;
+      gap: 15px;
+    }
+
+    .stat-card {
+      background-color: #1a1a1a;
+      padding: 6px 12px;
+      border-radius: 8px;
+      border: 1px solid #333;
+      text-align: center;
+    }
+
+    .stat-card span {
+      font-size: 0.7rem;
+      color: #888;
+    }
+
+    .stat-card h3 {
+      font-size: 1.1rem;
+      color: #00FF00;
+    }
+
+    .main-content {
+      flex: 1;
+      display: flex;
+      padding: 15px;
+      gap: 15px;
+      overflow: hidden;
+    }
+
+    /* COLUNA DA ESQUERDA: QR CODE E FOTO DESTAQUE */
+    .left-column {
+      flex: 2;
+      display: flex;
+      flex-direction: column;
+      gap: 15px;
+    }
+
+    .highlight-section {
+      flex: 1;
+      background-color: #141414;
+      border: 2px solid #222;
+      border-radius: 12px;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      padding: 15px;
+      position: relative;
+    }
+
+    .highlight-section h2 {
+      position: absolute;
+      top: 12px;
+      left: 15px;
+      font-size: 0.9rem;
+      color: #00FF00;
+    }
+
+    .highlight-viewer {
+      width: 100%;
+      height: 100%;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      overflow: hidden;
+    }
+
+    .highlight-viewer img {
+      max-width: 100%;
+      max-height: 100%;
+      object-fit: contain;
+      border-radius: 6px;
+    }
+
+    /* COLUNA DA DIREITA: FILA DE IMPRESSÃO + QR CODE */
+    .right-column {
+      flex: 1.2;
+      display: flex;
+      flex-direction: column;
+      gap: 15px;
+    }
+
+    .qrcode-box {
+      background-color: #141414;
+      border: 1px solid #333;
+      border-radius: 12px;
+      padding: 12px;
+      display: flex;
+      align-items: center;
+      justify-content: space-around;
+    }
+
+    .qrcode-box p {
+      font-size: 0.85rem;
+      color: #aaa;
+      max-width: 120px;
+    }
+
+    #qrcodeCanvas {
+      background-color: #fff;
+      padding: 5px;
+      border-radius: 6px;
+    }
+
+    .queue-section {
+      flex: 1;
+      background-color: #141414;
+      border: 2px solid #222;
+      border-radius: 12px;
+      display: flex;
+      flex-direction: column;
+      padding: 15px;
+    }
+
+    .queue-header {
+      margin-bottom: 12px;
+      padding-bottom: 8px;
+      border-bottom: 1px solid #222;
+    }
+
+    .queue-header h2 {
+      font-size: 1rem;
+      color: #fff;
+    }
+
+    .queue-list {
+      flex: 1;
+      overflow-y: auto;
+      display: flex;
+      flex-direction: column;
+      gap: 10px;
+    }
+
+    .queue-item {
+      background-color: #1c1c1c;
+      border: 1px solid #333;
+      border-radius: 8px;
+      padding: 8px;
+      display: flex;
+      gap: 10px;
+      align-items: center;
+    }
+
+    .queue-thumb {
+      width: 50px;
+      height: 70px;
+      object-fit: cover;
+      border-radius: 4px;
+      background-color: #000;
+    }
+
+    .queue-info {
+      flex: 1;
+    }
+
+    .queue-info p {
+      font-size: 0.8rem;
+      color: #aaa;
+      margin-bottom: 5px;
+    }
+
+    .btn-print {
+      background-color: #00FF00;
+      color: #000;
+      border: none;
+      padding: 6px 12px;
+      border-radius: 6px;
+      font-weight: bold;
+      font-size: 0.8rem;
+      cursor: pointer;
+    }
+  </style>
+</head>
+<body>
+
+  <!-- 1. TELA DE CONFIGURAÇÃO DO EVENTO -->
+  <div class="setup-screen" id="setupScreen">
+    <div class="setup-card">
+      <h1>DigiArt AR</h1>
+      <p>Configuração do Novo Evento</p>
+
+      <div class="form-group">
+        <label>Identificador da Festa (ID sem espaços):</label>
+        <input type="text" id="inputEventId" placeholder="Ex: maria15, casamentogabi" value="festa-teste">
+      </div>
+
+      <div class="form-group">
+        <label>Duração do Evento (Horas):</label>
+        <input type="number" id="inputEventHours" value="4" min="1" max="12">
+      </div>
+
+      <div class="form-group">
+        <label>Moldura do Evento (Imagem PNG):</label>
+        <input type="file" id="inputFrameFile" accept="image/png">
+      </div>
+
+      <button class="btn-start" id="btnStartEvent">INICIAR EVENTO</button>
+    </div>
+  </div>
+
+  <!-- 2. PAINEL DO OPERADOR AO VIVO -->
+  <div class="dashboard-container" id="dashboardContainer" style="display: none;">
+    
+    <header>
+      <div class="logo-area">
+        <h1>DigiArt AR</h1>
+        <span id="displayEventName">Evento: ---</span>
+      </div>
+
+      <div class="timer-box">
+        <span>Tempo Restante</span>
+        <h2 id="countdownTimer">00:00:00</h2>
+      </div>
+
+      <div class="stats-box">
+        <div class="stat-card">
+          <span>Na Fila</span>
+          <h3 id="countQueue">0</h3>
+        </div>
+        <div class="stat-card">
+          <span>Impressas</span>
+          <h3 id="countPrinted">0</h3>
+        </div>
+      </div>
+    </header>
+
+    <div class="main-content">
+      
+      <div class="left-column">
+        <section class="highlight-section">
+          <h2>📸 Última Foto Capturada</h2>
+          <div class="highlight-viewer" id="highlightViewer">
+            <p style="color:#555;">Aguardando fotos dos convidados...</p>
+          </div>
+        </section>
+      </div>
+
+      <div class="right-column">
+        
+        <!-- Bloco do QR Code da Festa -->
+        <div class="qrcode-box">
+          <div>
+            <p><strong>Escaneie para tirar foto:</strong></p>
+          </div>
+          <div id="qrcodeCanvas"></div>
+        </div>
+
+        <section class="queue-section">
+          <div class="queue-header">
+            <h2>Fila de Impressão</h2>
+          </div>
+          <div class="queue-list" id="queueList"></div>
+        </section>
+
+      </div>
+
+    </div>
+
+  </div>
+
+  <!-- LÓGICA E FIREBASE -->
+  <script type="module">
+    import { initializeApp } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-app.js";
+    import { getFirestore, collection, query, orderBy, onSnapshot, updateDoc, doc, setDoc } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-firestore.js";
+    import { getStorage, ref, uploadBytes, getDownloadURL } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-storage.js";
+
+    const firebaseConfig = {
+      apiKey: "AIzaSyB9cempkBujGI2cOzpNLmMWzYEp1nrOogI",
+      authDomain: "estacao-de-fotos.firebaseapp.com",
+      projectId: "estacao-de-fotos",
+      storageBucket: "estacao-de-fotos.firebasestorage.app",
+      messagingSenderId: "227871054513",
+      appId: "1:227871054513:web:8588dfa40f8a9da6166090",
+      measurementId: "G-3CTFM7HHZQ"
+    };
+
+    const app = initializeApp(firebaseConfig);
+    const db = getFirestore(app);
+    const storage = getStorage(app);
+
+    // ELEMENTOS
+    const setupScreen = document.getElementById("setupScreen");
+    const dashboardContainer = document.getElementById("dashboardContainer");
+
+    const inputEventId = document.getElementById("inputEventId");
+    const inputEventHours = document.getElementById("inputEventHours");
+    const inputFrameFile = document.getElementById("inputFrameFile");
+    const btnStartEvent = document.getElementById("btnStartEvent");
+
+    const displayEventName = document.getElementById("displayEventName");
+    const countdownTimer = document.getElementById("countdownTimer");
+    const highlightViewer = document.getElementById("highlightViewer");
+    const queueList = document.getElementById("queueList");
+    const countQueue = document.getElementById("countQueue");
+    const countPrinted = document.getElementById("countPrinted");
+
+    let currentEventId = "";
+    let totalImpressas = 0;
+
+    // BOTÃO DE INICIAR EVENTO
+    btnStartEvent.addEventListener("click", async () => {
+      const eventIdRaw = inputEventId.value.trim().toLowerCase().replace(/\s+/g, '-');
+      if (!eventIdRaw) {
+        alert("Por favor, informe o ID do evento!");
+        return;
+      }
+
+      currentEventId = eventIdRaw;
+      btnStartEvent.innerText = "CARREGANDO...";
+      btnStartEvent.disabled = true;
+
+      let molduraUrl = "";
+
+      // Upload da Moldura se selecionada
+      if (inputFrameFile.files.length > 0) {
+        const file = inputFrameFile.files[0];
+        const storageRef = ref(storage, `eventos/${currentEventId}/moldura.png`);
+        await uploadBytes(storageRef, file);
+        molduraUrl = await getDownloadURL(storageRef);
+      }
+
+      // Salva no Firestore
+      await setDoc(doc(db, "eventos", currentEventId), {
+        nome: currentEventId,
+        molduraUrl: molduraUrl,
+        criadoEm: new Date()
+      }, { merge: true });
+
+      // Oculta tela inicial e mostra o painel
+      setupScreen.style.display = "none";
+      dashboardContainer.style.display = "flex";
+      displayEventName.innerText = `Evento: ${currentEventId}`;
+
+      // Gera o QR Code para os convidados
+      gerarQRCodeCliente(currentEventId);
+
+      // Inicia o tempo e a escuta de fotos
+      iniciarCronometro(parseInt(inputEventHours.value) || 4);
+      monitorarFotos();
+    });
+
+    // GERAR QR CODE DA CÂMERA
+    function gerarQRCodeCliente(eventId) {
+      // Pega o endereço base de onde o repositório está rodando no GitHub Pages
+      const urlBase = window.location.href.split('/painel')[0];
+      const linkCamera = `${urlBase}/camera/?evento=${eventId}`;
+
+      document.getElementById("qrcodeCanvas").innerHTML = "";
+      new QRCode(document.getElementById("qrcodeCanvas"), {
+        text: linkCamera,
+        width: 100,
+        height: 100
+      });
+    }
+
+    // MONITORAR FOTOS EM TEMPO REAL
+    function monitorarFotos() {
+      const fotosRef = collection(db, "eventos", currentEventId, "fotos");
+      const q = query(fotosRef, orderBy("criadoEm", "desc"));
+
+      onSnapshot(q, (snapshot) => {
+        queueList.innerHTML = "";
+        let contadorPendentes = 0;
+
+        snapshot.forEach((docSnap) => {
+          const foto = docSnap.data();
+          foto.id = docSnap.id;
+
+          if (foto.status === "pendente") {
+            contadorPendentes++;
+
+            const item = document.createElement("div");
+            item.className = "queue-item";
+            item.innerHTML = `
+              <img src="${foto.fotoUrl}" class="queue-thumb" alt="Miniatura">
+              <div class="queue-info">
+                <p>Recebida agora</p>
+                <button class="btn-print" data-id="${foto.id}" data-url="${foto.fotoUrl}">IMPRIMIR</button>
+              </div>
+            `;
+            queueList.appendChild(item);
+          }
+        });
+
+        countQueue.innerText = contadorPendentes;
+
+        if (!snapshot.empty) {
+          const ultimaFoto = snapshot.docs[0].data();
+          highlightViewer.innerHTML = `<img src="${ultimaFoto.fotoUrl}" alt="Última Foto">`;
+        }
+
+        document.querySelectorAll(".btn-print").forEach(btn => {
+          btn.addEventListener("click", async (e) => {
+            const fotoId = e.target.getAttribute("data-id");
+            const fotoUrl = e.target.getAttribute("data-url");
+            await executarImpressao(fotoId, fotoUrl);
+          });
+        });
+      });
+    }
+
+    // IMPRESSÃO E STATUS
+    async function executarImpressao(id, url) {
+      const janelaImpressao = window.open(url, "_blank");
+      if (janelaImpressao) {
+        janelaImpressao.onload = function() { janelaImpressao.print(); };
+      }
+
+      const fotoRef = doc(db, "eventos", currentEventId, "fotos", id);
+      await updateDoc(fotoRef, { status: "impressa" });
+
+      totalImpressas++;
+      countPrinted.innerText = totalImpressas;
+    }
+
+    // CRONÔMETRO
+    function iniciarCronometro(horas) {
+      let tempoRestante = horas * 3600;
+      setInterval(() => {
+        if (tempoRestante > 0) {
+          tempoRestante--;
+          let h = Math.floor(tempoRestante / 3600);
+          let m = Math.floor((tempoRestante % 3600) / 60);
+          let s = tempoRestante % 60;
+          countdownTimer.innerText = 
+            String(h).padStart(2, '0') + ":" + 
+            String(m).padStart(2, '0') + ":" + 
+            String(s).padStart(2, '0');
+        }
+      }, 1000);
+    }
+  </script>
+</body>
+</html>
