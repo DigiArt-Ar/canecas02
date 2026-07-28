@@ -5,7 +5,6 @@
   <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
   <title>DigiArt AR - Câmera do Evento</title>
   
-  <!-- 1. ESTILOS VISUAIS DA TELA -->
   <style>
     * {
       box-sizing: border-box;
@@ -15,33 +14,31 @@
       -webkit-user-select: none;
     }
 
-    body, html {
+    html, body {
       width: 100%;
       height: 100%;
+      height: 100dvh;
       background-color: #000000;
       font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
       overflow: hidden;
     }
 
     .camera-container {
-      width: 100vw;
-      height: 100vh;
+      width: 100%;
+      height: 100%;
+      height: 100dvh;
       display: flex;
       flex-direction: column;
-      justify-content: space-between;
-      align-items: center;
       position: relative;
+      background-color: #000;
     }
 
-    /* Container que mantém a proporção e enquadramento */
+    /* Visualização da Câmera */
     .viewport-box {
       position: relative;
       width: 100%;
-      max-width: 500px;
       flex: 1;
-      margin-top: 10px;
-      background-color: #111;
-      border-radius: 12px;
+      background-color: #000;
       overflow: hidden;
       display: flex;
       align-items: center;
@@ -57,7 +54,6 @@
       left: 0;
     }
 
-    /* Moldura PNG sempre sobreposta */
     #frameOverlay {
       position: absolute;
       top: 0;
@@ -69,20 +65,22 @@
       z-index: 10;
     }
 
-    /* Barra dos Botões no Rodapé */
+    /* Barra de Controle Fixa no Rodapé */
     .controls-bar {
-      height: 120px;
+      position: absolute;
+      bottom: 0;
+      left: 0;
       width: 100%;
+      height: 110px;
       display: flex;
       align-items: center;
-      justify-content: center;
-      gap: 20px;
+      justify-content: space-around;
       padding: 0 20px;
-      background: linear-gradient(to top, rgba(0,0,0,0.9), transparent);
-      z-index: 20;
+      background: linear-gradient(to top, rgba(0,0,0,0.95), rgba(0,0,0,0.4), transparent);
+      z-index: 30;
     }
 
-    /* Botão Redondo de Tirar Foto */
+    /* Botão de Tirar Foto */
     .btn-capture {
       width: 75px;
       height: 75px;
@@ -94,7 +92,7 @@
       justify-content: center;
       cursor: pointer;
       outline: none;
-      transition: transform 0.1s ease;
+      box-shadow: 0 0 15px rgba(0, 255, 0, 0.4);
     }
 
     .btn-capture:active {
@@ -108,11 +106,30 @@
       background-color: #FFFFFF;
     }
 
-    /* Botões de Ação (Refazer / Enviar) */
+    /* Botão de Inverter Câmera */
+    .btn-flip {
+      width: 50px;
+      height: 50px;
+      border-radius: 50%;
+      background-color: rgba(255, 255, 255, 0.2);
+      border: 2px solid #FFFFFF;
+      color: #FFFFFF;
+      font-size: 1.4rem;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      cursor: pointer;
+    }
+
+    .btn-spacer {
+      width: 50px;
+    }
+
+    /* Botões Refazer / Enviar */
     .btn-action {
       flex: 1;
-      max-width: 160px;
-      padding: 15px;
+      max-width: 140px;
+      padding: 14px;
       border-radius: 25px;
       border: none;
       font-size: 1rem;
@@ -123,18 +140,20 @@
     .btn-retake {
       background-color: #333333;
       color: #FFFFFF;
+      border: 1px solid #555;
     }
 
     .btn-send {
       background-color: #00FF00;
       color: #000000;
+      box-shadow: 0 0 10px rgba(0, 255, 0, 0.5);
     }
 
-    /* Pop-up de Status */
+    /* Modal de Status */
     .status-modal {
       position: fixed;
       top: 0; left: 0; right: 0; bottom: 0;
-      background-color: rgba(0, 0, 0, 0.85);
+      background-color: rgba(0, 0, 0, 0.9);
       display: flex;
       align-items: center;
       justify-content: center;
@@ -164,7 +183,6 @@
       margin-bottom: 20px;
     }
 
-    /* Animação do Carregando */
     .spinner {
       width: 40px;
       height: 40px;
@@ -189,8 +207,7 @@
 </head>
 <body>
 
-  <!-- 2. ESTRUTURA VISUAL -->
-  <main class="camera-container" id="cameraScreen">
+  <main class="camera-container">
     <div class="viewport-box">
       <video id="videoFeed" autoplay playsinline muted></video>
       <canvas id="photoCanvas" style="display: none;"></canvas>
@@ -198,35 +215,36 @@
       <img id="photoPreview" src="" alt="Sua Foto" style="display: none;">
     </div>
 
+    <!-- BARRA TIRA FOTO -->
     <div class="controls-bar" id="controlsCapture">
+      <div class="btn-spacer"></div>
       <button class="btn-capture" id="btnCapture" title="Tirar Foto">
         <div class="inner-circle"></div>
       </button>
+      <button class="btn-flip" id="btnFlip" title="Inverter Câmera">🔄</button>
     </div>
 
+    <!-- BARRA REVISÃO (REFAZER / ENVIAR) -->
     <div class="controls-bar" id="controlsReview" style="display: none;">
       <button class="btn-action btn-retake" id="btnRetake">Refazer</button>
       <button class="btn-action btn-send" id="btnSend">Enviar Foto</button>
     </div>
   </main>
 
-  <!-- POP-UP DE STATUS -->
+  <!-- POP-UP STATUS -->
   <div class="status-modal" id="statusModal" style="display: none;">
     <div class="status-content">
       <div class="spinner" id="statusSpinner"></div>
       <h3 id="statusTitle">Enviando sua foto...</h3>
-      <p id="statusMessage">Aguarde um momento enquanto preparamos a impressão.</p>
+      <p id="statusMessage">Aguarde um momento enquanto enviamos para a fila de impressão.</p>
       <button class="btn-action btn-close" id="btnCloseModal" style="display: none;">Tirar Outra Foto</button>
     </div>
   </div>
 
-  <!-- 3. LÓGICA E CONEXÃO COM O FIREBASE -->
   <script type="module">
     import { initializeApp } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-app.js";
     import { getFirestore, collection, addDoc, doc, getDoc, serverTimestamp } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-firestore.js";
-    import { getStorage, ref, uploadString, getDownloadURL } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-storage.js";
 
-    // SUAS CREDENCIAIS DO FIREBASE
     const firebaseConfig = {
       apiKey: "AIzaSyB9cempkBujGI2cOzpNLmMWzYEp1nrOogI",
       authDomain: "estacao-de-fotos.firebaseapp.com",
@@ -237,18 +255,16 @@
       measurementId: "G-3CTFM7HHZQ"
     };
 
-    // INICIALIZAÇÃO
     const app = initializeApp(firebaseConfig);
     const db = getFirestore(app);
-    const storage = getStorage(app);
 
-    // ELEMENTOS
     const videoFeed = document.getElementById("videoFeed");
     const photoCanvas = document.getElementById("photoCanvas");
     const frameOverlay = document.getElementById("frameOverlay");
     const photoPreview = document.getElementById("photoPreview");
 
     const btnCapture = document.getElementById("btnCapture");
+    const btnFlip = document.getElementById("btnFlip");
     const btnRetake = document.getElementById("btnRetake");
     const btnSend = document.getElementById("btnSend");
 
@@ -261,26 +277,42 @@
     const statusSpinner = document.getElementById("statusSpinner");
     const btnCloseModal = document.getElementById("btnCloseModal");
 
+    let currentStream = null;
+    let facingMode = "environment"; // Inicia com a câmera TRASEIRA
     let capturedDataUrl = null;
     let currentEventId = null;
 
     function obterIdEventoUrl() {
       const params = new URLSearchParams(window.location.search);
-      return params.get("evento") || "evento-teste";
+      return params.get("evento") || "festa-teste";
     }
 
     async function iniciarCamera() {
+      if (currentStream) {
+        currentStream.getTracks().forEach(track => track.stop());
+      }
+
       try {
-        const stream = await navigator.mediaDevices.getUserMedia({
-          video: { facingMode: "user" },
+        currentStream = await navigator.mediaDevices.getUserMedia({
+          video: { facingMode: facingMode },
           audio: false
         });
-        videoFeed.srcObject = stream;
+        videoFeed.srcObject = currentStream;
       } catch (err) {
-        alert("Não foi possível acessar a câmera. Verifique as permissões do seu navegador.");
-        console.error("Erro na câmera:", err);
+        // Se falhar na traseira, tenta qualquer uma
+        try {
+          currentStream = await navigator.mediaDevices.getUserMedia({ video: true, audio: false });
+          videoFeed.srcObject = currentStream;
+        } catch (e) {
+          alert("Permita o acesso à câmera no seu navegador.");
+        }
       }
     }
+
+    btnFlip.addEventListener("click", () => {
+      facingMode = (facingMode === "environment") ? "user" : "environment";
+      iniciarCamera();
+    });
 
     async function carregarMolduraEvento() {
       currentEventId = obterIdEventoUrl();
@@ -293,7 +325,7 @@
           frameOverlay.style.display = "block";
         }
       } catch (err) {
-        console.log("Sem moldura para o evento:", currentEventId);
+        console.log("Sem moldura personalizada encontrada.");
       }
     }
 
@@ -305,13 +337,24 @@
       photoCanvas.height = height;
 
       const ctx = photoCanvas.getContext("2d");
+      
+      // Espelha horizontalmente se for câmera frontal
+      if (facingMode === "user") {
+        ctx.translate(width, 0);
+        ctx.scale(-1, 1);
+      }
+
       ctx.drawImage(videoFeed, 0, 0, width, height);
+
+      // Reseta a matriz para a moldura não ficar espelhada
+      ctx.setTransform(1, 0, 0, 1, 0, 0);
 
       if (frameOverlay.src && frameOverlay.style.display !== "none") {
         ctx.drawImage(frameOverlay, 0, 0, width, height);
       }
 
-      capturedDataUrl = photoCanvas.toDataURL("image/jpeg", 0.88);
+      // Compacta em JPEG com qualidade 0.75 para envio ultrarrápido ao Firestore
+      capturedDataUrl = photoCanvas.toDataURL("image/jpeg", 0.75);
       photoPreview.src = capturedDataUrl;
       photoPreview.style.display = "block";
       videoFeed.style.display = "none";
@@ -335,32 +378,27 @@
       statusModal.style.display = "flex";
       statusSpinner.style.display = "block";
       statusTitle.innerText = "Enviando foto...";
-      statusMessage.innerText = "Sua foto está a caminho da fila de impressão!";
+      statusMessage.innerText = "Sua foto está indo para a fila de impressão!";
       btnCloseModal.style.display = "none";
 
       try {
-        const fileName = `foto_${Date.now()}.jpg`;
-        const storageRef = ref(storage, `eventos/${currentEventId}/${fileName}`);
-        
-        await uploadString(storageRef, capturedDataUrl, "data_url");
-        const downloadUrl = await getDownloadURL(storageRef);
-
+        // Envia direto ao Firestore sem precisar do Storage pago!
         await addDoc(collection(db, "eventos", currentEventId, "fotos"), {
-          fotoUrl: downloadUrl,
+          fotoUrl: capturedDataUrl,
           status: "pendente",
           criadoEm: serverTimestamp()
         });
 
         statusSpinner.style.display = "none";
-        statusTitle.innerText = "Foto Enviada com Sucesso! 🎉";
-        statusMessage.innerText = "Procure a equipe de impressão para pegar sua foto.";
+        statusTitle.innerText = "Foto Enviada! 🎉";
+        statusMessage.innerText = "Sua foto já apareceu no painel de impressão.";
         btnCloseModal.style.display = "block";
 
       } catch (err) {
         console.error("Erro ao enviar:", err);
         statusSpinner.style.display = "none";
-        statusTitle.innerText = "Ops! Ocorreu um erro.";
-        statusMessage.innerText = "Não conseguimos enviar a sua foto. Tente novamente.";
+        statusTitle.innerText = "Erro ao Enviar";
+        statusMessage.innerText = "Verifique a conexão e tente novamente.";
         btnCloseModal.style.display = "block";
       }
     });
