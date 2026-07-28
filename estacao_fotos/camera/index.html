@@ -4,44 +4,213 @@
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
   <title>DigiArt AR - Câmera do Evento</title>
-  <link rel="stylesheet" href="style.css">
+  
+  <!-- 1. ESTILOS VISUAIS DA TELA -->
+  <style>
+    * {
+      box-sizing: border-box;
+      margin: 0;
+      padding: 0;
+      user-select: none;
+      -webkit-user-select: none;
+    }
+
+    body, html {
+      width: 100%;
+      height: 100%;
+      background-color: #000000;
+      font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
+      overflow: hidden;
+    }
+
+    .camera-container {
+      width: 100vw;
+      height: 100vh;
+      display: flex;
+      flex-direction: column;
+      justify-content: space-between;
+      align-items: center;
+      position: relative;
+    }
+
+    /* Container que mantém a proporção e enquadramento */
+    .viewport-box {
+      position: relative;
+      width: 100%;
+      max-width: 500px;
+      flex: 1;
+      margin-top: 10px;
+      background-color: #111;
+      border-radius: 12px;
+      overflow: hidden;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+    }
+
+    #videoFeed, #photoPreview {
+      width: 100%;
+      height: 100%;
+      object-fit: cover;
+      position: absolute;
+      top: 0;
+      left: 0;
+    }
+
+    /* Moldura PNG sempre sobreposta */
+    #frameOverlay {
+      position: absolute;
+      top: 0;
+      left: 0;
+      width: 100%;
+      height: 100%;
+      object-fit: contain;
+      pointer-events: none;
+      z-index: 10;
+    }
+
+    /* Barra dos Botões no Rodapé */
+    .controls-bar {
+      height: 120px;
+      width: 100%;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      gap: 20px;
+      padding: 0 20px;
+      background: linear-gradient(to top, rgba(0,0,0,0.9), transparent);
+      z-index: 20;
+    }
+
+    /* Botão Redondo de Tirar Foto */
+    .btn-capture {
+      width: 75px;
+      height: 75px;
+      border-radius: 50%;
+      background-color: #FFFFFF;
+      border: 4px solid #00FF00;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      cursor: pointer;
+      outline: none;
+      transition: transform 0.1s ease;
+    }
+
+    .btn-capture:active {
+      transform: scale(0.92);
+    }
+
+    .inner-circle {
+      width: 55px;
+      height: 55px;
+      border-radius: 50%;
+      background-color: #FFFFFF;
+    }
+
+    /* Botões de Ação (Refazer / Enviar) */
+    .btn-action {
+      flex: 1;
+      max-width: 160px;
+      padding: 15px;
+      border-radius: 25px;
+      border: none;
+      font-size: 1rem;
+      font-weight: bold;
+      cursor: pointer;
+    }
+
+    .btn-retake {
+      background-color: #333333;
+      color: #FFFFFF;
+    }
+
+    .btn-send {
+      background-color: #00FF00;
+      color: #000000;
+    }
+
+    /* Pop-up de Status */
+    .status-modal {
+      position: fixed;
+      top: 0; left: 0; right: 0; bottom: 0;
+      background-color: rgba(0, 0, 0, 0.85);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      z-index: 100;
+      padding: 20px;
+    }
+
+    .status-content {
+      background-color: #1a1a1a;
+      border: 2px solid #00FF00;
+      border-radius: 16px;
+      padding: 30px 20px;
+      text-align: center;
+      color: #FFFFFF;
+      max-width: 320px;
+      width: 100%;
+    }
+
+    .status-content h3 {
+      color: #00FF00;
+      margin-bottom: 10px;
+    }
+
+    .status-content p {
+      color: #CCCCCC;
+      font-size: 0.95rem;
+      margin-bottom: 20px;
+    }
+
+    /* Animação do Carregando */
+    .spinner {
+      width: 40px;
+      height: 40px;
+      border: 4px solid #333;
+      border-top: 4px solid #00FF00;
+      border-radius: 50%;
+      animation: spin 1s linear infinite;
+      margin: 0 auto 15px auto;
+    }
+
+    @keyframes spin {
+      0% { transform: rotate(0deg); }
+      100% { transform: rotate(360deg); }
+    }
+
+    .btn-close {
+      background-color: #00FF00;
+      color: #000;
+      width: 100%;
+    }
+  </style>
 </head>
 <body>
 
-  <!-- TELA PRINCIPAL DA CÂMERA -->
+  <!-- 2. ESTRUTURA VISUAL -->
   <main class="camera-container" id="cameraScreen">
-    
-    <!-- ÁREA DE VISUALIZAÇÃO COM MOLDURA -->
     <div class="viewport-box">
-      <!-- Vídeo ao vivo da câmera -->
       <video id="videoFeed" autoplay playsinline muted></video>
-      
-      <!-- Canvas oculto para tirar a foto final mesclada -->
       <canvas id="photoCanvas" style="display: none;"></canvas>
-
-      <!-- Moldura PNG sobreposta -->
       <img id="frameOverlay" src="" alt="Moldura do Evento" style="display: none;">
-
-      <!-- Elemento de Imagem para pré-visualizar a foto tirada -->
       <img id="photoPreview" src="" alt="Sua Foto" style="display: none;">
     </div>
 
-    <!-- PAINEL DE CONTROLES (BOTAO CAPTURAR) -->
     <div class="controls-bar" id="controlsCapture">
       <button class="btn-capture" id="btnCapture" title="Tirar Foto">
         <div class="inner-circle"></div>
       </button>
     </div>
 
-    <!-- PAINEL DE CONTROLES (CONFIRMAÇÃO DA FOTO) -->
     <div class="controls-bar" id="controlsReview" style="display: none;">
       <button class="btn-action btn-retake" id="btnRetake">Refazer</button>
       <button class="btn-action btn-send" id="btnSend">Enviar Foto</button>
     </div>
-
   </main>
 
-  <!-- POP-UP / MODAL DE STATUS (ENVIANDO / SUCESSO / ERRO) -->
+  <!-- POP-UP DE STATUS -->
   <div class="status-modal" id="statusModal" style="display: none;">
     <div class="status-content">
       <div class="spinner" id="statusSpinner"></div>
@@ -51,8 +220,160 @@
     </div>
   </div>
 
-  <!-- IMPORTAÇÃO DOS MÓDULOS E CÓDIGO DA CÂMERA -->
-  <script type="module" src="app.js"></script>
+  <!-- 3. LÓGICA E CONEXÃO COM O FIREBASE -->
+  <script type="module">
+    import { initializeApp } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-app.js";
+    import { getFirestore, collection, addDoc, doc, getDoc, serverTimestamp } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-firestore.js";
+    import { getStorage, ref, uploadString, getDownloadURL } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-storage.js";
 
+    // SUAS CREDENCIAIS DO FIREBASE
+    const firebaseConfig = {
+      apiKey: "AIzaSyB9cempkBujGI2cOzpNLmMWzYEp1nrOogI",
+      authDomain: "estacao-de-fotos.firebaseapp.com",
+      projectId: "estacao-de-fotos",
+      storageBucket: "estacao-de-fotos.firebasestorage.app",
+      messagingSenderId: "227871054513",
+      appId: "1:227871054513:web:8588dfa40f8a9da6166090",
+      measurementId: "G-3CTFM7HHZQ"
+    };
+
+    // INICIALIZAÇÃO
+    const app = initializeApp(firebaseConfig);
+    const db = getFirestore(app);
+    const storage = getStorage(app);
+
+    // ELEMENTOS
+    const videoFeed = document.getElementById("videoFeed");
+    const photoCanvas = document.getElementById("photoCanvas");
+    const frameOverlay = document.getElementById("frameOverlay");
+    const photoPreview = document.getElementById("photoPreview");
+
+    const btnCapture = document.getElementById("btnCapture");
+    const btnRetake = document.getElementById("btnRetake");
+    const btnSend = document.getElementById("btnSend");
+
+    const controlsCapture = document.getElementById("controlsCapture");
+    const controlsReview = document.getElementById("controlsReview");
+
+    const statusModal = document.getElementById("statusModal");
+    const statusTitle = document.getElementById("statusTitle");
+    const statusMessage = document.getElementById("statusMessage");
+    const statusSpinner = document.getElementById("statusSpinner");
+    const btnCloseModal = document.getElementById("btnCloseModal");
+
+    let capturedDataUrl = null;
+    let currentEventId = null;
+
+    function obterIdEventoUrl() {
+      const params = new URLSearchParams(window.location.search);
+      return params.get("evento") || "evento-teste";
+    }
+
+    async function iniciarCamera() {
+      try {
+        const stream = await navigator.mediaDevices.getUserMedia({
+          video: { facingMode: "user" },
+          audio: false
+        });
+        videoFeed.srcObject = stream;
+      } catch (err) {
+        alert("Não foi possível acessar a câmera. Verifique as permissões do seu navegador.");
+        console.error("Erro na câmera:", err);
+      }
+    }
+
+    async function carregarMolduraEvento() {
+      currentEventId = obterIdEventoUrl();
+      try {
+        const eventRef = doc(db, "eventos", currentEventId);
+        const eventSnap = await getDoc(eventRef);
+
+        if (eventSnap.exists() && eventSnap.data().molduraUrl) {
+          frameOverlay.src = eventSnap.data().molduraUrl;
+          frameOverlay.style.display = "block";
+        }
+      } catch (err) {
+        console.log("Sem moldura para o evento:", currentEventId);
+      }
+    }
+
+    btnCapture.addEventListener("click", () => {
+      const width = videoFeed.videoWidth || 1080;
+      const height = videoFeed.videoHeight || 1920;
+
+      photoCanvas.width = width;
+      photoCanvas.height = height;
+
+      const ctx = photoCanvas.getContext("2d");
+      ctx.drawImage(videoFeed, 0, 0, width, height);
+
+      if (frameOverlay.src && frameOverlay.style.display !== "none") {
+        ctx.drawImage(frameOverlay, 0, 0, width, height);
+      }
+
+      capturedDataUrl = photoCanvas.toDataURL("image/jpeg", 0.88);
+      photoPreview.src = capturedDataUrl;
+      photoPreview.style.display = "block";
+      videoFeed.style.display = "none";
+
+      controlsCapture.style.display = "none";
+      controlsReview.style.display = "flex";
+    });
+
+    btnRetake.addEventListener("click", () => {
+      capturedDataUrl = null;
+      photoPreview.style.display = "none";
+      videoFeed.style.display = "block";
+
+      controlsCapture.style.display = "flex";
+      controlsReview.style.display = "none";
+    });
+
+    btnSend.addEventListener("click", async () => {
+      if (!capturedDataUrl) return;
+
+      statusModal.style.display = "flex";
+      statusSpinner.style.display = "block";
+      statusTitle.innerText = "Enviando foto...";
+      statusMessage.innerText = "Sua foto está a caminho da fila de impressão!";
+      btnCloseModal.style.display = "none";
+
+      try {
+        const fileName = `foto_${Date.now()}.jpg`;
+        const storageRef = ref(storage, `eventos/${currentEventId}/${fileName}`);
+        
+        await uploadString(storageRef, capturedDataUrl, "data_url");
+        const downloadUrl = await getDownloadURL(storageRef);
+
+        await addDoc(collection(db, "eventos", currentEventId, "fotos"), {
+          fotoUrl: downloadUrl,
+          status: "pendente",
+          criadoEm: serverTimestamp()
+        });
+
+        statusSpinner.style.display = "none";
+        statusTitle.innerText = "Foto Enviada com Sucesso! 🎉";
+        statusMessage.innerText = "Procure a equipe de impressão para pegar sua foto.";
+        btnCloseModal.style.display = "block";
+
+      } catch (err) {
+        console.error("Erro ao enviar:", err);
+        statusSpinner.style.display = "none";
+        statusTitle.innerText = "Ops! Ocorreu um erro.";
+        statusMessage.innerText = "Não conseguimos enviar a sua foto. Tente novamente.";
+        btnCloseModal.style.display = "block";
+      }
+    });
+
+    btnCloseModal.addEventListener("click", () => {
+      statusModal.style.display = "none";
+      btnRetake.click();
+    });
+
+    window.addEventListener("DOMContentLoaded", () => {
+      iniciarCamera();
+      carregarMolduraEvento();
+    });
+  </script>
 </body>
 </html>
