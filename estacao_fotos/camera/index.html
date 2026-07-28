@@ -1,0 +1,58 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+  <title>DigiArt AR - Câmera do Evento</title>
+  <link rel="stylesheet" href="style.css">
+</head>
+<body>
+
+  <!-- TELA PRINCIPAL DA CÂMERA -->
+  <main class="camera-container" id="cameraScreen">
+    
+    <!-- ÁREA DE VISUALIZAÇÃO COM MOLDURA -->
+    <div class="viewport-box">
+      <!-- Vídeo ao vivo da câmera -->
+      <video id="videoFeed" autoplay playsinline muted></video>
+      
+      <!-- Canvas oculto para tirar a foto final mesclada -->
+      <canvas id="photoCanvas" style="display: none;"></canvas>
+
+      <!-- Moldura PNG sobreposta -->
+      <img id="frameOverlay" src="" alt="Moldura do Evento" style="display: none;">
+
+      <!-- Elemento de Imagem para pré-visualizar a foto tirada -->
+      <img id="photoPreview" src="" alt="Sua Foto" style="display: none;">
+    </div>
+
+    <!-- PAINEL DE CONTROLES (BOTAO CAPTURAR) -->
+    <div class="controls-bar" id="controlsCapture">
+      <button class="btn-capture" id="btnCapture" title="Tirar Foto">
+        <div class="inner-circle"></div>
+      </button>
+    </div>
+
+    <!-- PAINEL DE CONTROLES (CONFIRMAÇÃO DA FOTO) -->
+    <div class="controls-bar" id="controlsReview" style="display: none;">
+      <button class="btn-action btn-retake" id="btnRetake">Refazer</button>
+      <button class="btn-action btn-send" id="btnSend">Enviar Foto</button>
+    </div>
+
+  </main>
+
+  <!-- POP-UP / MODAL DE STATUS (ENVIANDO / SUCESSO / ERRO) -->
+  <div class="status-modal" id="statusModal" style="display: none;">
+    <div class="status-content">
+      <div class="spinner" id="statusSpinner"></div>
+      <h3 id="statusTitle">Enviando sua foto...</h3>
+      <p id="statusMessage">Aguarde um momento enquanto preparamos a impressão.</p>
+      <button class="btn-action btn-close" id="btnCloseModal" style="display: none;">Tirar Outra Foto</button>
+    </div>
+  </div>
+
+  <!-- IMPORTAÇÃO DOS MÓDULOS E CÓDIGO DA CÂMERA -->
+  <script type="module" src="app.js"></script>
+
+</body>
+</html>
