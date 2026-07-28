@@ -5,38 +5,36 @@
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>DigiArt AR - Painel do Operador</title>
 
-  <!-- Biblioteca para gerar o QR Code na tela -->
+  <!-- Script para gerar QR Code -->
   <script src="https://cdnjs.cloudflare.com/ajax/libs/qrcodejs/1.0.0/qrcode.min.js"></script>
-  
+
   <style>
     * {
       box-sizing: border-box;
       margin: 0;
       padding: 0;
+      font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
       user-select: none;
     }
 
-    body, html {
-      width: 100%;
-      height: 100vh;
+    body {
       background-color: #0b0b0b;
       color: #ffffff;
-      font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
+      min-height: 100vh;
+      display: flex;
+      flex-direction: column;
       overflow: hidden;
     }
 
-    /* ------------------------------------------------------------- */
-    /* 1. TELA DE CONFIGURAÇÃO INICIAL (FORMULÁRIO) */
-    /* ------------------------------------------------------------- */
-    .setup-screen {
-      width: 100%;
-      height: 100vh;
-      display: flex;
-      align-items: center;
-      justify-content: center;
-      background-color: #000000;
+    /* 1. TELA DE CONFIGURAÇÃO INICIAL */
+    #setupScreen {
       position: absolute;
       top: 0; left: 0;
+      width: 100%; height: 100vh;
+      display: flex;
+      justify-content: center;
+      align-items: center;
+      background-color: #000000;
       z-index: 200;
     }
 
@@ -102,20 +100,18 @@
       font-weight: bold;
       cursor: pointer;
       margin-top: 10px;
-      transition: transform 0.1s ease;
     }
 
-    .btn-start:active {
-      transform: scale(0.98);
+    .btn-start:disabled {
+      background-color: #555;
+      cursor: not-allowed;
     }
 
-    /* ------------------------------------------------------------- */
-    /* 2. PAINEL DO OPERADOR DA FESTA (AO VIVO) */
-    /* ------------------------------------------------------------- */
-    .dashboard-container {
+    /* 2. PAINEL DO OPERADOR AO VIVO */
+    #dashboardContainer {
       width: 100%;
       height: 100vh;
-      display: flex;
+      display: none;
       flex-direction: column;
     }
 
@@ -191,12 +187,10 @@
       overflow: hidden;
     }
 
-    /* COLUNA DA ESQUERDA: QR CODE E FOTO DESTAQUE */
     .left-column {
       flex: 2;
       display: flex;
       flex-direction: column;
-      gap: 15px;
     }
 
     .highlight-section {
@@ -236,7 +230,6 @@
       border-radius: 6px;
     }
 
-    /* COLUNA DA DIREITA: FILA DE IMPRESSÃO + QR CODE */
     .right-column {
       flex: 1.2;
       display: flex;
@@ -338,14 +331,14 @@
 <body>
 
   <!-- 1. TELA DE CONFIGURAÇÃO DO EVENTO -->
-  <div class="setup-screen" id="setupScreen">
+  <div id="setupScreen">
     <div class="setup-card">
       <h1>DigiArt AR</h1>
-      <p>Configuração do Novo Evento</p>
+      <p>Configuração do Evento</p>
 
       <div class="form-group">
-        <label>Identificador da Festa (ID sem espaços):</label>
-        <input type="text" id="inputEventId" placeholder="Ex: maria15, casamentogabi" value="festa-teste">
+        <label>ID do Evento (Sem espaços):</label>
+        <input type="text" id="inputEventId" placeholder="Ex: maria15" value="festa-teste">
       </div>
 
       <div class="form-group">
@@ -363,8 +356,7 @@
   </div>
 
   <!-- 2. PAINEL DO OPERADOR AO VIVO -->
-  <div class="dashboard-container" id="dashboardContainer" style="display: none;">
-    
+  <div id="dashboardContainer">
     <header>
       <div class="logo-area">
         <h1>DigiArt AR</h1>
@@ -389,7 +381,6 @@
     </header>
 
     <div class="main-content">
-      
       <div class="left-column">
         <section class="highlight-section">
           <h2>📸 Última Foto Capturada</h2>
@@ -400,12 +391,8 @@
       </div>
 
       <div class="right-column">
-        
-        <!-- Bloco do QR Code da Festa -->
         <div class="qrcode-box">
-          <div>
-            <p><strong>Escaneie para tirar foto:</strong></p>
-          </div>
+          <p><strong>Escaneie para tirar foto:</strong></p>
           <div id="qrcodeCanvas"></div>
         </div>
 
@@ -415,18 +402,14 @@
           </div>
           <div class="queue-list" id="queueList"></div>
         </section>
-
       </div>
-
     </div>
-
   </div>
 
   <!-- LÓGICA E FIREBASE -->
   <script type="module">
     import { initializeApp } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-app.js";
     import { getFirestore, collection, query, orderBy, onSnapshot, updateDoc, doc, setDoc } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-firestore.js";
-    import { getStorage, ref, uploadBytes, getDownloadURL } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-storage.js";
 
     const firebaseConfig = {
       apiKey: "AIzaSyB9cempkBujGI2cOzpNLmMWzYEp1nrOogI",
@@ -440,7 +423,6 @@
 
     const app = initializeApp(firebaseConfig);
     const db = getFirestore(app);
-    const storage = getStorage(app);
 
     // ELEMENTOS
     const setupScreen = document.getElementById("setupScreen");
@@ -461,6 +443,16 @@
     let currentEventId = "";
     let totalImpressas = 0;
 
+    // CONVERTE FOTO LOCAL EM BASE64 (SEM PRECISAR DE STORAGE)
+    function converterParaBase64(file) {
+      return new Promise((resolve, reject) => {
+        const reader = new FileReader();
+        reader.readAsDataURL(file);
+        reader.onload = () => resolve(reader.result);
+        reader.onerror = error => reject(error);
+      });
+    }
+
     // BOTÃO DE INICIAR EVENTO
     btnStartEvent.addEventListener("click", async () => {
       const eventIdRaw = inputEventId.value.trim().toLowerCase().replace(/\s+/g, '-');
@@ -473,39 +465,37 @@
       btnStartEvent.innerText = "CARREGANDO...";
       btnStartEvent.disabled = true;
 
-      let molduraUrl = "";
+      let molduraBase64 = "";
 
-      // Upload da Moldura se selecionada
-      if (inputFrameFile.files.length > 0) {
-        const file = inputFrameFile.files[0];
-        const storageRef = ref(storage, `eventos/${currentEventId}/moldura.png`);
-        await uploadBytes(storageRef, file);
-        molduraUrl = await getDownloadURL(storageRef);
+      try {
+        if (inputFrameFile.files.length > 0) {
+          molduraBase64 = await converterParaBase64(inputFrameFile.files[0]);
+        }
+
+        // Salva direto no Firestore (Não depende do Storage!)
+        await setDoc(doc(db, "eventos", currentEventId), {
+          nome: currentEventId,
+          molduraUrl: molduraBase64,
+          criadoEm: new Date()
+        }, { merge: true });
+
+        setupScreen.style.display = "none";
+        dashboardContainer.style.display = "flex";
+        displayEventName.innerText = `Evento: ${currentEventId}`;
+
+        gerarQRCodeCliente(currentEventId);
+        iniciarCronometro(parseInt(inputEventHours.value) || 4);
+        monitorarFotos();
+
+      } catch (erro) {
+        console.error("Erro ao iniciar evento:", erro);
+        alert("Erro no Firestore. Verifique se publicou as Regras no Firestore!");
+        btnStartEvent.innerText = "INICIAR EVENTO";
+        btnStartEvent.disabled = false;
       }
-
-      // Salva no Firestore
-      await setDoc(doc(db, "eventos", currentEventId), {
-        nome: currentEventId,
-        molduraUrl: molduraUrl,
-        criadoEm: new Date()
-      }, { merge: true });
-
-      // Oculta tela inicial e mostra o painel
-      setupScreen.style.display = "none";
-      dashboardContainer.style.display = "flex";
-      displayEventName.innerText = `Evento: ${currentEventId}`;
-
-      // Gera o QR Code para os convidados
-      gerarQRCodeCliente(currentEventId);
-
-      // Inicia o tempo e a escuta de fotos
-      iniciarCronometro(parseInt(inputEventHours.value) || 4);
-      monitorarFotos();
     });
 
-    // GERAR QR CODE DA CÂMERA
     function gerarQRCodeCliente(eventId) {
-      // Pega o endereço base de onde o repositório está rodando no GitHub Pages
       const urlBase = window.location.href.split('/painel')[0];
       const linkCamera = `${urlBase}/camera/?evento=${eventId}`;
 
@@ -517,7 +507,6 @@
       });
     }
 
-    // MONITORAR FOTOS EM TEMPO REAL
     function monitorarFotos() {
       const fotosRef = collection(db, "eventos", currentEventId, "fotos");
       const q = query(fotosRef, orderBy("criadoEm", "desc"));
@@ -563,7 +552,6 @@
       });
     }
 
-    // IMPRESSÃO E STATUS
     async function executarImpressao(id, url) {
       const janelaImpressao = window.open(url, "_blank");
       if (janelaImpressao) {
@@ -577,7 +565,6 @@
       countPrinted.innerText = totalImpressas;
     }
 
-    // CRONÔMETRO
     function iniciarCronometro(horas) {
       let tempoRestante = horas * 3600;
       setInterval(() => {
