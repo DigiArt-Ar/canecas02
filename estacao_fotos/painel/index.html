@@ -73,7 +73,7 @@
       font-weight: bold;
     }
 
-    .form-group input {
+    .form-group input, .form-group select {
       width: 100%;
       padding: 12px;
       border-radius: 8px;
@@ -84,7 +84,7 @@
       outline: none;
     }
 
-    .form-group input:focus {
+    .form-group input:focus, .form-group select:focus {
       border-color: #00FF00;
     }
 
@@ -351,6 +351,40 @@
       border-radius: 6px;
     }
 
+    /* NOVO: CAIXA DE CONFIGURAÇÃO DE PAPEL NO PAINEL */
+    .paper-config-box {
+      background-color: #141414;
+      border: 1px solid #333;
+      border-radius: 12px;
+      padding: 12px;
+      display: flex;
+      flex-direction: column;
+      gap: 6px;
+      flex-shrink: 0;
+    }
+
+    .paper-config-box label {
+      font-size: 0.8rem;
+      color: #00FF00;
+      font-weight: bold;
+    }
+
+    .paper-config-box select {
+      width: 100%;
+      padding: 10px;
+      border-radius: 6px;
+      border: 1px solid #333;
+      background-color: #1c1c1c;
+      color: #fff;
+      font-size: 0.9rem;
+      outline: none;
+      cursor: pointer;
+    }
+
+    .paper-config-box select:focus {
+      border-color: #00FF00;
+    }
+
     .queue-section {
       flex: 1;
       background-color: #141414;
@@ -503,6 +537,16 @@
           <div id="qrcodeCanvas"></div>
         </div>
 
+        <!-- PAINEL DE SELEÇÃO DE TAMANHO DE PAPEL DA IMPRESSORA -->
+        <div class="paper-config-box">
+          <label for="selectPaperSize">📄 Papel da Impressora:</label>
+          <select id="selectPaperSize">
+            <option value="100mm 150mm">10 x 15 cm (Padrão)</option>
+            <option value="150mm 210mm">15 x 21 cm</option>
+            <option value="75mm 100mm">7.5 x 10 cm</option>
+          </select>
+        </div>
+
         <section class="queue-section">
           <div class="queue-header">
             <h2>Fila de Impressão (Ordem de Chegada)</h2>
@@ -550,12 +594,23 @@
 
     const btnActionPrint = document.getElementById("btnActionPrint");
     const btnActionDelete = document.getElementById("btnActionDelete");
+    const selectPaperSize = document.getElementById("selectPaperSize");
 
     let currentEventId = "";
     let totalImpressas = 0;
     let timerInterval = null;
     let unsubscribeSnapshot = null;
     let fotoSelecionadaAtual = null;
+
+    // RESTAURAR PAPEL SELECIONADO ANTERIORMENTE
+    const papelSalvo = localStorage.getItem("digiart_papel_selecionado");
+    if (papelSalvo) {
+      selectPaperSize.value = papelSalvo;
+    }
+
+    selectPaperSize.addEventListener("change", (e) => {
+      localStorage.setItem("digiart_papel_selecionado", e.target.value);
+    });
 
     // COMPRESSOR DE MOLDURA EM CANVAS (MANTÉM TRANSPARÊNCIA E ALTA QUALIDADE)
     function comprimirMolduraPNG(file, maxDimension = 1200) {
@@ -586,7 +641,6 @@
             const ctx = canvas.getContext("2d");
             ctx.drawImage(img, 0, 0, width, height);
 
-            // Exporta PNG compactado preservando canal Alpha (transparência)
             const compressedBase64 = canvas.toDataURL("image/png");
             resolve(compressedBase64);
           };
@@ -793,6 +847,7 @@
     btnActionPrint.addEventListener("click", async () => {
       if (!fotoSelecionadaAtual) return;
 
+      btnActionPrint.disabled = true;
       const { id, fotoUrl } = fotoSelecionadaAtual;
       await executarImpressao(id, fotoUrl);
     });
@@ -805,40 +860,51 @@
       if (confirma) {
         const fotoRef = doc(db, "eventos", currentEventId, "fotos", fotoSelecionadaAtual.id);
         await deleteDoc(fotoRef);
-        fotoSelecionadaAtual = null; // Libera para a próxima foto da fila assumir o destaque
+        fotoSelecionadaAtual = null;
       }
     });
 
-    // IMPRESSÃO SILENCIOSA E AVANÇO AUTOMÁTICO DA FILA
+    // IMPRESSÃO DINÂMICA DE ACORDO COM O PAPEL SELECIONADO
     async function executarImpressao(id, url) {
-      let iframe = document.getElementById("printFrame");
-      if (!iframe) {
-        iframe = document.createElement("iframe");
-        iframe.id = "printFrame";
-        iframe.style.position = "fixed";
-        iframe.style.right = "0";
-        iframe.style.bottom = "0";
-        iframe.style.width = "0";
-        iframe.style.height = "0";
-        iframe.style.border = "none";
-        document.body.appendChild(iframe);
+      // Pega a dimensão configurada no dropdown do painel
+      const dimensaoPapel = selectPaperSize.value;
+
+      // Limpa iframe anterior para não travar o fluxo de cliques
+      const iframeAntigo = document.getElementById("printFrame");
+      if (iframeAntigo) {
+        iframeAntigo.remove();
       }
+
+      // Cria um novo iframe limpo
+      const iframe = document.createElement("iframe");
+      iframe.id = "printFrame";
+      iframe.style.position = "fixed";
+      iframe.style.right = "0";
+      iframe.style.bottom = "0";
+      iframe.style.width = "0";
+      iframe.style.height = "0";
+      iframe.style.border = "none";
+      document.body.appendChild(iframe);
 
       const docIframe = iframe.contentWindow.document;
       docIframe.open();
+      
+      // Injeta CSS dinâmico ajustando o @page conforme o seletor do operador
       docIframe.write(`
         <!DOCTYPE html>
         <html>
           <head>
             <style>
               @page {
+                size: ${dimensaoPapel} portrait !important;
+                margin: 0 !important;
+              }
+              *, html, body {
                 margin: 0 !important;
                 padding: 0 !important;
-                size: auto;
+                box-sizing: border-box !important;
               }
               html, body {
-                margin: 0 !important;
-                padding: 0 !important;
                 width: 100% !important;
                 height: 100% !important;
                 overflow: hidden !important;
@@ -848,12 +914,11 @@
                 justify-content: center !important;
               }
               img {
-                max-width: 100% !important;
-                max-height: 100% !important;
                 width: 100% !important;
                 height: 100% !important;
                 object-fit: contain !important;
-                display: block;
+                object-position: center !important;
+                display: block !important;
               }
             </style>
           </head>
@@ -864,14 +929,14 @@
       `);
       docIframe.close();
 
+      // Atualiza Firestore
       const fotoRef = doc(db, "eventos", currentEventId, "fotos", id);
       await updateDoc(fotoRef, { status: "impressa" });
 
       totalImpressas++;
       countPrinted.innerText = totalImpressas;
       
-      // Reseta a referência da foto atual para que o onSnapshot selecione
-      // automaticamente a próxima foto pendente da fila de impressão.
+      // Reseta para a próxima foto da fila assumir o destaque
       fotoSelecionadaAtual = null;
     }
 
