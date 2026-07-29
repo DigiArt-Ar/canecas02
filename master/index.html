@@ -91,10 +91,6 @@
       outline: none;
     }
 
-    .form-group input::placeholder {
-      color: #555;
-    }
-
     .form-group input:focus, .form-group select:focus {
       border-color: #00FF00;
     }
@@ -228,15 +224,15 @@
       <div class="form-grid">
         <div class="form-group">
           <label for="inputNome">Nome do Cliente:</label>
-          <input type="text" id="inputNome" placeholder="">
+          <input type="text" id="inputNome" placeholder="Nome Completo">
         </div>
         <div class="form-group">
           <label for="inputEmail">E-mail de Acesso:</label>
-          <input type="email" id="inputEmail" placeholder="">
+          <input type="email" id="inputEmail" placeholder="cliente@email.com">
         </div>
         <div class="form-group">
           <label for="inputTelefone">Telefone / WhatsApp:</label>
-          <input type="text" id="inputTelefone" placeholder="">
+          <input type="text" id="inputTelefone" placeholder="(00) 00000-0000">
         </div>
         <div class="form-group">
           <label for="selectMeses">Tempo de Licença:</label>
@@ -295,7 +291,7 @@
 
   <script type="module">
     import { initializeApp } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-app.js";
-    import { getFirestore, collection, doc, setDoc, getDocs, deleteDoc, updateDoc } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-firestore.js";
+    import { getFirestore, collection, doc, setDoc, getDocs, deleteDoc, updateDoc, getDoc } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-firestore.js";
 
     const firebaseConfig = {
       apiKey: "AIzaSyB9cempkBujGI2cOzpNLmMWzYEp1nrOogI",
@@ -366,8 +362,7 @@
               <br><small style="color: #888; font-size: 0.75rem;">Expira em: ${dataFormatada}</small>
             </td>
             <td class="actions-cell">
-              <button class="btn-sm btn-renew" onclick="renovarLicenca('${email}', 1)">+1 Mês</button>
-              <button class="btn-sm btn-renew" onclick="renovarLicenca('${email}', 12)">+1 Ano</button>
+              <button class="btn-sm btn-renew" onclick="renovarLicencaPrompt('${email}')">+ Renovar</button>
               <button class="btn-sm btn-delete" onclick="excluirRevendedor('${email}')">Excluir</button>
             </td>
           `;
@@ -443,18 +438,40 @@
       setTimeout(() => btnCopiarToken.innerText = "Copiar Token", 2000);
     });
 
-    // FUNÇÕES GLOBAIS PARA OS BOTÕES DA TABELA
-    window.renovarLicenca = async function(email, mesesAdicionais) {
-      const confirma = confirm(`Deseja adicionar mais ${mesesAdicionais} ${mesesAdicionais === 1 ? 'mês' : 'meses'} para o revendedor ${email}?`);
-      if (!confirma) return;
+    // FUNÇÃO PARA PERGUNTAR QUANTOS MESES ADICIONAR NA RENOVAÇÃO
+    window.renovarLicencaPrompt = async function(email) {
+      const inputQtd = prompt("Quantos meses deseja adicionar para o revendedor " + email + "?\n(Ex: Digite 1 para 1 mês, 12 para 1 ano)", "1");
+      if (!inputQtd) return;
+
+      const mesesAdicionais = parseInt(inputQtd);
+      if (isNaN(mesesAdicionais) || mesesAdicionais <= 0) {
+        alert("Por favor, digite um número válido de meses.");
+        return;
+      }
 
       try {
+        // Busca a data atual que está no banco de dados para somar em cima dela
+        const docRef = doc(db, "revendedores", email);
+        const docSnap = await getDoc(docRef);
+
+        if (!docSnap.exists()) {
+          alert("Revendedor não encontrado.");
+          return;
+        }
+
+        const dados = docSnap.data();
+        const validadeAtual = dados.expiraEm;
+        const agora = Date.now();
+
+        // Se já expirou, soma a partir de agora. Se ainda está ativo, soma em cima da data final atual!
+        const baseCalculo = validadeAtual > agora ? validadeAtual : agora;
         const msAdicionais = mesesAdicionais * 30 * 24 * 3600 * 1000;
-        const novoExpira = Date.now() + msAdicionais;
-        
-        await updateDoc(doc(db, "revendedores", email), {
+        const novoExpira = baseCalculo + msAdicionais;
+
+        await updateDoc(docRef, {
           expiraEm: novoExpira
         });
+
         alert("Licença renovada com sucesso!");
         carregarLista();
       } catch (err) {
@@ -464,7 +481,7 @@
     };
 
     window.excluirRevendedor = async function(email) {
-      const confirma = confirm(`Tem certeza que deseja excluir o acesso de ${email}? Ele não conseguirá mais logar.`);
+      const confirma = confirm("Tem certeza que deseja excluir o acesso de " + email + "? Ele não conseguirá mais logar.");
       if (!confirma) return;
 
       try {
@@ -476,7 +493,7 @@
       }
     };
 
-    // CARREGA LA TABELA AO ABRIR A PÁGINA
+    // CARREGA A TABELA AO ABRIR A PÁGINA
     window.addEventListener("DOMContentLoaded", () => {
       carregarLista();
     });
