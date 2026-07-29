@@ -558,6 +558,7 @@
     let timerInterval = null;
     let unsubscribeSnapshot = null;
     let fotoSelecionadaAtual = null;
+    let listaFotosPendentes = [];
 
     // COMPRESSOR DE MOLDURA EM CANVAS
     function comprimirMolduraPNG(file, maxDimension = 1200) {
@@ -699,6 +700,7 @@
         currentEventId = "";
         totalImpressas = 0;
         fotoSelecionadaAtual = null;
+        listaFotosPendentes = [];
         limparDestaque();
 
         dashboardContainer.style.display = "none";
@@ -729,23 +731,21 @@
 
       unsubscribeSnapshot = onSnapshot(q, (snapshot) => {
         queueList.innerHTML = "";
-        let contadorPendentes = 0;
-        let pendentesArray = [];
+        listaFotosPendentes = [];
 
         snapshot.forEach((docSnap) => {
           const foto = docSnap.data();
           foto.id = docSnap.id;
 
           if (foto.status === "pendente") {
-            contadorPendentes++;
-            pendentesArray.push(foto);
+            listaFotosPendentes.push(foto);
           }
         });
 
-        countQueue.innerText = contadorPendentes;
+        countQueue.innerText = listaFotosPendentes.length;
 
         // Renderiza itens da fila
-        pendentesArray.forEach((foto, idx) => {
+        listaFotosPendentes.forEach((foto, idx) => {
           const item = document.createElement("div");
           item.className = `queue-item ${fotoSelecionadaAtual && fotoSelecionadaAtual.id === foto.id ? 'selected' : ''}`;
           item.innerHTML = `
@@ -763,10 +763,10 @@
           queueList.appendChild(item);
         });
 
-        // Se houver fotos e nenhuma estiver selecionada, seleciona a PRIMEIRA da fila
-        if (pendentesArray.length > 0) {
-          if (!fotoSelecionadaAtual || !pendentesArray.some(f => f.id === fotoSelecionadaAtual.id)) {
-            selecionarFotoParaDestaque(pendentesArray[0]);
+        // Se tiver fotos e nada selecionado na tela, engatilha a primeira da fila
+        if (listaFotosPendentes.length > 0) {
+          if (!fotoSelecionadaAtual || !listaFotosPendentes.some(f => f.id === fotoSelecionadaAtual.id)) {
+            selecionarFotoParaDestaque(listaFotosPendentes[0]);
           }
         } else {
           limparDestaque();
@@ -790,23 +790,31 @@
       btnActionDelete.disabled = true;
     }
 
-    // BOTAO IMPRIMIR FOTO DA TELA PRINCIPAL
-    btnActionPrint.addEventListener("click", async () => {
+    // BOTAO IMPRIMIR (MECANISMO DE REVOLVER: DISPARA E ENGATILHA A PRÓXIMA)
+    btnActionPrint.addEventListener("click", () => {
       if (!fotoSelecionadaAtual) return;
 
-      btnActionPrint.disabled = true;
-      btnActionPrint.innerText = "⏳ ENVIANDO...";
+      const fotoParaImprimir = fotoSelecionadaAtual;
 
-      try {
-        const { id, fotoUrl } = fotoSelecionadaAtual;
-        await executarImpressao(id, fotoUrl);
-      } catch (err) {
-        console.error("Erro na impressão:", err);
-      } finally {
-        btnActionPrint.innerText = "🖨️ IMPRIMIR FOTO";
-        if (fotoSelecionadaAtual) {
-          btnActionPrint.disabled = false;
-        }
+      // 1. DISPARA A IMPRESSÃO INSTANTÂNEA
+      imprimirDireto(fotoParaImprimir.fotoUrl);
+
+      // 2. ATUALIZA CONTADORES E BANCO EM SEGUNDO PLANO
+      totalImpressas++;
+      countPrinted.innerText = totalImpressas;
+
+      const fotoRef = doc(db, "eventos", currentEventId, "fotos", fotoParaImprimir.id);
+      updateDoc(fotoRef, { status: "impressa" }).catch(err => {
+        console.error("Erro ao atualizar status no Firebase:", err);
+      });
+
+      // 3. GIRO DO TAMBOR: Procura a próxima foto pendente e engatilha na hora
+      const proximaFoto = listaFotosPendentes.find(f => f.id !== fotoParaImprimir.id && f.status === "pendente");
+
+      if (proximaFoto) {
+        selecionarFotoParaDestaque(proximaFoto);
+      } else {
+        limparDestaque();
       }
     });
 
@@ -822,15 +830,11 @@
       }
     });
 
-    // IMPRESSÃO RESPEITANDO MARGENS NATURAIS DA IMPRESSORA
-    function executarImpressao(id, url) {
-      return new Promise((resolve) => {
-        const iframeAntigo = document.getElementById("printFrame");
-        if (iframeAntigo) {
-          iframeAntigo.remove();
-        }
-
-        const iframe = document.createElement("iframe");
+    // IMPRESSÃO DIRETA SEM BLOQUEAR A THREAD DO NAVEGADOR
+    function imprimirDireto(url) {
+      let iframe = document.getElementById("printFrame");
+      if (!iframe) {
+        iframe = document.createElement("iframe");
         iframe.id = "printFrame";
         iframe.style.position = "fixed";
         iframe.style.right = "0";
@@ -839,64 +843,25 @@
         iframe.style.height = "0";
         iframe.style.border = "none";
         document.body.appendChild(iframe);
+      }
 
-        const docIframe = iframe.contentWindow.document;
-        docIframe.open();
-        
-        docIframe.write(`
-          <!DOCTYPE html>
-          <html>
-            <head>
-              <style>
-                body {
-                  margin: 0;
-                  padding: 0;
-                  text-align: center;
-                  background-color: #ffffff;
-                }
-                img {
-                  max-width: 100%;
-                  max-height: 100vh;
-                  height: auto;
-                  display: block;
-                  margin: 0 auto;
-                }
-              </style>
-            </head>
-            <body>
-              <img id="imgPrint" src="${url}" />
-            </body>
-          </html>
-        `);
-        docIframe.close();
-
-        const img = docIframe.getElementById("imgPrint");
-
-        const dispararImpressao = async () => {
-          try {
-            iframe.contentWindow.focus();
-            iframe.contentWindow.print();
-
-            // Atualiza status no banco
-            const fotoRef = doc(db, "eventos", currentEventId, "fotos", id);
-            await updateDoc(fotoRef, { status: "impressa" });
-
-            totalImpressas++;
-            countPrinted.innerText = totalImpressas;
-            
-            fotoSelecionadaAtual = null;
-          } catch (e) {
-            console.error("Erro no processo de impressão:", e);
-          } resolve();
-        };
-
-        if (img.complete) {
-          setTimeout(dispararImpressao, 300);
-        } else {
-          img.onload = () => setTimeout(dispararImpressao, 300);
-          img.onerror = () => resolve();
-        }
-      });
+      const docIframe = iframe.contentWindow.document;
+      docIframe.open();
+      docIframe.write(`
+        <!DOCTYPE html>
+        <html>
+          <head>
+            <style>
+              body { margin: 0; padding: 0; text-align: center; background-color: #ffffff; }
+              img { max-width: 100%; max-height: 100vh; height: auto; display: block; margin: 0 auto; }
+            </style>
+          </head>
+          <body>
+            <img src="${url}" onload="window.print();" />
+          </body>
+        </html>
+      `);
+      docIframe.close();
     }
 
     function iniciarCronometroComSegundos(segundosTotais) {
