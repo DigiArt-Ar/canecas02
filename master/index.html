@@ -2,55 +2,279 @@
 <html lang="pt-BR">
 <head>
   <meta charset="UTF-8">
-  <title>DigiArt AR - Painel Master (Matriz)</title>
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>DigiArt AR - Painel Master (Gerenciamento)</title>
   <style>
-    body { background: #0b0b0b; color: #fff; font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; padding: 20px; }
-    .card { background: #141414; border: 2px solid #00FF00; border-radius: 12px; padding: 20px; max-width: 500px; margin: auto; }
-    h1 { color: #00FF00; font-size: 1.5rem; text-align: center; margin-bottom: 20px; }
-    .form-group { margin-bottom: 15px; }
-    label { display: block; color: #00FF00; font-size: 0.85rem; margin-bottom: 5px; }
-    input, select { width: 100%; padding: 10px; border-radius: 6px; border: 1px solid #333; background: #1c1c1c; color: #fff; box-sizing: border-box; }
-    button { width: 100%; padding: 12px; background: #00FF00; color: #000; border: none; font-weight: bold; border-radius: 6px; cursor: pointer; margin-top: 10px; }
-    .token-box { background: #1c1c1c; border: 1px dashed #00FF00; padding: 15px; margin-top: 20px; text-align: center; border-radius: 6px; display: none; }
-    .token-box strong { color: #00FF00; font-size: 1.2rem; display: block; margin-top: 5px; word-break: break-all; }
+    * {
+      box-sizing: border-box;
+      margin: 0;
+      padding: 0;
+      font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+    }
+
+    body {
+      background-color: #0b0b0b;
+      color: #ffffff;
+      min-height: 100vh;
+      padding: 20px;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+    }
+
+    .container {
+      width: 100%;
+      max-width: 900px;
+    }
+
+    header {
+      text-align: center;
+      margin-bottom: 30px;
+    }
+
+    header h1 {
+      color: #00FF00;
+      font-size: 2rem;
+    }
+
+    header p {
+      color: #888;
+      font-size: 0.9rem;
+    }
+
+    .card {
+      background-color: #141414;
+      border: 2px solid #222;
+      border-radius: 12px;
+      padding: 25px;
+      margin-bottom: 30px;
+      box-shadow: 0 0 15px rgba(0, 0, 0, 0.5);
+    }
+
+    .card h2 {
+      color: #00FF00;
+      font-size: 1.2rem;
+      margin-bottom: 15px;
+      border-bottom: 1px solid #222;
+      padding-bottom: 8px;
+    }
+
+    .form-grid {
+      display: grid;
+      grid-template-columns: 2fr 1fr 1fr;
+      gap: 15px;
+      align-items: end;
+    }
+
+    @media (max-width: 768px) {
+      .form-grid {
+        grid-template-columns: 1fr;
+      }
+    }
+
+    .form-group label {
+      display: block;
+      font-size: 0.85rem;
+      color: #00FF00;
+      margin-bottom: 6px;
+      font-weight: bold;
+    }
+
+    .form-group input, .form-group select {
+      width: 100%;
+      padding: 12px;
+      border-radius: 8px;
+      border: 1px solid #333;
+      background-color: #1c1c1c;
+      color: #fff;
+      font-size: 1rem;
+      outline: none;
+    }
+
+    .form-group input:focus, .form-group select:focus {
+      border-color: #00FF00;
+    }
+
+    .btn {
+      width: 100%;
+      padding: 12px;
+      border-radius: 8px;
+      border: none;
+      background-color: #00FF00;
+      color: #000;
+      font-size: 1rem;
+      font-weight: bold;
+      cursor: pointer;
+      transition: background 0.2s;
+    }
+
+    .btn:hover {
+      background-color: #00cc00;
+    }
+
+    .token-result {
+      margin-top: 15px;
+      background-color: #1c1c1c;
+      border: 1px dashed #00FF00;
+      padding: 12px;
+      border-radius: 8px;
+      display: none;
+      align-items: center;
+      justify-content: space-between;
+    }
+
+    .token-result span {
+      font-family: monospace;
+      color: #00FF00;
+      font-size: 1.1rem;
+    }
+
+    /* TABELA DE GERENCIAMENTO */
+    .table-responsive {
+      width: 100%;
+      overflow-x: auto;
+    }
+
+    table {
+      width: 100%;
+      border-collapse: collapse;
+      margin-top: 10px;
+      text-align: left;
+      font-size: 0.9rem;
+    }
+
+    th, td {
+      padding: 12px;
+      border-bottom: 1px solid #222;
+    }
+
+    th {
+      color: #888;
+      font-size: 0.8rem;
+      text-transform: uppercase;
+    }
+
+    .badge {
+      padding: 4px 8px;
+      border-radius: 4px;
+      font-size: 0.75rem;
+      font-weight: bold;
+    }
+
+    .badge-ativo {
+      background-color: #052605;
+      color: #00FF00;
+      border: 1px solid #00FF00;
+    }
+
+    .badge-expirado {
+      background-color: #260505;
+      color: #ff4d4d;
+      border: 1px solid #ff4d4d;
+    }
+
+    .actions-cell {
+      display: flex;
+      gap: 8px;
+    }
+
+    .btn-sm {
+      padding: 6px 10px;
+      font-size: 0.75rem;
+      border-radius: 4px;
+      border: none;
+      cursor: pointer;
+      font-weight: bold;
+    }
+
+    .btn-renew {
+      background-color: #1a2a1a;
+      color: #00FF00;
+      border: 1px solid #00FF00;
+    }
+
+    .btn-renew:hover {
+      background-color: #00FF00;
+      color: #000;
+    }
+
+    .btn-delete {
+      background-color: #2a0a0a;
+      color: #ff4d4d;
+      border: 1px solid #ff4d4d;
+    }
+
+    .btn-delete:hover {
+      background-color: #ff4d4d;
+      color: #000;
+    }
   </style>
 </head>
 <body>
-  <div class="card">
-    <h1>Painel Master - Gerar Revendedor</h1>
-    <div class="form-group">
-      <label>Nome do Revendedor:</label>
-      <input type="text" id="revNome" placeholder="Ex: Ana Maria / João Fotógrafo">
-    </div>
-    <div class="form-group">
-      <label>E-mail:</label>
-      <input type="email" id="revEmail" placeholder="cliente@email.com">
-    </div>
-    <div class="form-group">
-      <label>Telefone / WhatsApp:</label>
-      <input type="text" id="revTel" placeholder="24 99999-9999">
-    </div>
-    <div class="form-group">
-      <label>Tempo de Licença:</label>
-      <select id="revMeses">
-        <option value="30">1 Mês (30 Dias)</option>
-        <option value="60">2 Meses (60 Dias)</option>
-        <option value="120">4 Meses (120 Dias)</option>
-        <option value="365">1 Ano (365 Dias)</option>
-      </select>
-    </div>
-    <button id="btnGerar">GERAR ACESSO</button>
 
-    <div class="token-box" id="tokenBox">
-      <span>Token / Senha Gerada:</span>
-      <strong id="tokenGerado">---</strong>
-      <span style="font-size: 0.75rem; color: #aaa; display:block; margin-top: 8px;">Envie este token e o e-mail para o revendedor.</span>
+  <div class="container">
+    <header>
+      <h1>DigiArt AR</h1>
+      <p>Painel de Controle e Gestão Master</p>
+    </header>
+
+    <!-- CARD DE CRIAÇÃO -->
+    <div class="card">
+      <h2>Novo Acesso / Revendedor</h2>
+      <div class="form-grid">
+        <div class="form-group">
+          <label for="inputEmail">E-mail do Revendedor:</label>
+          <input type="email" id="inputEmail" placeholder="cliente@email.com">
+        </div>
+        <div class="form-group">
+          <label for="selectDias">Tempo de Licença:</label>
+          <select id="selectDias">
+            <option value="1">1 Dia (Teste)</option>
+            <option value="7">7 Dias (Semanal)</option>
+            <option value="30" selected>30 Dias (Mensal)</option>
+            <option value="365">1 Ano (Anual)</option>
+          </select>
+        </div>
+        <div class="form-group">
+          <button class="btn" id="btnGerar">GERAR ACESSO</button>
+        </div>
+      </div>
+
+      <div class="token-result" id="tokenResultBox">
+        <div>
+          <small style="color: #888; display:block;">Token Gerado:</small>
+          <span id="txtTokenGerado">---</span>
+        </div>
+        <button class="btn-sm btn-renew" id="btnCopiarToken">Copiar Token</button>
+      </div>
+    </div>
+
+    <!-- CARD DE GERENCIAMENTO (LISTA) -->
+    <div class="card">
+      <h2>Revendedores Cadastrados</h2>
+      <div class="table-responsive">
+        <table>
+          <thead>
+            <tr>
+              <th>E-mail</th>
+              <th>Token</th>
+              <th>Status / Validade</th>
+              <th>Ações</th>
+            </tr>
+          </thead>
+          <tbody id="tabelaRevendedores">
+            <tr>
+              <td colspan="4" style="text-align: center; color: #666;">Carregando revendedores...</td>
+            </tr>
+          </tbody>
+        </table>
+      </div>
     </div>
   </div>
 
   <script type="module">
     import { initializeApp } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-app.js";
-    import { getFirestore, doc, setDoc } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-firestore.js";
+    import { getFirestore, collection, doc, setDoc, getDocs, deleteDoc, updateDoc } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-firestore.js";
 
     const firebaseConfig = {
       apiKey: "AIzaSyB9cempkBujGI2cOzpNLmMWzYEp1nrOogI",
@@ -65,47 +289,146 @@
     const app = initializeApp(firebaseConfig);
     const db = getFirestore(app);
 
+    const inputEmail = document.getElementById("inputEmail");
+    const selectDias = document.getElementById("selectDias");
+    const btnGerar = document.getElementById("btnGerar");
+    const tokenResultBox = document.getElementById("tokenResultBox");
+    const txtTokenGerado = document.getElementById("txtTokenGerado");
+    const btnCopiarToken = document.getElementById("btnCopiarToken");
+    const tabelaRevendedores = document.getElementById("tabelaRevendedores");
+
     function gerarTokenAleatorio() {
-      const chars = 'ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789';
+      const caracteres = 'ABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789';
       let token = '';
-      for(let i=0; i < 16; i++) {
-        token += chars.charAt(Math.floor(Math.random() * chars.length));
+      for (let i = 0; i < 8; i++) {
+        token += caracteres.charAt(Math.floor(Math.random() * caracteres.length));
       }
       return token;
     }
 
-    document.getElementById("btnGerar").addEventListener("click", async () => {
-      const nome = document.getElementById("revNome").value.trim();
-      const email = document.getElementById("revEmail").value.trim().toLowerCase();
-      const telefone = document.getElementById("revTel").value.trim();
-      const dias = parseInt(document.getElementById("revMeses").value);
+    async function carregarLista() {
+      try {
+        const querySnapshot = await getDocs(collection(db, "revendedores"));
+        tabelaRevendedores.innerHTML = "";
 
-      if(!nome || !email) {
-        alert("Preencha o nome e o e-mail do revendedor!");
+        if (querySnapshot.empty) {
+          tabelaRevendedores.innerHTML = `<tr><td colspan="4" style="text-align: center; color: #666;">Nenhum revendedor cadastrado.</td></tr>`;
+          return;
+        }
+
+        querySnapshot.forEach((docSnap) => {
+          const dados = docSnap.data();
+          const email = docSnap.id;
+          const token = dados.token;
+          const expiraEm = dados.expiraEm;
+          
+          const agora = Date.now();
+          const isAtivo = agora < expiraEm;
+          const dataFormatada = new Date(expiraEm).toLocaleDateString('pt-BR', { day: '2-digit', month: '2-digit', year: 'numeric', hour: '2-digit', minute: '2-digit' });
+
+          const tr = document.createElement("tr");
+          tr.innerHTML = `
+            <td><strong>${email}</strong></td>
+            <td><code style="color: #00FF00;">${token}</code></td>
+            <td>
+              <span class="badge ${isAtivo ? 'badge-ativo' : 'badge-expirado'}">
+                ${isAtivo ? 'Ativo' : 'Expirado'}
+              </span>
+              <br><small style="color: #888; font-size: 0.75rem;">Expira em: ${dataFormatada}</small>
+            </td>
+            <td class="actions-cell">
+              <button class="btn-sm btn-renew" onclick="renovarLicenca('${email}', 30)">+30 Dias</button>
+              <button class="btn-sm btn-delete" onclick="excluirRevendedor('${email}')">Excluir</button>
+            </td>
+          `;
+          tabelaRevendedores.appendChild(tr);
+        });
+
+      } catch (err) {
+        console.error("Erro ao carregar lista:", err);
+        tabelaRevendedores.innerHTML = `<tr><td colspan="4" style="text-align: center; color: #ff4d4d;">Erro ao carregar do banco de dados.</td></tr>`;
+      }
+    }
+
+    // GERAR NOVO ACESSO
+    btnGerar.addEventListener("click", async () => {
+      const email = inputEmail.value.trim().toLowerCase();
+      const dias = parseInt(selectDias.value);
+
+      if (!email || !email.includes("@")) {
+        alert("Digite um e-mail válido!");
+        inputEmail.focus();
         return;
       }
 
-      const token = gerarTokenAleatorio();
-      const dataExpiracao = Date.now() + (dias * 24 * 3600 * 1000); // Soma os dias em milissegundos
+      btnGerar.innerText = "GERANDO...";
+      btnGerar.disabled = true;
 
       try {
-        // Salva na coleção "revendedores" usando o e-mail como ID principal
+        const token = gerarTokenAleatorio();
+        const expiraEm = Date.now() + (dias * 24 * 3600 * 1000);
+
         await setDoc(doc(db, "revendedores", email), {
-          nome: nome,
-          email: email,
-          telefone: telefone,
           token: token,
-          expiraEm: dataExpiracao,
+          expiraEm: expiraEm,
           criadoEm: Date.now()
         });
 
-        document.getElementById("tokenGerado").innerText = token;
-        document.getElementById("tokenBox").style.display = "block";
-        alert("Acesso gerado com sucesso!");
+        txtTokenGerado.innerText = token;
+        tokenResultBox.style.display = "flex";
+        inputEmail.value = "";
+        carregarLista();
+
       } catch (err) {
-        console.error("Erro ao salvar revendedor:", err);
+        console.error("Erro ao salvar:", err);
         alert("Erro ao gerar acesso no Firebase.");
+      } finally {
+        btnGerar.innerText = "GERAR ACESSO";
+        btnGerar.disabled = false;
       }
+    });
+
+    btnCopiarToken.addEventListener("click", () => {
+      navigator.clipboard.writeText(txtTokenGerado.innerText);
+      btnCopiarToken.innerText = "Copiado!";
+      setTimeout(() => btnCopiarToken.innerText = "Copiar Token", 2000);
+    });
+
+    // FUNÇÕES GLOBAIS PARA OS BOTÕES DA TABELA
+    window.renovarLicenca = async function(email, diasAdicionais) {
+      const confirma = confirm(`Deseja adicionar mais ${diasAdicionais} dias para o revendedor ${email}?`);
+      if (!confirma) return;
+
+      try {
+        // Pega a validade atual ou renova a partir de agora
+        const novoExpira = Date.now() + (diasAdicionais * 24 * 3600 * 1000);
+        await updateDoc(doc(db, "revendedores", email), {
+          expiraEm: novoExpira
+        });
+        alert("Licença renovada com sucesso!");
+        carregarLista();
+      } catch (err) {
+        console.error("Erro ao renovar:", err);
+        alert("Erro ao atualizar licença.");
+      }
+    };
+
+    window.excluirRevendedor = async function(email) {
+      const confirma = confirm(`Tem certeza que deseja excluir o acesso de ${email}? Ele não conseguirá mais logar.`);
+      if (!confirma) return;
+
+      try {
+        await deleteDoc(doc(db, "revendedores", email));
+        carregarLista();
+      } catch (err) {
+        console.error("Erro ao excluir:", err);
+        alert("Erro ao excluir revendedor.");
+      }
+    };
+
+    // CARREGA A TABELA AO ABRIR A PÁGINA
+    window.addEventListener("DOMContentLoaded", () => {
+      carregarLista();
     });
   </script>
 </body>
