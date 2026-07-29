@@ -351,7 +351,6 @@
       border-radius: 6px;
     }
 
-    /* CAIXA DE CONFIGURAÇÃO DE PAPEL NO PAINEL */
     .paper-config-box {
       background-color: #141414;
       border: 1px solid #333;
@@ -475,7 +474,6 @@
         <input type="number" id="inputEventHours" value="4" min="1" max="12">
       </div>
 
-      <!-- SELEÇÃO DE TAMANHO DE PAPEL ADICIONADA NA TELA INICIAL -->
       <div class="form-group">
         <label for="setupSelectPaperSize">📄 Tamanho do Papel da Impressora:</label>
         <select id="setupSelectPaperSize">
@@ -549,7 +547,6 @@
           <div id="qrcodeCanvas"></div>
         </div>
 
-        <!-- PAINEL DE SELEÇÃO DE TAMANHO DE PAPEL NO PAINEL -->
         <div class="paper-config-box">
           <label for="selectPaperSize">📄 Papel da Impressora:</label>
           <select id="selectPaperSize">
@@ -615,14 +612,13 @@
     let unsubscribeSnapshot = null;
     let fotoSelecionadaAtual = null;
 
-    // RESTAURAR PAPEL SELECIONADO ANTERIORMENTE E SINCRONIZAR OS SELECTS
+    // RESTAURAR PAPEL SELECIONADO
     const papelSalvo = localStorage.getItem("digiart_papel_selecionado");
     if (papelSalvo) {
       setupSelectPaperSize.value = papelSalvo;
       selectPaperSize.value = papelSalvo;
     }
 
-    // SINCRONIZAÇÃO ENTRE OS DOS SELECTS (TELA INICIAL E PAINEL)
     setupSelectPaperSize.addEventListener("change", (e) => {
       const val = e.target.value;
       selectPaperSize.value = val;
@@ -635,7 +631,6 @@
       localStorage.setItem("digiart_papel_selecionado", val);
     });
 
-    // COMPRESSOR DE MOLDURA EM CANVAS
     function comprimirMolduraPNG(file, maxDimension = 1200) {
       return new Promise((resolve, reject) => {
         const reader = new FileReader();
@@ -673,7 +668,6 @@
       });
     }
 
-    // AVISO ANTES DE ATUALIZAR A PÁGINA
     window.addEventListener("beforeunload", (e) => {
       if (currentEventId) {
         e.preventDefault();
@@ -708,7 +702,6 @@
       }
     }
 
-    // INICIAR EVENTO
     btnStartEvent.addEventListener("click", async () => {
       const eventIdRaw = inputEventId.value.trim().toLowerCase().replace(/\s+/g, '-');
       if (!eventIdRaw) {
@@ -733,7 +726,6 @@
         const horas = parseInt(inputEventHours.value) || 4;
         const tempoFimTimestamp = Date.now() + (horas * 3600 * 1000);
 
-        // Salva papel configurado
         localStorage.setItem("digiart_papel_selecionado", setupSelectPaperSize.value);
 
         await setDoc(doc(db, "eventos", currentEventId), {
@@ -764,7 +756,6 @@
       }
     });
 
-    // FINALIZAR EVENTO
     btnFinishEvent.addEventListener("click", () => {
       const confirma = confirm(`Tem certeza que deseja FINALIZAR o evento "${currentEventId}"?`);
       if (confirma) {
@@ -799,7 +790,7 @@
       });
     }
 
-    // MONITORAR FILA (ORDEM DE CHEGADA: ASC)
+    // MONITORAR FILA E ATUALIZAR AUTOMATICAMENTE
     function monitorarFotos() {
       if (unsubscribeSnapshot) unsubscribeSnapshot();
 
@@ -823,7 +814,6 @@
 
         countQueue.innerText = contadorPendentes;
 
-        // Renderiza itens da fila
         pendentesArray.forEach((foto, idx) => {
           const item = document.createElement("div");
           item.className = `queue-item ${fotoSelecionadaAtual && fotoSelecionadaAtual.id === foto.id ? 'selected' : ''}`;
@@ -842,9 +832,11 @@
           queueList.appendChild(item);
         });
 
-        // Se houver fotos e nenhuma estiver selecionada, seleciona a PRIMEIRA da fila
+        // AVANÇO AUTOMÁTICO NA FILA:
+        // Se a foto selecionada não está mais pendente ou não existe, pega a 1ª disponível
         if (pendentesArray.length > 0) {
-          if (!fotoSelecionadaAtual || !pendentesArray.some(f => f.id === fotoSelecionadaAtual.id)) {
+          const aindaExiste = fotoSelecionadaAtual && pendentesArray.some(f => f.id === fotoSelecionadaAtual.id);
+          if (!aindaExiste) {
             selecionarFotoParaDestaque(pendentesArray[0]);
           }
         } else {
@@ -869,7 +861,6 @@
       btnActionDelete.disabled = true;
     }
 
-    // BOTAO IMPRIMIR FOTO DA TELA PRINCIPAL
     btnActionPrint.addEventListener("click", async () => {
       if (!fotoSelecionadaAtual) return;
 
@@ -878,7 +869,6 @@
       await executarImpressao(id, fotoUrl);
     });
 
-    // BOTAO EXCLUIR FOTO DA TELA PRINCIPAL
     btnActionDelete.addEventListener("click", async () => {
       if (!fotoSelecionadaAtual) return;
 
@@ -890,7 +880,7 @@
       }
     });
 
-    // IMPRESSÃO DINÂMICA DE ACORDO COM O PAPEL SELECIONADO
+    // CORREÇÃO DE CENTRALIZAÇÃO E PREENCHIMENTO DO PAPEL
     async function executarImpressao(id, url) {
       const dimensaoPapel = selectPaperSize.value;
 
@@ -919,7 +909,7 @@
             <style>
               @page {
                 size: ${dimensaoPapel} portrait !important;
-                margin: 0 !important;
+                margin: 0mm !important;
               }
               *, html, body {
                 margin: 0 !important;
@@ -927,8 +917,8 @@
                 box-sizing: border-box !important;
               }
               html, body {
-                width: 100% !important;
-                height: 100% !important;
+                width: 100vw !important;
+                height: 100vh !important;
                 overflow: hidden !important;
                 background-color: #ffffff;
                 display: flex !important;
@@ -936,9 +926,9 @@
                 justify-content: center !important;
               }
               img {
-                width: 100% !important;
-                height: 100% !important;
-                object-fit: contain !important;
+                width: 100vw !important;
+                height: 100vh !important;
+                object-fit: cover !important;
                 object-position: center !important;
                 display: block !important;
               }
@@ -951,12 +941,14 @@
       `);
       docIframe.close();
 
+      // Atualiza o banco de dados
       const fotoRef = doc(db, "eventos", currentEventId, "fotos", id);
       await updateDoc(fotoRef, { status: "impressa" });
 
       totalImpressas++;
       countPrinted.innerText = totalImpressas;
       
+      // Libera a variável para que a próxima da fila seja selecionada instantaneamente
       fotoSelecionadaAtual = null;
     }
 
