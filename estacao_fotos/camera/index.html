@@ -26,18 +26,18 @@
       overflow: hidden;
     }
 
-    /* TUTORIAL EM SOBREPOSIÇÃO */
+    /* SOBREPOSIÇÃO DO TUTORIAL */
     .tutorial-overlay {
       position: fixed;
       top: 0; left: 0; right: 0; bottom: 0;
-      background-color: rgba(0, 0, 0, 0.88);
+      background-color: rgba(0, 0, 0, 0.92);
       display: flex;
       flex-direction: column;
       align-items: center;
       justify-content: center;
       z-index: 999;
       cursor: pointer;
-      transition: opacity 0.4s ease, visibility 0.4s ease;
+      transition: opacity 0.3s ease;
       padding: 20px;
     }
 
@@ -47,6 +47,7 @@
       display: flex;
       flex-direction: column;
       align-items: center;
+      pointer-events: none;
     }
 
     .hand-icon {
@@ -124,7 +125,7 @@
       padding: 10px 25px max(15px, env(safe-area-inset-bottom)) 25px;
     }
 
-    /* Linha Superior do Triângulo (DigiArt Ar na Esquerda / Inverter na Direita) */
+    /* Linha Superior: DigiArt Ar na Esquerda / Inverter na Direita */
     .controls-top-row {
       width: 100%;
       display: flex;
@@ -161,7 +162,7 @@
       fill: #00FF00;
     }
 
-    /* Linha Inferior do Triângulo (Botão Grande de Tirar Foto no Centro) */
+    /* Linha Inferior: Botão Grande de Tirar Foto no Centro */
     .controls-bottom-row {
       width: 100%;
       display: flex;
@@ -383,22 +384,26 @@
     let capturedDataUrl = null;
     let currentEventId = null;
 
-    function entrarTelaCheiaETutorial() {
-      const el = document.documentElement;
-      if (el.requestFullscreen) {
-        el.requestFullscreen().catch(() => {});
-      } else if (el.webkitRequestFullscreen) {
-        el.webkitRequestFullscreen();
-      }
+    // FECHAR TUTORIAL SEM TRAVAR
+    function fecharTutorialEEntrarFullscreen() {
+      // Esconde o tutorial imediatamente
+      tutorialOverlay.style.display = "none";
 
-      tutorialOverlay.style.opacity = "0";
-      setTimeout(() => {
-        tutorialOverlay.style.visibility = "hidden";
-      }, 400);
+      // Tenta acionar tela cheia sem interromper o fluxo se der erro
+      try {
+        const el = document.documentElement;
+        if (el.requestFullscreen) {
+          el.requestFullscreen().catch(() => {});
+        } else if (el.webkitRequestFullscreen) {
+          el.webkitRequestFullscreen();
+        }
+      } catch (e) {
+        console.log("Tela cheia não suportada ou bloqueada pelo navegador.");
+      }
     }
 
-    tutorialOverlay.addEventListener("click", entrarTelaCheiaETutorial);
-    tutorialOverlay.addEventListener("touchstart", entrarTelaCheiaETutorial);
+    tutorialOverlay.addEventListener("click", fecharTutorialEEntrarFullscreen);
+    tutorialOverlay.addEventListener("touchstart", fecharTutorialEEntrarFullscreen);
 
     function obterIdEventoUrl() {
       const params = new URLSearchParams(window.location.search);
@@ -489,3 +494,51 @@
     btnRetake.addEventListener("click", () => {
       capturedDataUrl = null;
       photoPreview.style.display = "none";
+      videoFeed.style.display = "block";
+
+      controlsCapture.style.display = "flex";
+      controlsReview.style.display = "none";
+    });
+
+    btnSend.addEventListener("click", async () => {
+      if (!capturedDataUrl) return;
+
+      statusModal.style.display = "flex";
+      statusSpinner.style.display = "block";
+      statusTitle.innerText = "Enviando foto...";
+      statusMessage.innerText = "Sua foto está indo para a fila de impressão!";
+      btnCloseModal.style.display = "none";
+
+      try {
+        await addDoc(collection(db, "eventos", currentEventId, "fotos"), {
+          fotoUrl: capturedDataUrl,
+          status: "pendente",
+          criadoEm: serverTimestamp()
+        });
+
+        statusSpinner.style.display = "none";
+        statusTitle.innerText = "Foto Enviada! 🎉";
+        statusMessage.innerText = "Sua foto já apareceu no painel de impressão.";
+        btnCloseModal.style.display = "block";
+
+      } catch (err) {
+        console.error("Erro ao enviar:", err);
+        statusSpinner.style.display = "none";
+        statusTitle.innerText = "Erro ao Enviar";
+        statusMessage.innerText = "Verifique a conexão e tente novamente.";
+        btnCloseModal.style.display = "block";
+      }
+    });
+
+    btnCloseModal.addEventListener("click", () => {
+      statusModal.style.display = "none";
+      btnRetake.click();
+    });
+
+    window.addEventListener("DOMContentLoaded", () => {
+      iniciarCamera();
+      carregarMolduraEvento();
+    });
+  </script>
+</body>
+</html>
