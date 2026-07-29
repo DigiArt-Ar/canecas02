@@ -73,7 +73,7 @@
       font-weight: bold;
     }
 
-    .form-group input, .form-group select {
+    .form-group input {
       width: 100%;
       padding: 12px;
       border-radius: 8px;
@@ -84,7 +84,7 @@
       outline: none;
     }
 
-    .form-group input:focus, .form-group select:focus {
+    .form-group input:focus {
       border-color: #00FF00;
     }
 
@@ -351,39 +351,6 @@
       border-radius: 6px;
     }
 
-    .paper-config-box {
-      background-color: #141414;
-      border: 1px solid #333;
-      border-radius: 12px;
-      padding: 12px;
-      display: flex;
-      flex-direction: column;
-      gap: 6px;
-      flex-shrink: 0;
-    }
-
-    .paper-config-box label {
-      font-size: 0.8rem;
-      color: #00FF00;
-      font-weight: bold;
-    }
-
-    .paper-config-box select {
-      width: 100%;
-      padding: 10px;
-      border-radius: 6px;
-      border: 1px solid #333;
-      background-color: #1c1c1c;
-      color: #fff;
-      font-size: 0.9rem;
-      outline: none;
-      cursor: pointer;
-    }
-
-    .paper-config-box select:focus {
-      border-color: #00FF00;
-    }
-
     .queue-section {
       flex: 1;
       background-color: #141414;
@@ -475,15 +442,6 @@
       </div>
 
       <div class="form-group">
-        <label for="setupSelectPaperSize">📄 Tamanho do Papel da Impressora:</label>
-        <select id="setupSelectPaperSize">
-          <option value="100mm 150mm">10 x 15 cm (Padrão)</option>
-          <option value="150mm 210mm">15 x 21 cm</option>
-          <option value="75mm 100mm">7.5 x 10 cm</option>
-        </select>
-      </div>
-
-      <div class="form-group">
         <label for="inputFrameFile">Moldura do Evento (Imagem PNG):</label>
         <input type="file" id="inputFrameFile" accept="image/png">
       </div>
@@ -547,15 +505,6 @@
           <div id="qrcodeCanvas"></div>
         </div>
 
-        <div class="paper-config-box">
-          <label for="selectPaperSize">📄 Papel da Impressora:</label>
-          <select id="selectPaperSize">
-            <option value="100mm 150mm">10 x 15 cm (Padrão)</option>
-            <option value="150mm 210mm">15 x 21 cm</option>
-            <option value="75mm 100mm">7.5 x 10 cm</option>
-          </select>
-        </div>
-
         <section class="queue-section">
           <div class="queue-header">
             <h2>Fila de Impressão (Ordem de Chegada)</h2>
@@ -589,7 +538,6 @@
 
     const inputEventId = document.getElementById("inputEventId");
     const inputEventHours = document.getElementById("inputEventHours");
-    const setupSelectPaperSize = document.getElementById("setupSelectPaperSize");
     const inputFrameFile = document.getElementById("inputFrameFile");
     const btnStartEvent = document.getElementById("btnStartEvent");
     const btnFinishEvent = document.getElementById("btnFinishEvent");
@@ -604,7 +552,6 @@
 
     const btnActionPrint = document.getElementById("btnActionPrint");
     const btnActionDelete = document.getElementById("btnActionDelete");
-    const selectPaperSize = document.getElementById("selectPaperSize");
 
     let currentEventId = "";
     let totalImpressas = 0;
@@ -612,25 +559,7 @@
     let unsubscribeSnapshot = null;
     let fotoSelecionadaAtual = null;
 
-    // RESTAURAR PAPEL SELECIONADO
-    const papelSalvo = localStorage.getItem("digiart_papel_selecionado");
-    if (papelSalvo) {
-      setupSelectPaperSize.value = papelSalvo;
-      selectPaperSize.value = papelSalvo;
-    }
-
-    setupSelectPaperSize.addEventListener("change", (e) => {
-      const val = e.target.value;
-      selectPaperSize.value = val;
-      localStorage.setItem("digiart_papel_selecionado", val);
-    });
-
-    selectPaperSize.addEventListener("change", (e) => {
-      const val = e.target.value;
-      setupSelectPaperSize.value = val;
-      localStorage.setItem("digiart_papel_selecionado", val);
-    });
-
+    // COMPRESSOR DE MOLDURA EM CANVAS
     function comprimirMolduraPNG(file, maxDimension = 1200) {
       return new Promise((resolve, reject) => {
         const reader = new FileReader();
@@ -668,6 +597,7 @@
       });
     }
 
+    // AVISO ANTES DE ATUALIZAR A PÁGINA
     window.addEventListener("beforeunload", (e) => {
       if (currentEventId) {
         e.preventDefault();
@@ -702,6 +632,7 @@
       }
     }
 
+    // INICIAR EVENTO
     btnStartEvent.addEventListener("click", async () => {
       const eventIdRaw = inputEventId.value.trim().toLowerCase().replace(/\s+/g, '-');
       if (!eventIdRaw) {
@@ -725,8 +656,6 @@
         const agora = new Date();
         const horas = parseInt(inputEventHours.value) || 4;
         const tempoFimTimestamp = Date.now() + (horas * 3600 * 1000);
-
-        localStorage.setItem("digiart_papel_selecionado", setupSelectPaperSize.value);
 
         await setDoc(doc(db, "eventos", currentEventId), {
           nome: currentEventId,
@@ -756,6 +685,7 @@
       }
     });
 
+    // FINALIZAR EVENTO
     btnFinishEvent.addEventListener("click", () => {
       const confirma = confirm(`Tem certeza que deseja FINALIZAR o evento "${currentEventId}"?`);
       if (confirma) {
@@ -790,7 +720,7 @@
       });
     }
 
-    // MONITORAR FILA E ATUALIZAR AUTOMATICAMENTE
+    // MONITORAR FILA (ORDEM DE CHEGADA: ASC)
     function monitorarFotos() {
       if (unsubscribeSnapshot) unsubscribeSnapshot();
 
@@ -814,6 +744,7 @@
 
         countQueue.innerText = contadorPendentes;
 
+        // Renderiza itens da fila
         pendentesArray.forEach((foto, idx) => {
           const item = document.createElement("div");
           item.className = `queue-item ${fotoSelecionadaAtual && fotoSelecionadaAtual.id === foto.id ? 'selected' : ''}`;
@@ -832,11 +763,9 @@
           queueList.appendChild(item);
         });
 
-        // AVANÇO AUTOMÁTICO NA FILA:
-        // Se a foto selecionada não está mais pendente ou não existe, pega a 1ª disponível
+        // Se houver fotos e nenhuma estiver selecionada, seleciona a PRIMEIRA da fila
         if (pendentesArray.length > 0) {
-          const aindaExiste = fotoSelecionadaAtual && pendentesArray.some(f => f.id === fotoSelecionadaAtual.id);
-          if (!aindaExiste) {
+          if (!fotoSelecionadaAtual || !pendentesArray.some(f => f.id === fotoSelecionadaAtual.id)) {
             selecionarFotoParaDestaque(pendentesArray[0]);
           }
         } else {
@@ -861,14 +790,27 @@
       btnActionDelete.disabled = true;
     }
 
+    // BOTAO IMPRIMIR FOTO DA TELA PRINCIPAL
     btnActionPrint.addEventListener("click", async () => {
       if (!fotoSelecionadaAtual) return;
 
       btnActionPrint.disabled = true;
-      const { id, fotoUrl } = fotoSelecionadaAtual;
-      await executarImpressao(id, fotoUrl);
+      btnActionPrint.innerText = "⏳ ENVIANDO...";
+
+      try {
+        const { id, fotoUrl } = fotoSelecionadaAtual;
+        await executarImpressao(id, fotoUrl);
+      } catch (err) {
+        console.error("Erro na impressão:", err);
+      } finally {
+        btnActionPrint.innerText = "🖨️ IMPRIMIR FOTO";
+        if (fotoSelecionadaAtual) {
+          btnActionPrint.disabled = false;
+        }
+      }
     });
 
+    // BOTAO EXCLUIR FOTO DA TELA PRINCIPAL
     btnActionDelete.addEventListener("click", async () => {
       if (!fotoSelecionadaAtual) return;
 
@@ -880,76 +822,81 @@
       }
     });
 
-    // CORREÇÃO DE CENTRALIZAÇÃO E PREENCHIMENTO DO PAPEL
-    async function executarImpressao(id, url) {
-      const dimensaoPapel = selectPaperSize.value;
+    // IMPRESSÃO RESPEITANDO MARGENS NATURAIS DA IMPRESSORA
+    function executarImpressao(id, url) {
+      return new Promise((resolve) => {
+        const iframeAntigo = document.getElementById("printFrame");
+        if (iframeAntigo) {
+          iframeAntigo.remove();
+        }
 
-      const iframeAntigo = document.getElementById("printFrame");
-      if (iframeAntigo) {
-        iframeAntigo.remove();
-      }
+        const iframe = document.createElement("iframe");
+        iframe.id = "printFrame";
+        iframe.style.position = "fixed";
+        iframe.style.right = "0";
+        iframe.style.bottom = "0";
+        iframe.style.width = "0";
+        iframe.style.height = "0";
+        iframe.style.border = "none";
+        document.body.appendChild(iframe);
 
-      const iframe = document.createElement("iframe");
-      iframe.id = "printFrame";
-      iframe.style.position = "fixed";
-      iframe.style.right = "0";
-      iframe.style.bottom = "0";
-      iframe.style.width = "0";
-      iframe.style.height = "0";
-      iframe.style.border = "none";
-      document.body.appendChild(iframe);
+        const docIframe = iframe.contentWindow.document;
+        docIframe.open();
+        
+        docIframe.write(`
+          <!DOCTYPE html>
+          <html>
+            <head>
+              <style>
+                body {
+                  margin: 0;
+                  padding: 0;
+                  text-align: center;
+                  background-color: #ffffff;
+                }
+                img {
+                  max-width: 100%;
+                  max-height: 100vh;
+                  height: auto;
+                  display: block;
+                  margin: 0 auto;
+                }
+              </style>
+            </head>
+            <body>
+              <img id="imgPrint" src="${url}" />
+            </body>
+          </html>
+        `);
+        docIframe.close();
 
-      const docIframe = iframe.contentWindow.document;
-      docIframe.open();
-      
-      docIframe.write(`
-        <!DOCTYPE html>
-        <html>
-          <head>
-            <style>
-              @page {
-                size: ${dimensaoPapel} portrait !important;
-                margin: 0mm !important;
-              }
-              *, html, body {
-                margin: 0 !important;
-                padding: 0 !important;
-                box-sizing: border-box !important;
-              }
-              html, body {
-                width: 100vw !important;
-                height: 100vh !important;
-                overflow: hidden !important;
-                background-color: #ffffff;
-                display: flex !important;
-                align-items: center !important;
-                justify-content: center !important;
-              }
-              img {
-                width: 100vw !important;
-                height: 100vh !important;
-                object-fit: cover !important;
-                object-position: center !important;
-                display: block !important;
-              }
-            </style>
-          </head>
-          <body>
-            <img src="${url}" onload="window.focus(); window.print();" />
-          </body>
-        </html>
-      `);
-      docIframe.close();
+        const img = docIframe.getElementById("imgPrint");
 
-      // Atualiza o banco de dados
-      const fotoRef = doc(db, "eventos", currentEventId, "fotos", id);
-      await updateDoc(fotoRef, { status: "impressa" });
+        const dispararImpressao = async () => {
+          try {
+            iframe.contentWindow.focus();
+            iframe.contentWindow.print();
 
-      totalImpressas++;
-      countPrinted.innerText = totalImpressas;
-      
-      // Libera a variável para que a próxima da fila seja selecionada instantaneamente
-      fotoSelecionadaAtual = null;
+            // Atualiza status no banco
+            const fotoRef = doc(db, "eventos", currentEventId, "fotos", id);
+            await updateDoc(fotoRef, { status: "impressa" });
+
+            totalImpressas++;
+            countPrinted.innerText = totalImpressas;
+            
+            fotoSelecionadaAtual = null;
+          } catch (e) {
+            console.error("Erro no processo de impressão:", e);
+          } resolve();
+        };
+
+        if (img.complete) {
+          setTimeout(dispararImpressao, 300);
+        } else {
+          img.onload = () => setTimeout(dispararImpressao, 300);
+          img.onerror = () => resolve();
+        }
+      });
     }
 
     function iniciarCronometroComSegundos(segundosTotais) {
