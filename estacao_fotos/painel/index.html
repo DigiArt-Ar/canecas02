@@ -91,6 +91,13 @@
       border-color: #00FF00;
     }
 
+    .frame-status {
+      font-size: 0.8rem;
+      margin-top: 6px;
+      color: #888;
+      display: block;
+    }
+
     .btn-start {
       width: 100%;
       padding: 14px;
@@ -457,8 +464,8 @@
       <p>Configuração do Evento</p>
 
       <div class="form-group">
-        <label for="inputEventId">ID do Evento (Sem espaços):</label>
-        <input type="text" id="inputEventId" placeholder="Ex: maria15" value="festa-teste">
+        <label for="inputEventId">Nome do Evento:</label>
+        <input type="text" id="inputEventId" placeholder="Ex: 15 Anos de Maria Eduarda" value="Mês Ambiente">
       </div>
 
       <div class="form-group">
@@ -469,6 +476,7 @@
       <div class="form-group">
         <label for="inputFrameFile">Moldura do Evento (Imagem PNG):</label>
         <input type="file" id="inputFrameFile" accept="image/png">
+        <span class="frame-status" id="frameStatusText">Nenhuma imagem selecionada.</span>
       </div>
 
       <button class="btn-start" id="btnStartEvent">INICIAR EVENTO</button>
@@ -567,6 +575,7 @@
     const inputEventId = document.getElementById("inputEventId");
     const inputEventHours = document.getElementById("inputEventHours");
     const inputFrameFile = document.getElementById("inputFrameFile");
+    const frameStatusText = document.getElementById("frameStatusText");
     const btnStartEvent = document.getElementById("btnStartEvent");
     const btnFinishEvent = document.getElementById("btnFinishEvent");
     const btnDownloadZip = document.getElementById("btnDownloadZip");
@@ -583,11 +592,34 @@
     const btnActionDelete = document.getElementById("btnActionDelete");
 
     let currentEventId = "";
+    let nomeEventoExibicao = "";
     let totalImpressas = 0;
     let timerInterval = null;
     let unsubscribeSnapshot = null;
     let fotoSelecionadaAtual = null;
     let listaFotosPendentes = [];
+
+    // GERAR ID CURTO ALEATÓRIO DE 6 CARACTERES
+    function gerarIdCurto() {
+      const caracteres = 'abcdefghijklmnopqrstuvwxyz0123456789';
+      let resultado = '';
+      for (let i = 0; i < 6; i++) {
+        resultado += caracteres.charAt(Math.floor(Math.random() * caracteres.length));
+      }
+      return resultado;
+    }
+
+    // MONITOR DE SELEÇÃO DA MOLDURA
+    inputFrameFile.addEventListener("change", (e) => {
+      if (e.target.files.length > 0) {
+        const file = e.target.files[0];
+        frameStatusText.style.color = "#00FF00";
+        frameStatusText.innerText = `✅ Imagem selecionada: ${file.name}`;
+      } else {
+        frameStatusText.style.color = "#888";
+        frameStatusText.innerText = "Nenhuma imagem selecionada.";
+      }
+    });
 
     // COMPRESSOR DE MOLDURA EM CANVAS
     function comprimirMolduraPNG(file, maxDimension = 1200) {
@@ -637,16 +669,18 @@
 
     async function restaurarSessaoAtiva() {
       const eventoSalvo = localStorage.getItem("digiart_evento_ativo");
+      const nomeSalvo = localStorage.getItem("digiart_nome_evento") || eventoSalvo;
       const tempoFimSalvo = localStorage.getItem("digiart_tempo_fim");
       const dataInicioSalva = localStorage.getItem("digiart_data_inicio");
 
       if (eventoSalvo) {
         currentEventId = eventoSalvo;
+        nomeEventoExibicao = nomeSalvo;
         
         setupScreen.style.display = "none";
         dashboardContainer.style.display = "flex";
 
-        infoEventId.innerText = currentEventId;
+        infoEventId.innerText = nomeEventoExibicao;
         if (dataInicioSalva) {
           const dt = new Date(dataInicioSalva);
           infoEventDate.innerText = `Início: ${dt.toLocaleDateString('pt-BR')} ${dt.toLocaleTimeString('pt-BR', {hour: '2-digit', minute:'2-digit'})}`;
@@ -662,23 +696,28 @@
       }
     }
 
-    // INICIAR EVENTO
+    // INICIAR EVENTO (COM ID CURTO E STATUS VISUAL)
     btnStartEvent.addEventListener("click", async () => {
-      const eventIdRaw = inputEventId.value.trim().toLowerCase().replace(/\s+/g, '-');
-      if (!eventIdRaw) {
-        alert("Por favor, informe o ID do evento!");
+      const nomeInput = inputEventId.value.trim();
+      if (!nomeInput) {
+        alert("Por favor, informe o nome do evento!");
         return;
       }
 
-      currentEventId = eventIdRaw;
-      btnStartEvent.innerText = "OTIMIZANDO MOLDURA...";
+      nomeEventoExibicao = nomeInput;
+      currentEventId = gerarIdCurto(); // Ex: a7k9x2
+
+      btnStartEvent.innerText = "INICIANDO...";
       btnStartEvent.disabled = true;
 
       let molduraBase64 = "";
 
       try {
         if (inputFrameFile.files.length > 0) {
+          btnStartEvent.innerText = "OTIMIZANDO MOLDURA...";
+          frameStatusText.innerText = "⏳ Otimizando imagem para o banco...";
           molduraBase64 = await comprimirMolduraPNG(inputFrameFile.files[0], 1200);
+          frameStatusText.innerText = "✅ Moldura pronta!";
         }
 
         btnStartEvent.innerText = "SALVANDO EVENTO...";
@@ -688,19 +727,20 @@
         const tempoFimTimestamp = Date.now() + (horas * 3600 * 1000);
 
         await setDoc(doc(db, "eventos", currentEventId), {
-          nome: currentEventId,
+          nome: nomeEventoExibicao,
           molduraUrl: molduraBase64,
           criadoEm: agora
         }, { merge: true });
 
         localStorage.setItem("digiart_evento_ativo", currentEventId);
+        localStorage.setItem("digiart_nome_evento", nomeEventoExibicao);
         localStorage.setItem("digiart_tempo_fim", tempoFimTimestamp);
         localStorage.setItem("digiart_data_inicio", agora.toISOString());
 
         setupScreen.style.display = "none";
         dashboardContainer.style.display = "flex";
 
-        infoEventId.innerText = currentEventId;
+        infoEventId.innerText = nomeEventoExibicao;
         infoEventDate.innerText = `Início: ${agora.toLocaleDateString('pt-BR')} ${agora.toLocaleTimeString('pt-BR', {hour: '2-digit', minute:'2-digit')}`;
 
         gerarQRCodeCliente(currentEventId);
@@ -710,16 +750,20 @@
       } catch (erro) {
         console.error("Erro ao iniciar evento:", erro);
         alert("Erro ao processar imagem ou salvar no banco de dados!");
-        btnStartEvent.innerText = "INICIAR EVENTO";
-        btnStartEvent.disabled = false;
+      } finally {
+        if (setupScreen.style.display !== "none") {
+          btnStartEvent.innerText = "INICIAR EVENTO";
+          btnStartEvent.disabled = false;
+        }
       }
     });
 
     // FINALIZAR EVENTO
     btnFinishEvent.addEventListener("click", () => {
-      const confirma = confirm(`Tem certeza que deseja FINALIZAR o evento "${currentEventId}"?`);
+      const confirma = confirm(`Tem certeza que deseja FINALIZAR o evento "${nomeEventoExibicao}"?`);
       if (confirma) {
         localStorage.removeItem("digiart_evento_ativo");
+        localStorage.removeItem("digiart_nome_evento");
         localStorage.removeItem("digiart_tempo_fim");
         localStorage.removeItem("digiart_data_inicio");
 
@@ -727,10 +771,15 @@
         if (unsubscribeSnapshot) unsubscribeSnapshot();
 
         currentEventId = "";
+        nomeEventoExibicao = "";
         totalImpressas = 0;
         fotoSelecionadaAtual = null;
         listaFotosPendentes = [];
         limparDestaque();
+
+        frameStatusText.style.color = "#888";
+        frameStatusText.innerText = "Nenhuma imagem selecionada.";
+        inputFrameFile.value = "";
 
         dashboardContainer.style.display = "none";
         setupScreen.style.display = "flex";
@@ -739,7 +788,7 @@
       }
     });
 
-    // QR CODE COM MENOS PONTOS (CorrectLevel.L) E CAMINHO EXATO DA CÂMERA
+    // QR CODE SUPER LIMPO COM ID CURTO
     function gerarQRCodeCliente(eventId) {
       const urlBase = window.location.origin + window.location.pathname.replace('/painel', '');
       const linkCamera = `${urlBase}/camera/?evento=${eventId}`;
@@ -823,16 +872,14 @@
       btnActionDelete.disabled = true;
     }
 
-    // BOTAO IMPRIMIR (MECANISMO DE REVOLVER: DISPARA E ENGATILHA A PRÓXIMA)
+    // BOTAO IMPRIMIR
     btnActionPrint.addEventListener("click", () => {
       if (!fotoSelecionadaAtual) return;
 
       const fotoParaImprimir = fotoSelecionadaAtual;
 
-      // 1. DISPARA A IMPRESSÃO INSTANTÂNEA
       imprimirDireto(fotoParaImprimir.fotoUrl);
 
-      // 2. ATUALIZA CONTADORES E BANCO EM SEGUNDO PLANO
       totalImpressas++;
       countPrinted.innerText = totalImpressas;
 
@@ -841,7 +888,6 @@
         console.error("Erro ao atualizar status no Firebase:", err);
       });
 
-      // 3. GIRO DO TAMBOR: Procura a próxima foto pendente e engatilha na hora
       const proximaFoto = listaFotosPendentes.find(f => f.id !== fotoParaImprimir.id && f.status === "pendente");
 
       if (proximaFoto) {
@@ -851,7 +897,7 @@
       }
     });
 
-    // BOTAO EXCLUIR FOTO DA TELA PRINCIPAL
+    // BOTAO EXCLUIR
     btnActionDelete.addEventListener("click", async () => {
       if (!fotoSelecionadaAtual) return;
 
@@ -889,7 +935,6 @@
         snapshot.forEach((docSnap) => {
           const foto = docSnap.data();
           if (foto.fotoUrl) {
-            // Remove o cabeçalho "data:image/jpeg;base64," para extrair os dados puros
             const base64Data = foto.fotoUrl.replace(/^data:image\/(png|jpeg|jpg);base64,/, "");
             const numPadded = String(contador).padStart(3, '0');
             pasta.file(`foto_${numPadded}.jpg`, base64Data, { base64: true });
@@ -899,10 +944,9 @@
 
         const content = await zip.generateAsync({ type: "blob" });
         
-        // Dispara o download automático do ZIP
         const link = document.createElement("a");
         link.href = URL.createObjectURL(content);
-        link.download = `Fotos_${currentEventId}.zip`;
+        link.download = `Fotos_${nomeEventoExibicao.replace(/\s+/g, '_')}.zip`;
         link.click();
         URL.revokeObjectURL(link.href);
 
@@ -915,7 +959,7 @@
       }
     });
 
-    // IMPRESSÃO DIRETA FORÇANDO ÁREA TOTAL E SEM MARGENS
+    // IMPRESSÃO DIRETA
     function imprimirDireto(url) {
       let iframe = document.getElementById("printFrame");
       if (!iframe) {
