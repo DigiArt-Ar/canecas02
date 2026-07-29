@@ -33,7 +33,7 @@
       background-color: #000;
     }
 
-    /* Visualização da Câmera */
+    /* Container de Visualização da Câmera */
     .viewport-box {
       position: relative;
       width: 100%;
@@ -45,22 +45,17 @@
       justify-content: center;
     }
 
-    #videoFeed, #photoPreview {
+    /* Força o vídeo, preview e moldura a alinharem exatamente com object-fit: contain */
+    #videoFeed, #photoPreview, #frameOverlay {
       width: 100%;
       height: 100%;
-      object-fit: cover;
+      object-fit: contain;
       position: absolute;
       top: 0;
       left: 0;
     }
 
     #frameOverlay {
-      position: absolute;
-      top: 0;
-      left: 0;
-      width: 100%;
-      height: 100%;
-      object-fit: contain;
       pointer-events: none;
       z-index: 10;
     }
@@ -278,7 +273,7 @@
     const btnCloseModal = document.getElementById("btnCloseModal");
 
     let currentStream = null;
-    let facingMode = "environment"; // Inicia com a câmera TRASEIRA
+    let facingMode = "environment"; 
     let capturedDataUrl = null;
     let currentEventId = null;
 
@@ -299,7 +294,6 @@
         });
         videoFeed.srcObject = currentStream;
       } catch (err) {
-        // Se falhar na traseira, tenta qualquer uma
         try {
           currentStream = await navigator.mediaDevices.getUserMedia({ video: true, audio: false });
           videoFeed.srcObject = currentStream;
@@ -330,31 +324,42 @@
     }
 
     btnCapture.addEventListener("click", () => {
-      const width = videoFeed.videoWidth || 1080;
-      const height = videoFeed.videoHeight || 1920;
+      // Ajusta o tamanho da foto renderizada com base na moldura ou resolução do vídeo
+      const width = frameOverlay.naturalWidth || videoFeed.videoWidth || 1080;
+      const height = frameOverlay.naturalHeight || videoFeed.videoHeight || 1920;
 
       photoCanvas.width = width;
       photoCanvas.height = height;
 
       const ctx = photoCanvas.getContext("2d");
       
+      // Limpa com fundo preto para evitar vazamentos
+      ctx.fillStyle = "#000000";
+      ctx.fillRect(0, 0, width, height);
+
       // Espelha horizontalmente se for câmera frontal
       if (facingMode === "user") {
         ctx.translate(width, 0);
         ctx.scale(-1, 1);
       }
 
-      ctx.drawImage(videoFeed, 0, 0, width, height);
+      // Calcula o encaixe correto da câmera na proporção exata do canvas (cover suave)
+      const vWidth = videoFeed.videoWidth || width;
+      const vHeight = videoFeed.videoHeight || height;
+      const scale = Math.max(width / vWidth, height / vHeight);
+      const x = (width - vWidth * scale) / 2;
+      const y = (height - vHeight * scale) / 2;
 
-      // Reseta a matriz para a moldura não ficar espelhada
+      ctx.drawImage(videoFeed, x, y, vWidth * scale, vHeight * scale);
+
+      // Reseta a matriz para desenhar a moldura normalmente por cima
       ctx.setTransform(1, 0, 0, 1, 0, 0);
 
       if (frameOverlay.src && frameOverlay.style.display !== "none") {
         ctx.drawImage(frameOverlay, 0, 0, width, height);
       }
 
-      // Compacta em JPEG com qualidade 0.75 para envio ultrarrápido ao Firestore
-      capturedDataUrl = photoCanvas.toDataURL("image/jpeg", 0.75);
+      capturedDataUrl = photoCanvas.toDataURL("image/jpeg", 0.85);
       photoPreview.src = capturedDataUrl;
       photoPreview.style.display = "block";
       videoFeed.style.display = "none";
@@ -382,7 +387,6 @@
       btnCloseModal.style.display = "none";
 
       try {
-        // Envia direto ao Firestore sem precisar do Storage pago!
         await addDoc(collection(db, "eventos", currentEventId, "fotos"), {
           fotoUrl: capturedDataUrl,
           status: "pendente",
