@@ -805,11 +805,11 @@
       if (confirma) {
         const fotoRef = doc(db, "eventos", currentEventId, "fotos", fotoSelecionadaAtual.id);
         await deleteDoc(fotoRef);
-        limparDestaque();
+        fotoSelecionadaAtual = null; // Libera para a próxima foto da fila assumir o destaque
       }
     });
 
-    // IMPRESSÃO SILENCIOSA E CENTRALIZADA NA FOLHA
+    // IMPRESSÃO SILENCIOSA E AVANÇO AUTOMÁTICO DA FILA
     async function executarImpressao(id, url) {
       let iframe = document.getElementById("printFrame");
       if (!iframe) {
@@ -869,7 +869,10 @@
 
       totalImpressas++;
       countPrinted.innerText = totalImpressas;
-      limparDestaque();
+      
+      // Reseta a referência da foto atual para que o onSnapshot selecione
+      // automaticamente a próxima foto pendente da fila de impressão.
+      fotoSelecionadaAtual = null;
     }
 
     function iniciarCronometroComSegundos(segundosTotais) {
