@@ -36,7 +36,7 @@
       background-color: #000;
     }
 
-    /* Container de Visualização da Câmera */
+    /* Area Principal da Câmera */
     .viewport-box {
       position: relative;
       width: 100%;
@@ -48,11 +48,10 @@
       justify-content: center;
     }
 
-    /* Força o vídeo, preview e moldura a preencherem a tela sem tarjas pretas */
     #videoFeed, #photoPreview, #frameOverlay {
       width: 100%;
       height: 100%;
-      object-fit: cover;
+      object-fit: contain;
       position: absolute;
       top: 0;
       left: 0;
@@ -63,93 +62,99 @@
       z-index: 10;
     }
 
-    /* Barra de Controle Fixa no Rodapé */
-    .controls-bar {
-      position: absolute;
-      bottom: 0;
-      left: 0;
+    /* LINHA SUPERIOR DE CONTROLES (Logo na esquerda + Inverter Câmera na direita, colados na moldura) */
+    .sub-frame-bar {
       width: 100%;
-      height: 110px;
       display: flex;
       align-items: center;
       justify-content: space-between;
-      padding: 0 25px;
-      background: linear-gradient(to top, rgba(0,0,0,0.95) 0%, rgba(0,0,0,0.7) 70%, rgba(0,0,0,0) 100%);
+      padding: 10px 20px;
+      background-color: #000000;
+      z-index: 30;
+    }
+
+    /* Texto DigiArt Ar na mesma linha */
+    .brand-logo {
+      color: #00FF00;
+      font-weight: 700;
+      font-size: 1.1rem;
+      letter-spacing: 0.5px;
+      font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
+      white-space: nowrap;
+    }
+
+    /* Botão de Inverter Câmera POSICIONADO NO ALTO DIREITO */
+    .btn-flip {
+      width: 46px;
+      height: 46px;
+      border-radius: 50%;
+      background-color: transparent;
+      border: 2px solid #00FF00;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      cursor: pointer;
+      box-shadow: 0 0 10px rgba(0, 255, 0, 0.3);
+    }
+
+    .btn-flip svg {
+      width: 24px;
+      height: 24px;
+      fill: #00FF00;
+    }
+
+    /* BARRA INFERIOR APENAS PARA O BOTÃO GRANDE DE TIRAR FOTO */
+    .controls-bar {
+      width: 100%;
+      height: 140px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      background-color: #000000;
       z-index: 30;
       padding-bottom: env(safe-area-inset-bottom);
     }
 
-    /* Marca / Logo DigiArt AR em uma única linha */
-    .brand-logo {
-      color: #00FF00;
-      font-weight: 700;
-      font-size: 0.95rem;
-      letter-spacing: 0.8px;
-      font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
-      text-shadow: 0 0 10px rgba(0, 255, 0, 0.4);
-      white-space: nowrap;
-      width: auto;
-    }
-
-    /* Botão de Tirar Foto (MAIOR) */
+    /* Botão de Tirar Foto GRANDE (Conforme o círculo vermelho) */
     .btn-capture {
-      width: 92px;
-      height: 92px;
+      width: 110px;
+      height: 110px;
       border-radius: 50%;
       background-color: transparent;
-      border: 4px solid #00FF00;
+      border: 5px solid #00FF00;
       display: flex;
       align-items: center;
       justify-content: center;
       cursor: pointer;
       outline: none;
-      box-shadow: 0 0 25px rgba(0, 255, 0, 0.5);
+      box-shadow: 0 0 30px rgba(0, 255, 0, 0.6);
       transition: transform 0.1s ease;
     }
 
     .btn-capture:active {
-      transform: scale(0.90);
+      transform: scale(0.92);
     }
 
     .inner-circle {
-      width: 74px;
-      height: 74px;
+      width: 88px;
+      height: 88px;
       border-radius: 50%;
       background-color: #FFFFFF;
-      transition: background-color 0.15s ease;
     }
 
-    .btn-capture:active .inner-circle {
-      background-color: #e0e0e0;
-    }
-
-    /* Botão de Inverter Câmera (Mais alto e bem definido) */
-    .btn-flip {
-      width: 50px;
-      height: 50px;
-      border-radius: 50%;
-      background-color: rgba(0, 0, 0, 0.4);
-      border: 1.5px solid #00FF00;
+    /* Painel de Revisão (Refazer / Enviar) */
+    .controls-review {
+      width: 100%;
+      height: 120px;
       display: flex;
       align-items: center;
-      justify-content: center;
-      cursor: pointer;
-      box-shadow: 0 0 12px rgba(0, 255, 0, 0.3);
-      transition: transform 0.2s ease, background-color 0.2s;
+      justify-content: space-around;
+      padding: 0 20px;
+      background-color: #000000;
+      z-index: 30;
+      padding-bottom: env(safe-area-inset-bottom);
     }
 
-    .btn-flip:active {
-      transform: rotate(180deg);
-      background-color: rgba(0, 255, 0, 0.2);
-    }
-
-    .btn-flip svg {
-      width: 26px;
-      height: 26px;
-      fill: #00FF00;
-    }
-
-    /* Botões Refazer / Enviar (Painel de Revisão) */
     .btn-action {
       flex: 1;
       max-width: 140px;
@@ -163,9 +168,9 @@
     }
 
     .btn-retake {
-      background-color: rgba(255, 255, 255, 0.15);
+      background-color: #333333;
       color: #FFFFFF;
-      border: 1px solid rgba(255, 255, 255, 0.3);
+      border: 1px solid #555;
     }
 
     .btn-send {
@@ -240,12 +245,9 @@
       <img id="photoPreview" src="" alt="Sua Foto" style="display: none;">
     </div>
 
-    <!-- BARRA TIRA FOTO -->
-    <div class="controls-bar" id="controlsCapture">
-      <div class="brand-logo">DigiArt AR</div>
-      <button class="btn-capture" id="btnCapture" title="Tirar Foto">
-        <div class="inner-circle"></div>
-      </button>
+    <!-- LINHA LOGO + BOTÃO INVERTER CÂMERA (Subido para abaixo da moldura) -->
+    <div class="sub-frame-bar" id="subFrameBar">
+      <div class="brand-logo">DigiArt Ar</div>
       <button class="btn-flip" id="btnFlip" title="Inverter Câmera">
         <svg viewBox="0 0 24 24">
           <path d="M19 8l-4 4h3c0 3.31-2.69 6-6 6-1.01 0-1.97-.25-2.8-.7l-1.46 1.46C9.01 19.54 10.43 20 12 20c4.42 0 8-3.58 8-8h3l-4-4zM6 12c0-3.31 2.69-6 6-6 1.01 0 1.97.25 2.8.7l1.46-1.46C14.99 4.46 13.57 4 12 4c-4.42 0-8 3.58-8 8H1l4 4 4-4H6z"/>
@@ -253,8 +255,15 @@
       </button>
     </div>
 
-    <!-- BARRA REVISÃO (REFAZER / ENVIAR) -->
-    <div class="controls-bar" id="controlsReview" style="display: none; justify-content: space-around;">
+    <!-- BARRA DO BOTÃO GRANDE DE TIRAR FOTO -->
+    <div class="controls-bar" id="controlsCapture">
+      <button class="btn-capture" id="btnCapture" title="Tirar Foto">
+        <div class="inner-circle"></div>
+      </button>
+    </div>
+
+    <!-- BARRA DE REVISÃO (REFAZER / ENVIAR) -->
+    <div class="controls-review" id="controlsReview" style="display: none;">
       <button class="btn-action btn-retake" id="btnRetake">Refazer</button>
       <button class="btn-action btn-send" id="btnSend">Enviar Foto</button>
     </div>
@@ -297,6 +306,7 @@
     const btnRetake = document.getElementById("btnRetake");
     const btnSend = document.getElementById("btnSend");
 
+    const subFrameBar = document.getElementById("subFrameBar");
     const controlsCapture = document.getElementById("controlsCapture");
     const controlsReview = document.getElementById("controlsReview");
 
@@ -311,7 +321,6 @@
     let capturedDataUrl = null;
     let currentEventId = null;
 
-    // Força o modo Fullscreen em QUALQUER primeiro toque na tela
     function ativarTelaCheiaGlobal() {
       const el = document.documentElement;
       if (el.requestFullscreen) {
@@ -406,6 +415,7 @@
       photoPreview.style.display = "block";
       videoFeed.style.display = "none";
 
+      subFrameBar.style.display = "none";
       controlsCapture.style.display = "none";
       controlsReview.style.display = "flex";
     });
@@ -415,6 +425,7 @@
       photoPreview.style.display = "none";
       videoFeed.style.display = "block";
 
+      subFrameBar.style.display = "flex";
       controlsCapture.style.display = "flex";
       controlsReview.style.display = "none";
     });
