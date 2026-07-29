@@ -48,11 +48,11 @@
       justify-content: center;
     }
 
-    /* Força o vídeo, preview e moldura a alinharem exatamente */
+    /* Força o vídeo, preview e moldura a preencherem a tela sem tarjas pretas */
     #videoFeed, #photoPreview, #frameOverlay {
       width: 100%;
       height: 100%;
-      object-fit: contain;
+      object-fit: cover;
       position: absolute;
       top: 0;
       left: 0;
@@ -65,34 +65,36 @@
 
     /* Barra de Controle Fixa no Rodapé */
     .controls-bar {
-      position: relative;
+      position: absolute;
+      bottom: 0;
+      left: 0;
       width: 100%;
-      height: 130px; /* Aumentado para dar mais destaque */
+      height: 110px;
       display: flex;
       align-items: center;
       justify-content: space-between;
       padding: 0 25px;
-      background-color: #000000;
+      background: linear-gradient(to top, rgba(0,0,0,0.95) 0%, rgba(0,0,0,0.7) 70%, rgba(0,0,0,0) 100%);
       z-index: 30;
       padding-bottom: env(safe-area-inset-bottom);
     }
 
-    /* Marca / Logo DigiArt AR */
+    /* Marca / Logo DigiArt AR em uma única linha */
     .brand-logo {
       color: #00FF00;
       font-weight: 700;
-      font-size: 1rem;
+      font-size: 0.95rem;
       letter-spacing: 0.8px;
       font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
-      text-shadow: 0 0 10px rgba(0, 255, 0, 0.3);
-      width: 90px;
-      line-height: 1.2;
+      text-shadow: 0 0 10px rgba(0, 255, 0, 0.4);
+      white-space: nowrap;
+      width: auto;
     }
 
-    /* Botão de Tirar Foto (Maior e estilo NATIVO) */
+    /* Botão de Tirar Foto (MAIOR) */
     .btn-capture {
-      width: 82px;
-      height: 82px;
+      width: 92px;
+      height: 92px;
       border-radius: 50%;
       background-color: transparent;
       border: 4px solid #00FF00;
@@ -101,7 +103,7 @@
       justify-content: center;
       cursor: pointer;
       outline: none;
-      box-shadow: 0 0 20px rgba(0, 255, 0, 0.4);
+      box-shadow: 0 0 25px rgba(0, 255, 0, 0.5);
       transition: transform 0.1s ease;
     }
 
@@ -110,8 +112,8 @@
     }
 
     .inner-circle {
-      width: 66px;
-      height: 66px;
+      width: 74px;
+      height: 74px;
       border-radius: 50%;
       background-color: #FFFFFF;
       transition: background-color 0.15s ease;
@@ -121,18 +123,18 @@
       background-color: #e0e0e0;
     }
 
-    /* Botão de Inverter Câmera (Ícone Profissional Clean) */
+    /* Botão de Inverter Câmera (Mais alto e bem definido) */
     .btn-flip {
-      width: 52px;
-      height: 52px;
+      width: 50px;
+      height: 50px;
       border-radius: 50%;
-      background-color: rgba(255, 255, 255, 0.08);
-      border: 1.5px solid rgba(0, 255, 0, 0.6);
+      background-color: rgba(0, 0, 0, 0.4);
+      border: 1.5px solid #00FF00;
       display: flex;
       align-items: center;
       justify-content: center;
       cursor: pointer;
-      box-shadow: 0 0 10px rgba(0, 255, 0, 0.2);
+      box-shadow: 0 0 12px rgba(0, 255, 0, 0.3);
       transition: transform 0.2s ease, background-color 0.2s;
     }
 
@@ -147,7 +149,7 @@
       fill: #00FF00;
     }
 
-    /* Botões Refazer / Enviar */
+    /* Botões Refazer / Enviar (Painel de Revisão) */
     .btn-action {
       flex: 1;
       max-width: 140px;
@@ -157,18 +159,19 @@
       font-size: 1rem;
       font-weight: bold;
       cursor: pointer;
+      text-align: center;
     }
 
     .btn-retake {
-      background-color: #333333;
+      background-color: rgba(255, 255, 255, 0.15);
       color: #FFFFFF;
-      border: 1px solid #555;
+      border: 1px solid rgba(255, 255, 255, 0.3);
     }
 
     .btn-send {
       background-color: #00FF00;
       color: #000000;
-      box-shadow: 0 0 10px rgba(0, 255, 0, 0.5);
+      box-shadow: 0 0 15px rgba(0, 255, 0, 0.5);
     }
 
     /* Modal de Status */
@@ -239,7 +242,7 @@
 
     <!-- BARRA TIRA FOTO -->
     <div class="controls-bar" id="controlsCapture">
-      <div class="brand-logo">DigiArt<br>AR</div>
+      <div class="brand-logo">DigiArt AR</div>
       <button class="btn-capture" id="btnCapture" title="Tirar Foto">
         <div class="inner-circle"></div>
       </button>
