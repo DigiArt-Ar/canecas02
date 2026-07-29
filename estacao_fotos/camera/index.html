@@ -290,6 +290,7 @@
 </head>
 <body>
 
+  <!-- TUTORIAL EM SOBREPOSIÇÃO -->
   <div class="tutorial-overlay" id="tutorialOverlay">
     <div class="tutorial-box">
       <div class="hand-icon">👆</div>
@@ -307,6 +308,7 @@
       <img id="photoPreview" src="" alt="Sua Foto" style="display: none;">
     </div>
 
+    <!-- BARRA INFERIOR EM TRIÂNGULO -->
     <div class="controls-bar" id="controlsCapture">
       <div class="controls-top-row">
         <div class="brand-logo">DigiArt Ar</div>
@@ -325,12 +327,14 @@
       </div>
     </div>
 
+    <!-- BARRA DE REVISÃO (REFAZER / ENVIAR) -->
     <div class="controls-review" id="controlsReview" style="display: none;">
       <button class="btn-action btn-retake" id="btnRetake">Refazer</button>
       <button class="btn-action btn-send" id="btnSend">Enviar Foto</button>
     </div>
   </main>
 
+  <!-- POP-UP STATUS -->
   <div class="status-modal" id="statusModal" style="display: none;">
     <div class="status-content">
       <div class="spinner" id="statusSpinner"></div>
@@ -377,28 +381,25 @@
     const btnCloseModal = document.getElementById("btnCloseModal");
 
     const tutorialOverlay = document.getElementById("tutorialOverlay");
+    const mainContainer = document.getElementById("mainContainer");
 
     let currentStream = null;
     let facingMode = "environment"; 
     let capturedDataUrl = null;
     let currentEventId = null;
 
-    // FECHAR TUTORIAL E ATIVAR FULLSCREEN
-    function ativarFullscreenETutorial(ev) {
-      if (ev) ev.preventDefault();
-
-      const docEl = document.documentElement;
-      const requestFS = docEl.requestFullscreen || docEl.webkitRequestFullscreen || docEl.mozRequestFullScreen || docEl.msRequestFullscreen;
-
-      if (requestFS) {
-        requestFS.call(docEl).catch(() => {});
+    // ACIONAR TELA CHEIA LIMPO
+    tutorialOverlay.addEventListener("click", () => {
+      // 1. Tenta acionar Fullscreen direto na div principal
+      if (mainContainer.requestFullscreen) {
+        mainContainer.requestFullscreen().catch(() => {});
+      } else if (mainContainer.webkitRequestFullscreen) {
+        mainContainer.webkitRequestFullscreen();
       }
 
+      // 2. Esconde a tela do tutorial
       tutorialOverlay.style.display = "none";
-    }
-
-    tutorialOverlay.addEventListener("click", ativarFullscreenETutorial);
-    tutorialOverlay.addEventListener("touchend", ativarFullscreenETutorial);
+    });
 
     function obterIdEventoUrl() {
       const params = new URLSearchParams(window.location.search);
