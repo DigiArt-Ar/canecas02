@@ -26,7 +26,7 @@
       overflow: hidden;
     }
 
-    /* SOBREPOSIÇÃO DO TUTORIAL DE TELA CHEIA */
+    /* TUTORIAL EM SOBREPOSIÇÃO */
     .tutorial-overlay {
       position: fixed;
       top: 0; left: 0; right: 0; bottom: 0;
@@ -56,7 +56,6 @@
       display: inline-block;
     }
 
-    /* Animação do dedo simulando o toque de clique */
     @keyframes clickAnimation {
       0% { transform: scale(1) translateY(0); opacity: 0.8; }
       50% { transform: scale(0.85) translateY(12px); opacity: 1; filter: drop-shadow(0 0 15px #00FF00); }
@@ -87,7 +86,7 @@
       background-color: #000;
     }
 
-    /* Área Principal da Câmera preenchendo o espaço dinamicamente */
+    /* Área Principal da Câmera */
     .viewport-box {
       position: relative;
       width: 100%;
@@ -102,7 +101,7 @@
     #videoFeed, #photoPreview, #frameOverlay {
       width: 100%;
       height: 100%;
-      object-fit: contain; /* Mantém a proporção exata da moldura sem cortar as bordas */
+      object-fit: contain;
       position: absolute;
       top: 0;
       left: 0;
@@ -113,59 +112,36 @@
       z-index: 10;
     }
 
-    /* BARRA INFERIOR INTEGRADA (Logo na Esquerda + Botão Foto no Centro + Inverter na Direita) */
+    /* BARRA INFERIOR EM FORMATO DE TRIÂNGULO (2 LINHAS) */
     .controls-bar {
       width: 100%;
-      height: 130px;
       display: flex;
+      flex-direction: column;
       align-items: center;
-      justify-content: space-between;
-      padding: 0 25px;
       background-color: #000000;
       z-index: 30;
       flex-shrink: 0;
-      padding-bottom: env(safe-area-inset-bottom);
+      padding: 10px 25px max(15px, env(safe-area-inset-bottom)) 25px;
     }
 
-    /* Texto DigiArt Ar na esquerda */
+    /* Linha Superior do Triângulo (DigiArt Ar na Esquerda / Inverter na Direita) */
+    .controls-top-row {
+      width: 100%;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      margin-bottom: 5px;
+    }
+
     .brand-logo {
       color: #00FF00;
       font-weight: 700;
-      font-size: 1.1rem;
+      font-size: 1.15rem;
       letter-spacing: 0.5px;
       font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
       white-space: nowrap;
-      min-width: 90px;
     }
 
-    /* Botão de Tirar Foto GRANDE no centro */
-    .btn-capture {
-      width: 90px;
-      height: 90px;
-      border-radius: 50%;
-      background-color: transparent;
-      border: 5px solid #00FF00;
-      display: flex;
-      align-items: center;
-      justify-content: center;
-      cursor: pointer;
-      outline: none;
-      box-shadow: 0 0 25px rgba(0, 255, 0, 0.6);
-      transition: transform 0.1s ease;
-    }
-
-    .btn-capture:active {
-      transform: scale(0.92);
-    }
-
-    .inner-circle {
-      width: 70px;
-      height: 70px;
-      border-radius: 50%;
-      background-color: #FFFFFF;
-    }
-
-    /* Botão de Inverter Câmera na direita */
     .btn-flip {
       width: 48px;
       height: 48px;
@@ -176,7 +152,7 @@
       align-items: center;
       justify-content: center;
       cursor: pointer;
-      box-shadow: 0 0 10px rgba(0, 255, 0, 0.3);
+      box-shadow: 0 0 12px rgba(0, 255, 0, 0.4);
     }
 
     .btn-flip svg {
@@ -185,18 +161,51 @@
       fill: #00FF00;
     }
 
+    /* Linha Inferior do Triângulo (Botão Grande de Tirar Foto no Centro) */
+    .controls-bottom-row {
+      width: 100%;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      margin-top: 5px;
+    }
+
+    .btn-capture {
+      width: 100px;
+      height: 100px;
+      border-radius: 50%;
+      background-color: transparent;
+      border: 5px solid #00FF00;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      cursor: pointer;
+      outline: none;
+      box-shadow: 0 0 30px rgba(0, 255, 0, 0.6);
+      transition: transform 0.1s ease;
+    }
+
+    .btn-capture:active {
+      transform: scale(0.92);
+    }
+
+    .inner-circle {
+      width: 80px;
+      height: 80px;
+      border-radius: 50%;
+      background-color: #FFFFFF;
+    }
+
     /* Painel de Revisão (Refazer / Enviar) */
     .controls-review {
       width: 100%;
-      height: 130px;
+      padding: 15px 20px max(20px, env(safe-area-inset-bottom)) 20px;
       display: flex;
       align-items: center;
       justify-content: space-around;
-      padding: 0 20px;
       background-color: #000000;
       z-index: 30;
       flex-shrink: 0;
-      padding-bottom: env(safe-area-inset-bottom);
     }
 
     .btn-action {
@@ -299,17 +308,21 @@
     </div>
 
     <div class="controls-bar" id="controlsCapture">
-      <div class="brand-logo">DigiArt Ar</div>
+      <div class="controls-top-row">
+        <div class="brand-logo">DigiArt Ar</div>
 
-      <button class="btn-capture" id="btnCapture" title="Tirar Foto">
-        <div class="inner-circle"></div>
-      </button>
+        <button class="btn-flip" id="btnFlip" title="Inverter Câmera">
+          <svg viewBox="0 0 24 24">
+            <path d="M19 8l-4 4h3c0 3.31-2.69 6-6 6-1.01 0-1.97-.25-2.8-.7l-1.46 1.46C9.01 19.54 10.43 20 12 20c4.42 0 8-3.58 8-8h3l-4-4zM6 12c0-3.31 2.69-6 6-6 1.01 0 1.97.25 2.8.7l1.46-1.46C14.99 4.46 13.57 4 12 4c-4.42 0-8 3.58-8 8H1l4 4 4-4H6z"/>
+          </svg>
+        </button>
+      </div>
 
-      <button class="btn-flip" id="btnFlip" title="Inverter Câmera">
-        <svg viewBox="0 0 24 24">
-          <path d="M19 8l-4 4h3c0 3.31-2.69 6-6 6-1.01 0-1.97-.25-2.8-.7l-1.46 1.46C9.01 19.54 10.43 20 12 20c4.42 0 8-3.58 8-8h3l-4-4zM6 12c0-3.31 2.69-6 6-6 1.01 0 1.97.25 2.8.7l1.46-1.46C14.99 4.46 13.57 4 12 4c-4.42 0-8 3.58-8 8H1l4 4 4-4H6z"/>
-        </svg>
-      </button>
+      <div class="controls-bottom-row">
+        <button class="btn-capture" id="btnCapture" title="Tirar Foto">
+          <div class="inner-circle"></div>
+        </button>
+      </div>
     </div>
 
     <div class="controls-review" id="controlsReview" style="display: none;">
@@ -370,7 +383,6 @@
     let capturedDataUrl = null;
     let currentEventId = null;
 
-    // GERENCIADOR DE TELA CHEIA E SUMIÇO DO TUTORIAL
     function entrarTelaCheiaETutorial() {
       const el = document.documentElement;
       if (el.requestFullscreen) {
@@ -379,7 +391,6 @@
         el.webkitRequestFullscreen();
       }
 
-      // Desaparece suavemente
       tutorialOverlay.style.opacity = "0";
       setTimeout(() => {
         tutorialOverlay.style.visibility = "hidden";
@@ -478,51 +489,3 @@
     btnRetake.addEventListener("click", () => {
       capturedDataUrl = null;
       photoPreview.style.display = "none";
-      videoFeed.style.display = "block";
-
-      controlsCapture.style.display = "flex";
-      controlsReview.style.display = "none";
-    });
-
-    btnSend.addEventListener("click", async () => {
-      if (!capturedDataUrl) return;
-
-      statusModal.style.display = "flex";
-      statusSpinner.style.display = "block";
-      statusTitle.innerText = "Enviando foto...";
-      statusMessage.innerText = "Sua foto está indo para a fila de impressão!";
-      btnCloseModal.style.display = "none";
-
-      try {
-        await addDoc(collection(db, "eventos", currentEventId, "fotos"), {
-          fotoUrl: capturedDataUrl,
-          status: "pendente",
-          criadoEm: serverTimestamp()
-        });
-
-        statusSpinner.style.display = "none";
-        statusTitle.innerText = "Foto Enviada! 🎉";
-        statusMessage.innerText = "Sua foto já apareceu no painel de impressão.";
-        btnCloseModal.style.display = "block";
-
-      } catch (err) {
-        console.error("Erro ao enviar:", err);
-        statusSpinner.style.display = "none";
-        statusTitle.innerText = "Erro ao Enviar";
-        statusMessage.innerText = "Verifique a conexão e tente novamente.";
-        btnCloseModal.style.display = "block";
-      }
-    });
-
-    btnCloseModal.addEventListener("click", () => {
-      statusModal.style.display = "none";
-      btnRetake.click();
-    });
-
-    window.addEventListener("DOMContentLoaded", () => {
-      iniciarCamera();
-      carregarMolduraEvento();
-    });
-  </script>
-</body>
-</html>
