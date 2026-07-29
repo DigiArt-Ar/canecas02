@@ -87,6 +87,10 @@
       outline: none;
     }
 
+    .form-group input::placeholder {
+      color: #555;
+    }
+
     .form-group input:focus {
       border-color: #00FF00;
     }
@@ -465,12 +469,12 @@
 
       <div class="form-group">
         <label for="inputEventId">Nome do Evento:</label>
-        <input type="text" id="inputEventId" placeholder="Ex: 15 Anos de Maria Eduarda" value="Mês Ambiente">
+        <input type="text" id="inputEventId" placeholder="Ex: 15 Anos de Maria Eduarda" value="">
       </div>
 
       <div class="form-group">
         <label for="inputEventHours">Duração do Evento (Horas):</label>
-        <input type="number" id="inputEventHours" value="4" min="1" max="12">
+        <input type="number" id="inputEventHours" placeholder="Ex: 4" value="" min="1" max="12">
       </div>
 
       <div class="form-group">
@@ -609,12 +613,17 @@
       return resultado;
     }
 
-    // MONITOR DE SELEÇÃO DA MOLDURA
+    // MONITOR DE SELEÇÃO DA MOLDURA (Feedback imediato ao clicar)
     inputFrameFile.addEventListener("change", (e) => {
       if (e.target.files.length > 0) {
         const file = e.target.files[0];
         frameStatusText.style.color = "#00FF00";
-        frameStatusText.innerText = `✅ Imagem selecionada: ${file.name}`;
+        frameStatusText.innerText = `⏳ Lendo arquivo: ${file.name}...`;
+        
+        // Pequeno atraso visual só para garantir que o usuário veja a transição de leitura
+        setTimeout(() => {
+          frameStatusText.innerText = `✅ Arquivo carregado: ${file.name}`;
+        }, 300);
       } else {
         frameStatusText.style.color = "#888";
         frameStatusText.innerText = "Nenhuma imagem selecionada.";
@@ -696,16 +705,29 @@
       }
     }
 
-    // INICIAR EVENTO (COM ID CURTO E STATUS VISUAL)
+    // INICIAR EVENTO
     btnStartEvent.addEventListener("click", async () => {
       const nomeInput = inputEventId.value.trim();
       if (!nomeInput) {
-        alert("Por favor, informe o nome do evento!");
+        alert("Por favor, digite o nome do evento!");
+        inputEventId.focus();
+        return;
+      }
+
+      const horasInput = parseInt(inputEventHours.value);
+      if (!horasInput || horasInput < 1) {
+        alert("Por favor, informe a duração em horas do evento!");
+        inputEventHours.focus();
+        return;
+      }
+
+      if (inputFrameFile.files.length === 0) {
+        alert("Por favor, selecione a imagem PNG da moldura!");
         return;
       }
 
       nomeEventoExibicao = nomeInput;
-      currentEventId = gerarIdCurto(); // Ex: a7k9x2
+      currentEventId = gerarIdCurto();
 
       btnStartEvent.innerText = "INICIANDO...";
       btnStartEvent.disabled = true;
@@ -713,18 +735,14 @@
       let molduraBase64 = "";
 
       try {
-        if (inputFrameFile.files.length > 0) {
-          btnStartEvent.innerText = "OTIMIZANDO MOLDURA...";
-          frameStatusText.innerText = "⏳ Otimizando imagem para o banco...";
-          molduraBase64 = await comprimirMolduraPNG(inputFrameFile.files[0], 1200);
-          frameStatusText.innerText = "✅ Moldura pronta!";
-        }
+        btnStartEvent.innerText = "OTIMIZANDO MOLDURA...";
+        frameStatusText.innerText = "⏳ Otimizando imagem para o sistema...";
+        molduraBase64 = await comprimirMolduraPNG(inputFrameFile.files[0], 1200);
 
         btnStartEvent.innerText = "SALVANDO EVENTO...";
 
         const agora = new Date();
-        const horas = parseInt(inputEventHours.value) || 4;
-        const tempoFimTimestamp = Date.now() + (horas * 3600 * 1000);
+        const tempoFimTimestamp = Date.now() + (horasInput * 3600 * 1000);
 
         await setDoc(doc(db, "eventos", currentEventId), {
           nome: nomeEventoExibicao,
@@ -741,10 +759,10 @@
         dashboardContainer.style.display = "flex";
 
         infoEventId.innerText = nomeEventoExibicao;
-        infoEventDate.innerText = `Início: ${agora.toLocaleDateString('pt-BR')} ${agora.toLocaleTimeString('pt-BR', {hour: '2-digit', minute:'2-digit')}`;
+        infoEventDate.innerText = `Início: ${agora.toLocaleDateString('pt-BR')} ${agora.toLocaleTimeString('pt-BR', {hour: '2-digit', minute:'2-digit'})}`;
 
         gerarQRCodeCliente(currentEventId);
-        iniciarCronometroComSegundos(horas * 3600);
+        iniciarCronometroComSegundos(horasInput * 3600);
         monitorarFotos();
 
       } catch (erro) {
@@ -777,6 +795,8 @@
         listaFotosPendentes = [];
         limparDestaque();
 
+        inputEventId.value = "";
+        inputEventHours.value = "";
         frameStatusText.style.color = "#888";
         frameStatusText.innerText = "Nenhuma imagem selecionada.";
         inputFrameFile.value = "";
@@ -788,7 +808,7 @@
       }
     });
 
-    // QR CODE SUPER LIMPO COM ID CURTO
+    // QR CODE COM ID CURTO
     function gerarQRCodeCliente(eventId) {
       const urlBase = window.location.origin + window.location.pathname.replace('/painel', '');
       const linkCamera = `${urlBase}/camera/?evento=${eventId}`;
@@ -804,7 +824,7 @@
       });
     }
 
-    // MONITORAR FILA (ORDEM DE CHEGADA: ASC)
+    // MONITORAR FILA
     function monitorarFotos() {
       if (unsubscribeSnapshot) unsubscribeSnapshot();
 
@@ -826,7 +846,6 @@
 
         countQueue.innerText = listaFotosPendentes.length;
 
-        // Renderiza itens da fila
         listaFotosPendentes.forEach((foto, idx) => {
           const item = document.createElement("div");
           item.className = `queue-item ${fotoSelecionadaAtual && fotoSelecionadaAtual.id === foto.id ? 'selected' : ''}`;
@@ -845,7 +864,6 @@
           queueList.appendChild(item);
         });
 
-        // Se tiver fotos e nada selecionado na tela, engatilha a primeira da fila
         if (listaFotosPendentes.length > 0) {
           if (!fotoSelecionadaAtual || !listaFotosPendentes.some(f => f.id === fotoSelecionadaAtual.id)) {
             selecionarFotoParaDestaque(listaFotosPendentes[0]);
@@ -909,7 +927,7 @@
       }
     });
 
-    // EXPORTAR TODAS AS FOTOS EM UM ARQUIVO ZIP
+    // EXPORTAR ZIP
     btnDownloadZip.addEventListener("click", async () => {
       if (!currentEventId) return;
 
