@@ -26,6 +26,57 @@
       overflow: hidden;
     }
 
+    /* SOBREPOSIÇÃO DO TUTORIAL DE TELA CHEIA */
+    .tutorial-overlay {
+      position: fixed;
+      top: 0; left: 0; right: 0; bottom: 0;
+      background-color: rgba(0, 0, 0, 0.88);
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      z-index: 999;
+      cursor: pointer;
+      transition: opacity 0.4s ease, visibility 0.4s ease;
+      padding: 20px;
+    }
+
+    .tutorial-box {
+      text-align: center;
+      color: #FFFFFF;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+    }
+
+    .hand-icon {
+      font-size: 4rem;
+      margin-bottom: 20px;
+      animation: clickAnimation 1.2s infinite ease-in-out;
+      display: inline-block;
+    }
+
+    /* Animação do dedo simulando o toque de clique */
+    @keyframes clickAnimation {
+      0% { transform: scale(1) translateY(0); opacity: 0.8; }
+      50% { transform: scale(0.85) translateY(12px); opacity: 1; filter: drop-shadow(0 0 15px #00FF00); }
+      100% { transform: scale(1) translateY(0); opacity: 0.8; }
+    }
+
+    .tutorial-box h2 {
+      font-size: 1.3rem;
+      font-weight: 700;
+      color: #00FF00;
+      margin-bottom: 8px;
+      letter-spacing: 0.5px;
+    }
+
+    .tutorial-box p {
+      font-size: 0.95rem;
+      color: #CCCCCC;
+      font-weight: 400;
+    }
+
     .camera-container {
       width: 100%;
       height: 100%;
@@ -36,7 +87,7 @@
       background-color: #000;
     }
 
-    /* Area Principal da Câmera */
+    /* Area Principal da Câmera preenchendo o espaço dinamicamente */
     .viewport-box {
       position: relative;
       width: 100%;
@@ -51,7 +102,7 @@
     #videoFeed, #photoPreview, #frameOverlay {
       width: 100%;
       height: 100%;
-      object-fit: contain;
+      object-fit: contain; /* Mantém a proporção exata da moldura sem cortar as bordas */
       position: absolute;
       top: 0;
       left: 0;
@@ -62,7 +113,7 @@
       z-index: 10;
     }
 
-    /* LINHA SUPERIOR DE CONTROLES (Logo na esquerda + Inverter Câmera na direita, colados na moldura) */
+    /* LINHA SUPERIOR DE CONTROLES (Logo na esquerda + Inverter Câmera na direita) */
     .sub-frame-bar {
       width: 100%;
       display: flex;
@@ -71,9 +122,10 @@
       padding: 10px 20px;
       background-color: #000000;
       z-index: 30;
+      flex-shrink: 0;
     }
 
-    /* Texto DigiArt Ar na mesma linha */
+    /* Texto DigiArt Ar */
     .brand-logo {
       color: #00FF00;
       font-weight: 700;
@@ -83,7 +135,7 @@
       white-space: nowrap;
     }
 
-    /* Botão de Inverter Câmera POSICIONADO NO ALTO DIREITO */
+    /* Botão de Inverter Câmera */
     .btn-flip {
       width: 46px;
       height: 46px;
@@ -103,22 +155,23 @@
       fill: #00FF00;
     }
 
-    /* BARRA INFERIOR APENAS PARA O BOTÃO GRANDE DE TIRAR FOTO */
+    /* BARRA INFERIOR PARA O BOTÃO GRANDE DE TIRAR FOTO */
     .controls-bar {
       width: 100%;
-      height: 140px;
+      height: 120px;
       display: flex;
       align-items: center;
       justify-content: center;
       background-color: #000000;
       z-index: 30;
+      flex-shrink: 0;
       padding-bottom: env(safe-area-inset-bottom);
     }
 
-    /* Botão de Tirar Foto GRANDE (Conforme o círculo vermelho) */
+    /* Botão de Tirar Foto GRANDE */
     .btn-capture {
-      width: 110px;
-      height: 110px;
+      width: 100px;
+      height: 100px;
       border-radius: 50%;
       background-color: transparent;
       border: 5px solid #00FF00;
@@ -136,8 +189,8 @@
     }
 
     .inner-circle {
-      width: 88px;
-      height: 88px;
+      width: 80px;
+      height: 80px;
       border-radius: 50%;
       background-color: #FFFFFF;
     }
@@ -152,6 +205,7 @@
       padding: 0 20px;
       background-color: #000000;
       z-index: 30;
+      flex-shrink: 0;
       padding-bottom: env(safe-area-inset-bottom);
     }
 
@@ -237,15 +291,17 @@
 </head>
 <body>
 
-  <main class="camera-container" id="mainContainer">
-    <div class="viewport-box">
-      <video id="videoFeed" autoplay playsinline muted></video>
-      <canvas id="photoCanvas" style="display: none;"></canvas>
-      <img id="frameOverlay" src="" alt="Moldura do Evento" style="display: none;">
-      <img id="photoPreview" src="" alt="Sua Foto" style="display: none;">
+  <!-- TUTORIAL EM SOBREPOSIÇÃO (SÓ SUME AO CLICAR) -->
+  <div class="tutorial-overlay" id="tutorialOverlay">
+    <div class="tutorial-box">
+      <div class="hand-icon">👆</div>
+      <h2>TOQUE NA TELA</h2>
+      <p>Para abrir a câmera em Tela Cheia</p>
     </div>
+  </div>
 
-    <!-- LINHA LOGO + BOTÃO INVERTER CÂMERA (Subido para abaixo da moldura) -->
+  <main class="camera-container" id="mainContainer">
+    <!-- LINHA LOGO + BOTÃO INVERTER CÂMERA -->
     <div class="sub-frame-bar" id="subFrameBar">
       <div class="brand-logo">DigiArt Ar</div>
       <button class="btn-flip" id="btnFlip" title="Inverter Câmera">
@@ -253,6 +309,13 @@
           <path d="M19 8l-4 4h3c0 3.31-2.69 6-6 6-1.01 0-1.97-.25-2.8-.7l-1.46 1.46C9.01 19.54 10.43 20 12 20c4.42 0 8-3.58 8-8h3l-4-4zM6 12c0-3.31 2.69-6 6-6 1.01 0 1.97.25 2.8.7l1.46-1.46C14.99 4.46 13.57 4 12 4c-4.42 0-8 3.58-8 8H1l4 4 4-4H6z"/>
         </svg>
       </button>
+    </div>
+
+    <div class="viewport-box">
+      <video id="videoFeed" autoplay playsinline muted></video>
+      <canvas id="photoCanvas" style="display: none;"></canvas>
+      <img id="frameOverlay" src="" alt="Moldura do Evento" style="display: none;">
+      <img id="photoPreview" src="" alt="Sua Foto" style="display: none;">
     </div>
 
     <!-- BARRA DO BOTÃO GRANDE DE TIRAR FOTO -->
@@ -316,22 +379,31 @@
     const statusSpinner = document.getElementById("statusSpinner");
     const btnCloseModal = document.getElementById("btnCloseModal");
 
+    const tutorialOverlay = document.getElementById("tutorialOverlay");
+
     let currentStream = null;
     let facingMode = "environment"; 
     let capturedDataUrl = null;
     let currentEventId = null;
 
-    function ativarTelaCheiaGlobal() {
+    // GERENCIADOR DE TELA CHEIA E SUMIÇO DO TUTORIAL
+    function entrarTelaCheiaETutorial() {
       const el = document.documentElement;
       if (el.requestFullscreen) {
         el.requestFullscreen().catch(() => {});
       } else if (el.webkitRequestFullscreen) {
         el.webkitRequestFullscreen();
       }
+
+      // Desaparece suavemente
+      tutorialOverlay.style.opacity = "0";
+      setTimeout(() => {
+        tutorialOverlay.style.visibility = "hidden";
+      }, 400);
     }
 
-    document.body.addEventListener("click", ativarTelaCheiaGlobal, { once: true });
-    document.body.addEventListener("touchstart", ativarTelaCheiaGlobal, { once: true });
+    tutorialOverlay.addEventListener("click", entrarTelaCheiaETutorial);
+    tutorialOverlay.addEventListener("touchstart", entrarTelaCheiaETutorial);
 
     function obterIdEventoUrl() {
       const params = new URLSearchParams(window.location.search);
