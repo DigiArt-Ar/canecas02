@@ -5,7 +5,10 @@
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>DigiArt AR - Painel do Operador</title>
 
+  <!-- LIB QR CODE -->
   <script src="https://cdnjs.cloudflare.com/ajax/libs/qrcodejs/1.0.0/qrcode.min.js"></script>
+  <!-- LIB JSZIP PARA GERAR ZIP DAS FOTOS -->
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/jszip/3.10.1/jszip.min.js"></script>
 
   <style>
     * {
@@ -122,7 +125,7 @@
       justify-content: space-between;
       align-items: center;
       padding: 0 25px;
-      gap: 15px;
+      gap: 12px;
       flex-shrink: 0;
     }
 
@@ -198,6 +201,28 @@
     .stat-card h3 {
       font-size: 1.1rem;
       color: #00FF00;
+    }
+
+    .header-actions {
+      display: flex;
+      gap: 10px;
+    }
+
+    .btn-download-zip {
+      background-color: #1a2a1a;
+      color: #00FF00;
+      border: 1px solid #00FF00;
+      padding: 10px 14px;
+      border-radius: 8px;
+      font-weight: bold;
+      font-size: 0.85rem;
+      cursor: pointer;
+      transition: all 0.2s ease;
+    }
+
+    .btn-download-zip:hover {
+      background-color: #00FF00;
+      color: #000000;
     }
 
     .btn-finish {
@@ -480,7 +505,10 @@
         </div>
       </div>
 
-      <button class="btn-finish" id="btnFinishEvent">FINALIZAR EVENTO</button>
+      <div class="header-actions">
+        <button class="btn-download-zip" id="btnDownloadZip">📦 BAIXAR TODAS (ZIP)</button>
+        <button class="btn-finish" id="btnFinishEvent">FINALIZAR EVENTO</button>
+      </div>
     </header>
 
     <div class="main-content">
@@ -517,7 +545,7 @@
 
   <script type="module">
     import { initializeApp } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-app.js";
-    import { getFirestore, collection, query, orderBy, onSnapshot, updateDoc, doc, setDoc, deleteDoc } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-firestore.js";
+    import { getFirestore, collection, query, orderBy, onSnapshot, updateDoc, doc, setDoc, deleteDoc, getDocs } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-firestore.js";
 
     const firebaseConfig = {
       apiKey: "AIzaSyB9cempkBujGI2cOzpNLmMWzYEp1nrOogI",
@@ -541,6 +569,7 @@
     const inputFrameFile = document.getElementById("inputFrameFile");
     const btnStartEvent = document.getElementById("btnStartEvent");
     const btnFinishEvent = document.getElementById("btnFinishEvent");
+    const btnDownloadZip = document.getElementById("btnDownloadZip");
 
     const infoEventId = document.getElementById("infoEventId");
     const infoEventDate = document.getElementById("infoEventDate");
@@ -710,15 +739,19 @@
       }
     });
 
+    // QR CODE COM MENOS PONTOS (CorrectLevel.L) E LINK ENXUTO
     function gerarQRCodeCliente(eventId) {
-      const urlBase = window.location.href.split('/painel')[0];
-      const linkCamera = `${urlBase}/camera/?evento=${eventId}`;
+      const urlBase = window.location.origin + window.location.pathname.replace('/painel', '');
+      const linkCamera = `${urlBase}/camera/?e=${eventId}`;
 
-      document.getElementById("qrcodeCanvas").innerHTML = "";
-      new QRCode(document.getElementById("qrcodeCanvas"), {
+      const qrContainer = document.getElementById("qrcodeCanvas");
+      qrContainer.innerHTML = "";
+
+      new QRCode(qrContainer, {
         text: linkCamera,
-        width: 100,
-        height: 100
+        width: 120,
+        height: 120,
+        correctLevel: QRCode.CorrectLevel.L
       });
     }
 
@@ -830,7 +863,59 @@
       }
     });
 
-    // IMPRESSÃO DIRETA SEM BLOQUEAR A THREAD DO NAVEGADOR
+    // EXPORTAR TODAS AS FOTOS EM UM ARQUIVO ZIP
+    btnDownloadZip.addEventListener("click", async () => {
+      if (!currentEventId) return;
+
+      btnDownloadZip.innerText = "⏳ GERANDO ZIP...";
+      btnDownloadZip.disabled = true;
+
+      try {
+        const fotosRef = collection(db, "eventos", currentEventId, "fotos");
+        const q = query(fotosRef, orderBy("criadoEm", "asc"));
+        const snapshot = await getDocs(q);
+
+        if (snapshot.empty) {
+          alert("Nenhuma foto encontrada para este evento!");
+          btnDownloadZip.innerText = "📦 BAIXAR TODAS (ZIP)";
+          btnDownloadZip.disabled = false;
+          return;
+        }
+
+        const zip = new JSZip();
+        const pasta = zip.folder(`evento_${currentEventId}`);
+        let contador = 1;
+
+        snapshot.forEach((docSnap) => {
+          const foto = docSnap.data();
+          if (foto.fotoUrl) {
+            // Remove o cabeçalho "data:image/jpeg;base64," para extrair os dados puros
+            const base64Data = foto.fotoUrl.replace(/^data:image\/(png|jpeg|jpg);base64,/, "");
+            const numPadded = String(contador).padStart(3, '0');
+            pasta.file(`foto_${numPadded}.jpg`, base64Data, { base64: true });
+            contador++;
+          }
+        });
+
+        const content = await zip.generateAsync({ type: "blob" });
+        
+        // Dispara o download automático do ZIP
+        const link = document.createElement("a");
+        link.href = URL.createObjectURL(content);
+        link.download = `Fotos_${currentEventId}.zip`;
+        link.click();
+        URL.revokeObjectURL(link.href);
+
+      } catch (erro) {
+        console.error("Erro ao gerar arquivo ZIP:", erro);
+        alert("Ocorreu um erro ao gerar o arquivo ZIP de fotos.");
+      } finally {
+        btnDownloadZip.innerText = "📦 BAIXAR TODAS (ZIP)";
+        btnDownloadZip.disabled = false;
+      }
+    });
+
+    // IMPRESSÃO DIRETA FORÇANDO ÁREA TOTAL E SEM MARGENS
     function imprimirDireto(url) {
       let iframe = document.getElementById("printFrame");
       if (!iframe) {
@@ -852,8 +937,26 @@
         <html>
           <head>
             <style>
-              body { margin: 0; padding: 0; text-align: center; background-color: #ffffff; }
-              img { max-width: 100%; max-height: 100vh; height: auto; display: block; margin: 0 auto; }
+              @page {
+                size: portrait;
+                margin: 0;
+              }
+              html, body {
+                margin: 0;
+                padding: 0;
+                width: 100%;
+                height: 100%;
+                background-color: #ffffff;
+                display: flex;
+                align-items: center;
+                justify-content: center;
+              }
+              img {
+                width: 100%;
+                height: 100%;
+                object-fit: contain;
+                display: block;
+              }
             </style>
           </head>
           <body>
