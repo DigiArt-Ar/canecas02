@@ -37,7 +37,6 @@
       justify-content: center;
       z-index: 999;
       cursor: pointer;
-      transition: opacity 0.3s ease;
       padding: 20px;
     }
 
@@ -113,7 +112,7 @@
       z-index: 10;
     }
 
-    /* BARRA INFERIOR EM FORMATO DE TRIÂNGULO (2 LINHAS) */
+    /* BARRA INFERIOR EM FORMATO DE TRIÂNGULO */
     .controls-bar {
       width: 100%;
       display: flex;
@@ -384,26 +383,22 @@
     let capturedDataUrl = null;
     let currentEventId = null;
 
-    // FECHAR TUTORIAL SEM TRAVAR
-    function fecharTutorialEEntrarFullscreen() {
-      // Esconde o tutorial imediatamente
-      tutorialOverlay.style.display = "none";
+    // FECHAR TUTORIAL E ATIVAR FULLSCREEN
+    function ativarFullscreenETutorial(ev) {
+      if (ev) ev.preventDefault();
 
-      // Tenta acionar tela cheia sem interromper o fluxo se der erro
-      try {
-        const el = document.documentElement;
-        if (el.requestFullscreen) {
-          el.requestFullscreen().catch(() => {});
-        } else if (el.webkitRequestFullscreen) {
-          el.webkitRequestFullscreen();
-        }
-      } catch (e) {
-        console.log("Tela cheia não suportada ou bloqueada pelo navegador.");
+      const docEl = document.documentElement;
+      const requestFS = docEl.requestFullscreen || docEl.webkitRequestFullscreen || docEl.mozRequestFullScreen || docEl.msRequestFullscreen;
+
+      if (requestFS) {
+        requestFS.call(docEl).catch(() => {});
       }
+
+      tutorialOverlay.style.display = "none";
     }
 
-    tutorialOverlay.addEventListener("click", fecharTutorialEEntrarFullscreen);
-    tutorialOverlay.addEventListener("touchstart", fecharTutorialEEntrarFullscreen);
+    tutorialOverlay.addEventListener("click", ativarFullscreenETutorial);
+    tutorialOverlay.addEventListener("touchend", ativarFullscreenETutorial);
 
     function obterIdEventoUrl() {
       const params = new URLSearchParams(window.location.search);
