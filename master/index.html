@@ -1,0 +1,112 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+  <meta charset="UTF-8">
+  <title>DigiArt AR - Painel Master (Matriz)</title>
+  <style>
+    body { background: #0b0b0b; color: #fff; font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; padding: 20px; }
+    .card { background: #141414; border: 2px solid #00FF00; border-radius: 12px; padding: 20px; max-width: 500px; margin: auto; }
+    h1 { color: #00FF00; font-size: 1.5rem; text-align: center; margin-bottom: 20px; }
+    .form-group { margin-bottom: 15px; }
+    label { display: block; color: #00FF00; font-size: 0.85rem; margin-bottom: 5px; }
+    input, select { width: 100%; padding: 10px; border-radius: 6px; border: 1px solid #333; background: #1c1c1c; color: #fff; box-sizing: border-box; }
+    button { width: 100%; padding: 12px; background: #00FF00; color: #000; border: none; font-weight: bold; border-radius: 6px; cursor: pointer; margin-top: 10px; }
+    .token-box { background: #1c1c1c; border: 1px dashed #00FF00; padding: 15px; margin-top: 20px; text-align: center; border-radius: 6px; display: none; }
+    .token-box strong { color: #00FF00; font-size: 1.2rem; display: block; margin-top: 5px; word-break: break-all; }
+  </style>
+</head>
+<body>
+  <div class="card">
+    <h1>Painel Master - Gerar Revendedor</h1>
+    <div class="form-group">
+      <label>Nome do Revendedor:</label>
+      <input type="text" id="revNome" placeholder="Ex: Ana Maria / João Fotógrafo">
+    </div>
+    <div class="form-group">
+      <label>E-mail:</label>
+      <input type="email" id="revEmail" placeholder="cliente@email.com">
+    </div>
+    <div class="form-group">
+      <label>Telefone / WhatsApp:</label>
+      <input type="text" id="revTel" placeholder="24 99999-9999">
+    </div>
+    <div class="form-group">
+      <label>Tempo de Licença:</label>
+      <select id="revMeses">
+        <option value="30">1 Mês (30 Dias)</option>
+        <option value="60">2 Meses (60 Dias)</option>
+        <option value="120">4 Meses (120 Dias)</option>
+        <option value="365">1 Ano (365 Dias)</option>
+      </select>
+    </div>
+    <button id="btnGerar">GERAR ACESSO</button>
+
+    <div class="token-box" id="tokenBox">
+      <span>Token / Senha Gerada:</span>
+      <strong id="tokenGerado">---</strong>
+      <span style="font-size: 0.75rem; color: #aaa; display:block; margin-top: 8px;">Envie este token e o e-mail para o revendedor.</span>
+    </div>
+  </div>
+
+  <script type="module">
+    import { initializeApp } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-app.js";
+    import { getFirestore, doc, setDoc } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-firestore.js";
+
+    const firebaseConfig = {
+      apiKey: "AIzaSyB9cempkBujGI2cOzpNLmMWzYEp1nrOogI",
+      authDomain: "estacao-de-fotos.firebaseapp.com",
+      projectId: "estacao-de-fotos",
+      storageBucket: "estacao-de-fotos.firebasestorage.app",
+      messagingSenderId: "227871054513",
+      appId: "1:227871054513:web:8588dfa40f8a9da6166090",
+      measurementId: "G-3CTFM7HHZQ"
+    };
+
+    const app = initializeApp(firebaseConfig);
+    const db = getFirestore(app);
+
+    function gerarTokenAleatorio() {
+      const chars = 'ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789';
+      let token = '';
+      for(let i=0; i < 16; i++) {
+        token += chars.charAt(Math.floor(Math.random() * chars.length));
+      }
+      return token;
+    }
+
+    document.getElementById("btnGerar").addEventListener("click", async () => {
+      const nome = document.getElementById("revNome").value.trim();
+      const email = document.getElementById("revEmail").value.trim().toLowerCase();
+      const telefone = document.getElementById("revTel").value.trim();
+      const dias = parseInt(document.getElementById("revMeses").value);
+
+      if(!nome || !email) {
+        alert("Preencha o nome e o e-mail do revendedor!");
+        return;
+      }
+
+      const token = gerarTokenAleatorio();
+      const dataExpiracao = Date.now() + (dias * 24 * 3600 * 1000); // Soma os dias em milissegundos
+
+      try {
+        // Salva na coleção "revendedores" usando o e-mail como ID principal
+        await setDoc(doc(db, "revendedores", email), {
+          nome: nome,
+          email: email,
+          telefone: telefone,
+          token: token,
+          expiraEm: dataExpiracao,
+          criadoEm: Date.now()
+        });
+
+        document.getElementById("tokenGerado").innerText = token;
+        document.getElementById("tokenBox").style.display = "block";
+        alert("Acesso gerado com sucesso!");
+      } catch (err) {
+        console.error("Erro ao salvar revendedor:", err);
+        alert("Erro ao gerar acesso no Firebase.");
+      }
+    });
+  </script>
+</body>
+</html>
