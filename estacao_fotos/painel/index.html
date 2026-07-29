@@ -701,7 +701,7 @@
         dashboardContainer.style.display = "flex";
 
         infoEventId.innerText = currentEventId;
-        infoEventDate.innerText = `Início: ${agora.toLocaleDateString('pt-BR')} ${agora.toLocaleTimeString('pt-BR', {hour: '2-digit', minute:'2-digit'})}`;
+        infoEventDate.innerText = `Início: ${agora.toLocaleDateString('pt-BR')} ${agora.toLocaleTimeString('pt-BR', {hour: '2-digit', minute:'2-digit')}`;
 
         gerarQRCodeCliente(currentEventId);
         iniciarCronometroComSegundos(horas * 3600);
@@ -739,10 +739,10 @@
       }
     });
 
-    // QR CODE COM MENOS PONTOS (CorrectLevel.L) E LINK ENXUTO
+    // QR CODE COM MENOS PONTOS (CorrectLevel.L) E CAMINHO EXATO DA CÂMERA
     function gerarQRCodeCliente(eventId) {
       const urlBase = window.location.origin + window.location.pathname.replace('/painel', '');
-      const linkCamera = `${urlBase}/camera/?e=${eventId}`;
+      const linkCamera = `${urlBase}/camera/?evento=${eventId}`;
 
       const qrContainer = document.getElementById("qrcodeCanvas");
       qrContainer.innerHTML = "";
