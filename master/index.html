@@ -3,7 +3,7 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>DigiArt AR - Painel Master (Gerenciamento)</title>
+  <title>DigiArt AR - Painel de Controle e Gestão Master</title>
   <style>
     * {
       box-sizing: border-box;
@@ -24,7 +24,7 @@
 
     .container {
       width: 100%;
-      max-width: 900px;
+      max-width: 1000px;
     }
 
     header {
@@ -61,12 +61,12 @@
 
     .form-grid {
       display: grid;
-      grid-template-columns: 2fr 1fr 1fr;
+      grid-template-columns: 1fr 1fr 1fr 1fr;
       gap: 15px;
       align-items: end;
     }
 
-    @media (max-width: 768px) {
+    @media (max-width: 900px) {
       .form-grid {
         grid-template-columns: 1fr;
       }
@@ -89,6 +89,10 @@
       color: #fff;
       font-size: 1rem;
       outline: none;
+    }
+
+    .form-group input::placeholder {
+      color: #555;
     }
 
     .form-group input:focus, .form-group select:focus {
@@ -223,21 +227,38 @@
       <h2>Novo Acesso / Revendedor</h2>
       <div class="form-grid">
         <div class="form-group">
-          <label for="inputEmail">E-mail do Revendedor:</label>
-          <input type="email" id="inputEmail" placeholder="cliente@email.com">
+          <label for="inputNome">Nome do Cliente:</label>
+          <input type="text" id="inputNome" placeholder="">
         </div>
         <div class="form-group">
-          <label for="selectDias">Tempo de Licença:</label>
-          <select id="selectDias">
-            <option value="1">1 Dia (Teste)</option>
-            <option value="7">7 Dias (Semanal)</option>
-            <option value="30" selected>30 Dias (Mensal)</option>
-            <option value="365">1 Ano (Anual)</option>
+          <label for="inputEmail">E-mail de Acesso:</label>
+          <input type="email" id="inputEmail" placeholder="">
+        </div>
+        <div class="form-group">
+          <label for="inputTelefone">Telefone / WhatsApp:</label>
+          <input type="text" id="inputTelefone" placeholder="">
+        </div>
+        <div class="form-group">
+          <label for="selectMeses">Tempo de Licença:</label>
+          <select id="selectMeses">
+            <option value="1">1 Mês</option>
+            <option value="2">2 Meses</option>
+            <option value="3">3 Meses</option>
+            <option value="4">4 Meses</option>
+            <option value="5">5 Meses</option>
+            <option value="6">6 Meses</option>
+            <option value="7">7 Meses</option>
+            <option value="8">8 Meses</option>
+            <option value="9">9 Meses</option>
+            <option value="10">10 Meses</option>
+            <option value="11">11 Meses</option>
+            <option value="12" selected>12 Meses (1 Ano)</option>
           </select>
         </div>
-        <div class="form-group">
-          <button class="btn" id="btnGerar">GERAR ACESSO</button>
-        </div>
+      </div>
+
+      <div style="margin-top: 15px;">
+        <button class="btn" id="btnGerar">GERAR ACESSO E TOKEN</button>
       </div>
 
       <div class="token-result" id="tokenResultBox">
@@ -256,7 +277,7 @@
         <table>
           <thead>
             <tr>
-              <th>E-mail</th>
+              <th>Revendedor / Contato</th>
               <th>Token</th>
               <th>Status / Validade</th>
               <th>Ações</th>
@@ -289,8 +310,10 @@
     const app = initializeApp(firebaseConfig);
     const db = getFirestore(app);
 
+    const inputNome = document.getElementById("inputNome");
     const inputEmail = document.getElementById("inputEmail");
-    const selectDias = document.getElementById("selectDias");
+    const inputTelefone = document.getElementById("inputTelefone");
+    const selectMeses = document.getElementById("selectMeses");
     const btnGerar = document.getElementById("btnGerar");
     const tokenResultBox = document.getElementById("tokenResultBox");
     const txtTokenGerado = document.getElementById("txtTokenGerado");
@@ -319,6 +342,8 @@
         querySnapshot.forEach((docSnap) => {
           const dados = docSnap.data();
           const email = docSnap.id;
+          const nome = dados.nome || "Não informado";
+          const telefone = dados.telefone || "Não informado";
           const token = dados.token;
           const expiraEm = dados.expiraEm;
           
@@ -328,8 +353,12 @@
 
           const tr = document.createElement("tr");
           tr.innerHTML = `
-            <td><strong>${email}</strong></td>
-            <td><code style="color: #00FF00;">${token}</code></td>
+            <td>
+              <strong>${nome}</strong><br>
+              <small style="color: #00FF00;">${email}</small><br>
+              <small style="color: #888;">📞 ${telefone}</small>
+            </td>
+            <td><code style="color: #00FF00; font-size: 1rem;">${token}</code></td>
             <td>
               <span class="badge ${isAtivo ? 'badge-ativo' : 'badge-expirado'}">
                 ${isAtivo ? 'Ativo' : 'Expirado'}
@@ -337,7 +366,8 @@
               <br><small style="color: #888; font-size: 0.75rem;">Expira em: ${dataFormatada}</small>
             </td>
             <td class="actions-cell">
-              <button class="btn-sm btn-renew" onclick="renovarLicenca('${email}', 30)">+30 Dias</button>
+              <button class="btn-sm btn-renew" onclick="renovarLicenca('${email}', 1)">+1 Mês</button>
+              <button class="btn-sm btn-renew" onclick="renovarLicenca('${email}', 12)">+1 Ano</button>
               <button class="btn-sm btn-delete" onclick="excluirRevendedor('${email}')">Excluir</button>
             </td>
           `;
@@ -352,12 +382,24 @@
 
     // GERAR NOVO ACESSO
     btnGerar.addEventListener("click", async () => {
+      const nome = inputNome.value.trim();
       const email = inputEmail.value.trim().toLowerCase();
-      const dias = parseInt(selectDias.value);
+      const telefone = inputTelefone.value.trim();
+      const meses = parseInt(selectMeses.value);
 
+      if (!nome) {
+        alert("Digite o nome do revendedor!");
+        inputNome.focus();
+        return;
+      }
       if (!email || !email.includes("@")) {
         alert("Digite um e-mail válido!");
         inputEmail.focus();
+        return;
+      }
+      if (!telefone) {
+        alert("Digite o telefone de contato!");
+        inputTelefone.focus();
         return;
       }
 
@@ -366,9 +408,11 @@
 
       try {
         const token = gerarTokenAleatorio();
-        const expiraEm = Date.now() + (dias * 24 * 3600 * 1000);
+        const expiraEm = Date.now() + (meses * 30 * 24 * 3600 * 1000);
 
         await setDoc(doc(db, "revendedores", email), {
+          nome: nome,
+          telefone: telefone,
           token: token,
           expiraEm: expiraEm,
           criadoEm: Date.now()
@@ -376,14 +420,19 @@
 
         txtTokenGerado.innerText = token;
         tokenResultBox.style.display = "flex";
+        
+        inputNome.value = "";
         inputEmail.value = "";
+        inputTelefone.value = "";
+        selectMeses.value = "12";
+        
         carregarLista();
 
       } catch (err) {
         console.error("Erro ao salvar:", err);
         alert("Erro ao gerar acesso no Firebase.");
       } finally {
-        btnGerar.innerText = "GERAR ACESSO";
+        btnGerar.innerText = "GERAR ACESSO E TOKEN";
         btnGerar.disabled = false;
       }
     });
@@ -395,13 +444,14 @@
     });
 
     // FUNÇÕES GLOBAIS PARA OS BOTÕES DA TABELA
-    window.renovarLicenca = async function(email, diasAdicionais) {
-      const confirma = confirm(`Deseja adicionar mais ${diasAdicionais} dias para o revendedor ${email}?`);
+    window.renovarLicenca = async function(email, mesesAdicionais) {
+      const confirma = confirm(`Deseja adicionar mais ${mesesAdicionais} ${mesesAdicionais === 1 ? 'mês' : 'meses'} para o revendedor ${email}?`);
       if (!confirma) return;
 
       try {
-        // Pega a validade atual ou renova a partir de agora
-        const novoExpira = Date.now() + (diasAdicionais * 24 * 3600 * 1000);
+        const msAdicionais = mesesAdicionais * 30 * 24 * 3600 * 1000;
+        const novoExpira = Date.now() + msAdicionais;
+        
         await updateDoc(doc(db, "revendedores", email), {
           expiraEm: novoExpira
         });
@@ -426,7 +476,7 @@
       }
     };
 
-    // CARREGA A TABELA AO ABRIR A PÁGINA
+    // CARREGA LA TABELA AO ABRIR A PÁGINA
     window.addEventListener("DOMContentLoaded", () => {
       carregarLista();
     });
