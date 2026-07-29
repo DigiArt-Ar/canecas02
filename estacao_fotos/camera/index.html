@@ -2,7 +2,10 @@
 <html lang="pt-BR">
 <head>
   <meta charset="UTF-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
+  <meta name="apple-mobile-web-app-capable" content="yes">
+  <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+  <meta name="theme-color" content="#000000">
   <title>DigiArt AR - Câmera do Evento</title>
   
   <style>
@@ -45,7 +48,7 @@
       justify-content: center;
     }
 
-    /* Força o vídeo, preview e moldura a alinharem exatamente com object-fit: contain */
+    /* Força o vídeo, preview e moldura a alinharem exatamente */
     #videoFeed, #photoPreview, #frameOverlay {
       width: 100%;
       height: 100%;
@@ -60,34 +63,46 @@
       z-index: 10;
     }
 
-    /* Barra de Controle Fixa no Rodapé */
+    /* Barra de Controle Fixa no Rodapé (Preta Sólida como no Mockup) */
     .controls-bar {
-      position: absolute;
-      bottom: 0;
-      left: 0;
+      position: relative;
       width: 100%;
       height: 110px;
       display: flex;
       align-items: center;
-      justify-content: space-around;
-      padding: 0 20px;
-      background: linear-gradient(to top, rgba(0,0,0,0.95), rgba(0,0,0,0.4), transparent);
+      justify-content: space-between;
+      padding: 0 25px;
+      background-color: #000000;
       z-index: 30;
+      border-top: 1px solid #111;
+      padding-bottom: env(safe-area-inset-bottom);
     }
 
-    /* Botão de Tirar Foto */
+    /* Marca / Logo DigiArt Ar */
+    .brand-logo {
+      color: #00FF00;
+      font-weight: 800;
+      font-size: 1.1rem;
+      letter-spacing: 0.5px;
+      font-family: monospace, sans-serif;
+      text-shadow: 0 0 8px rgba(0, 255, 0, 0.4);
+      width: 80px;
+    }
+
+    /* Botão de Tirar Foto (Centralizado) */
     .btn-capture {
-      width: 75px;
-      height: 75px;
+      width: 72px;
+      height: 72px;
       border-radius: 50%;
-      background-color: #FFFFFF;
+      background-color: #888888;
       border: 4px solid #00FF00;
       display: flex;
       align-items: center;
       justify-content: center;
       cursor: pointer;
       outline: none;
-      box-shadow: 0 0 15px rgba(0, 255, 0, 0.4);
+      box-shadow: 0 0 12px rgba(0, 255, 0, 0.5);
+      transition: transform 0.1s ease;
     }
 
     .btn-capture:active {
@@ -95,29 +110,31 @@
     }
 
     .inner-circle {
-      width: 55px;
-      height: 55px;
+      width: 52px;
+      height: 52px;
       border-radius: 50%;
-      background-color: #FFFFFF;
+      background-color: #888888;
     }
 
-    /* Botão de Inverter Câmera */
+    /* Botão de Inverter Câmera (Verde Neon) */
     .btn-flip {
-      width: 50px;
-      height: 50px;
+      width: 48px;
+      height: 48px;
       border-radius: 50%;
-      background-color: rgba(255, 255, 255, 0.2);
-      border: 2px solid #FFFFFF;
-      color: #FFFFFF;
-      font-size: 1.4rem;
+      background-color: transparent;
+      border: 2px solid #00FF00;
+      color: #00FF00;
+      font-size: 1.2rem;
       display: flex;
       align-items: center;
       justify-content: center;
       cursor: pointer;
+      box-shadow: 0 0 8px rgba(0, 255, 0, 0.3);
     }
 
-    .btn-spacer {
-      width: 50px;
+    .btn-flip:active {
+      transform: rotate(180deg);
+      transition: transform 0.3s ease;
     }
 
     /* Botões Refazer / Enviar */
@@ -210,9 +227,9 @@
       <img id="photoPreview" src="" alt="Sua Foto" style="display: none;">
     </div>
 
-    <!-- BARRA TIRA FOTO -->
+    <!-- BARRA TIRA FOTO (IDÊNTICA AO MOCKUP) -->
     <div class="controls-bar" id="controlsCapture">
-      <div class="btn-spacer"></div>
+      <div class="brand-logo">DigiArt Ar</div>
       <button class="btn-capture" id="btnCapture" title="Tirar Foto">
         <div class="inner-circle"></div>
       </button>
@@ -220,7 +237,7 @@
     </div>
 
     <!-- BARRA REVISÃO (REFAZER / ENVIAR) -->
-    <div class="controls-bar" id="controlsReview" style="display: none;">
+    <div class="controls-bar" id="controlsReview" style="display: none; justify-content: space-around;">
       <button class="btn-action btn-retake" id="btnRetake">Refazer</button>
       <button class="btn-action btn-send" id="btnSend">Enviar Foto</button>
     </div>
@@ -277,6 +294,15 @@
     let capturedDataUrl = null;
     let currentEventId = null;
 
+    function ativarTelaCheia() {
+      const el = document.documentElement;
+      if (el.requestFullscreen) {
+        el.requestFullscreen().catch(() => {});
+      } else if (el.webkitRequestFullscreen) {
+        el.webkitRequestFullscreen();
+      }
+    }
+
     function obterIdEventoUrl() {
       const params = new URLSearchParams(window.location.search);
       return params.get("evento") || "festa-teste";
@@ -304,6 +330,7 @@
     }
 
     btnFlip.addEventListener("click", () => {
+      ativarTelaCheia();
       facingMode = (facingMode === "environment") ? "user" : "environment";
       iniciarCamera();
     });
@@ -324,7 +351,8 @@
     }
 
     btnCapture.addEventListener("click", () => {
-      // Ajusta o tamanho da foto renderizada com base na moldura ou resolução do vídeo
+      ativarTelaCheia();
+
       const width = frameOverlay.naturalWidth || videoFeed.videoWidth || 1080;
       const height = frameOverlay.naturalHeight || videoFeed.videoHeight || 1920;
 
@@ -333,17 +361,14 @@
 
       const ctx = photoCanvas.getContext("2d");
       
-      // Limpa com fundo preto para evitar vazamentos
       ctx.fillStyle = "#000000";
       ctx.fillRect(0, 0, width, height);
 
-      // Espelha horizontalmente se for câmera frontal
       if (facingMode === "user") {
         ctx.translate(width, 0);
         ctx.scale(-1, 1);
       }
 
-      // Calcula o encaixe correto da câmera na proporção exata do canvas (cover suave)
       const vWidth = videoFeed.videoWidth || width;
       const vHeight = videoFeed.videoHeight || height;
       const scale = Math.max(width / vWidth, height / vHeight);
@@ -352,7 +377,6 @@
 
       ctx.drawImage(videoFeed, x, y, vWidth * scale, vHeight * scale);
 
-      // Reseta a matriz para desenhar a moldura normalmente por cima
       ctx.setTransform(1, 0, 0, 1, 0, 0);
 
       if (frameOverlay.src && frameOverlay.style.display !== "none") {
