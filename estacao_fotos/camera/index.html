@@ -232,7 +232,7 @@
       box-shadow: 0 0 15px rgba(0, 255, 0, 0.5);
     }
 
-    /* Modal de Status Ajustado para Sobrepor a Tela Cheia */
+    /* Modal de Status com Z-index Máximo */
     .status-modal {
       position: fixed;
       top: 0; left: 0; right: 0; bottom: 0;
@@ -240,7 +240,7 @@
       display: flex;
       align-items: center;
       justify-content: center;
-      z-index: 9999;
+      z-index: 99999;
       padding: 20px;
     }
 
@@ -290,7 +290,6 @@
 </head>
 <body>
 
-  <!-- TUTORIAL EM SOBREPOSIÇÃO -->
   <div class="tutorial-overlay" id="tutorialOverlay">
     <div class="tutorial-box">
       <div class="hand-icon">👆</div>
@@ -308,7 +307,6 @@
       <img id="photoPreview" src="" alt="Sua Foto" style="display: none;">
     </div>
 
-    <!-- BARRA INFERIOR EM TRIÂNGULO -->
     <div class="controls-bar" id="controlsCapture">
       <div class="controls-top-row">
         <div class="brand-logo">DigiArt Ar</div>
@@ -327,14 +325,12 @@
       </div>
     </div>
 
-    <!-- BARRA DE REVISÃO (REFAZER / ENVIAR) -->
     <div class="controls-review" id="controlsReview" style="display: none;">
       <button class="btn-action btn-retake" id="btnRetake">Refazer</button>
       <button class="btn-action btn-send" id="btnSend">Enviar Foto</button>
     </div>
   </main>
 
-  <!-- POP-UP STATUS -->
   <div class="status-modal" id="statusModal" style="display: none;">
     <div class="status-content">
       <div class="spinner" id="statusSpinner"></div>
@@ -495,6 +491,7 @@
     btnSend.addEventListener("click", async () => {
       if (!capturedDataUrl) return;
 
+      // Mostra o modal de loading imediatamente
       statusModal.style.display = "flex";
       statusSpinner.style.display = "block";
       statusTitle.innerText = "Enviando foto...";
@@ -508,6 +505,7 @@
           criadoEm: serverTimestamp()
         });
 
+        // Sucesso: atualiza o modal e libera o botão para tirar outra foto
         statusSpinner.style.display = "none";
         statusTitle.innerText = "Foto Enviada! 🎉";
         statusMessage.innerText = "Sua foto já apareceu no painel de impressão.";
@@ -524,7 +522,12 @@
 
     btnCloseModal.addEventListener("click", () => {
       statusModal.style.display = "none";
-      btnRetake.click();
+      // Esconde a pré-visualização e limpa os controles para voltar direto à câmera
+      photoPreview.style.display = "none";
+      videoFeed.style.display = "block";
+      controlsCapture.style.display = "flex";
+      controlsReview.style.display = "none";
+      capturedDataUrl = null;
     });
 
     window.addEventListener("DOMContentLoaded", () => {
