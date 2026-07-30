@@ -432,7 +432,7 @@
           primeiroAcesso: true
         });
 
-        // Dispara o e-mail via EmailJS com os parâmetros mapeados perfeitamente ao template
+        // Dispara o e-mail via EmailJS com o template ID correto (template_rx3xjmj)
         const templateParams = {
           to_name: nome,
           to_email: email,
@@ -440,7 +440,7 @@
           painel_url: "https://digiart-ar.com.br/estacao_fotos/painel/"
         };
 
-        await emailjs.send('service_5cbhijz', 'f63iexn', templateParams);
+        await emailjs.send('service_5cbhijz', 'template_rx3xjmj', templateParams);
 
         txtTokenGerado.innerText = token;
         tokenResultBox.style.display = "flex";
