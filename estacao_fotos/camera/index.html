@@ -76,6 +76,31 @@
       font-weight: 400;
     }
 
+    /* MENSAGEM FLUÍDA DE SUCESSO (TOAST) */
+    .toast-message {
+      position: absolute;
+      top: 20px;
+      left: 50%;
+      transform: translateX(-50%) translateY(-50px);
+      background-color: #00FF00;
+      color: #000000;
+      padding: 12px 24px;
+      border-radius: 30px;
+      font-weight: bold;
+      font-size: 0.95rem;
+      box-shadow: 0 4px 20px rgba(0, 255, 0, 0.4);
+      z-index: 100;
+      opacity: 0;
+      transition: transform 0.3s ease, opacity 0.3s ease;
+      pointer-events: none;
+      white-space: nowrap;
+    }
+
+    .toast-message.show {
+      transform: translateX(-50%) translateY(0);
+      opacity: 1;
+    }
+
     .camera-container {
       width: 100%;
       height: 100%;
@@ -245,6 +270,9 @@
 
   <main class="camera-container" id="mainContainer">
 
+    <!-- Mensagem Flutuante de Sucesso -->
+    <div class="toast-message" id="toastMessage">✨ Foto enviada com sucesso!</div>
+
     <div class="viewport-box">
       <video id="videoFeed" autoplay playsinline muted></video>
       <canvas id="photoCanvas" style="display: none;"></canvas>
@@ -297,6 +325,7 @@
     const photoCanvas = document.getElementById("photoCanvas");
     const frameOverlay = document.getElementById("frameOverlay");
     const photoPreview = document.getElementById("photoPreview");
+    const toastMessage = document.getElementById("toastMessage");
 
     const btnCapture = document.getElementById("btnCapture");
     const btnFlip = document.getElementById("btnFlip");
@@ -313,6 +342,7 @@
     let facingMode = "environment"; 
     let capturedDataUrl = null;
     let currentEventId = null;
+    let toastTimeout = null;
 
     tutorialOverlay.addEventListener("click", () => {
       if (mainContainer.requestFullscreen) {
@@ -418,7 +448,15 @@
       controlsReview.style.display = "none";
     });
 
-    // Envio direto sem modal de espera: envia e já volta a câmera
+    // Função para exibir a mensagem flutuante sem travar a interface
+    function mostrarAvisoSucesso() {
+      clearTimeout(toastTimeout);
+      toastMessage.classList.add("show");
+      toastTimeout = setTimeout(() => {
+        toastMessage.classList.remove("show");
+      }, 2500);
+    }
+
     btnSend.addEventListener("click", () => {
       if (!capturedDataUrl) return;
 
@@ -430,6 +468,9 @@
       controlsCapture.style.display = "flex";
       controlsReview.style.display = "none";
       capturedDataUrl = null;
+
+      // Mostra o aviso visual instantaneamente
+      mostrarAvisoSucesso();
 
       // Envia os dados para o Firebase em segundo plano
       addDoc(collection(db, "eventos", currentEventId, "fotos"), {
