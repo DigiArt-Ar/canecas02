@@ -232,7 +232,7 @@
       box-shadow: 0 0 15px rgba(0, 255, 0, 0.5);
     }
 
-    /* Modal de Status */
+    /* Modal de Status Ajustado para Sobrepor a Tela Cheia */
     .status-modal {
       position: fixed;
       top: 0; left: 0; right: 0; bottom: 0;
@@ -240,7 +240,7 @@
       display: flex;
       align-items: center;
       justify-content: center;
-      z-index: 100;
+      z-index: 9999;
       padding: 20px;
     }
 
@@ -388,16 +388,12 @@
     let capturedDataUrl = null;
     let currentEventId = null;
 
-    // ACIONAR TELA CHEIA LIMPO
     tutorialOverlay.addEventListener("click", () => {
-      // 1. Tenta acionar Fullscreen direto na div principal
       if (mainContainer.requestFullscreen) {
         mainContainer.requestFullscreen().catch(() => {});
       } else if (mainContainer.webkitRequestFullscreen) {
         mainContainer.webkitRequestFullscreen();
       }
-
-      // 2. Esconde a tela do tutorial
       tutorialOverlay.style.display = "none";
     });
 
