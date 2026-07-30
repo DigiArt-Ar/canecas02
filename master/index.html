@@ -4,6 +4,13 @@
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>DigiArt AR - Painel de Controle e Gestão Master</title>
+  <script type="text/javascript" src="https://cdn.jsdelivr.net/npm/@emailjs/browser@4/dist/email.min.js"></script>
+  <script type="text/javascript">
+    (function(){
+       // Inicialize aqui com a sua Public Key do EmailJS (você cria uma conta gratuita em emailjs.com)
+       emailjs.init("SUA_PUBLIC_KEY_EMAILJS");
+    })();
+  </script>
   <style>
     * {
       box-sizing: border-box;
@@ -218,7 +225,6 @@
       <p>Painel de Controle e Gestão Master</p>
     </header>
 
-    <!-- CARD DE CRIAÇÃO -->
     <div class="card">
       <h2>Novo Acesso / Revendedor</h2>
       <div class="form-grid">
@@ -267,7 +273,6 @@
       </div>
     </div>
 
-    <!-- CARD DE GERENCIAMENTO (LISTA) -->
     <div class="card">
       <h2>Revendedores Cadastrados</h2>
       <div class="table-responsive">
@@ -328,7 +333,7 @@
 
     function calcularMilisegundos(valorStr) {
       if (valorStr === "dia_1") {
-        return 24 * 3600 * 1000; // 1 dia em ms
+        return 24 * 3600 * 1000;
       } else {
         const meses = parseInt(valorStr.replace("mes_", ""));
         return meses * 30 * 24 * 3600 * 1000;
@@ -385,7 +390,7 @@
       }
     }
 
-    // GERAR NOVO ACESSO
+    // GERAR NOVO ACESSO E ENVIAR E-MAIL AUTOMÁTICO
     btnGerar.addEventListener("click", async () => {
       const nome = inputNome.value.trim();
       const email = inputEmail.value.trim().toLowerCase();
@@ -408,20 +413,33 @@
         return;
       }
 
-      btnGerar.innerText = "GERANDO...";
+      btnGerar.innerText = "GERANDO E ENVIANDO...";
       btnGerar.disabled = true;
 
       try {
         const token = gerarTokenAleatorio();
         const expiraEm = Date.now() + calcularMilisegundos(valorPrazo);
 
+        // 1. Salva no Firebase
         await setDoc(doc(db, "revendedores", email), {
           nome: nome,
           telefone: telefone,
           token: token,
           expiraEm: expiraEm,
-          criadoEm: Date.now()
+          criadoEm: Date.now(),
+          primeiroAcesso: true // Sinaliza que precisará cadastrar senha nova no login
         });
+
+        // 2. Dispara o E-mail de Boas-Vindas automaticamente via EmailJS
+        const templateParams = {
+          to_email: email,
+          to_name: nome,
+          painel_url: "https://digiart-ar.com.br/estacao_fotos/painel/",
+          token_acesso: token
+        };
+
+        // Substitua 'SEU_SERVICE_ID' e 'SEU_TEMPLATE_ID' pelas suas credenciais gratuitas do EmailJS
+        await emailjs.send('SEU_SERVICE_ID', 'SEU_TEMPLATE_ID', templateParams);
 
         txtTokenGerado.innerText = token;
         tokenResultBox.style.display = "flex";
@@ -431,11 +449,12 @@
         inputTelefone.value = "";
         selectPrazo.value = "mes_12";
         
+        alert("Acesso gerado com sucesso e e-mail enviado para o cliente!");
         carregarLista();
 
       } catch (err) {
-        console.error("Erro ao salvar:", err);
-        alert("Erro ao gerar acesso no Firebase.");
+        console.error("Erro ao salvar ou enviar e-mail:", err);
+        alert("Acesso gerado no banco, mas houve falha ao enviar o e-mail automático. Verifique as configurações do EmailJS.");
       } finally {
         btnGerar.innerText = "GERAR ACESSO E TOKEN";
         btnGerar.disabled = false;
@@ -448,7 +467,6 @@
       setTimeout(() => btnCopiarToken.innerText = "Copiar Token", 2000);
     });
 
-    // FUNÇÃO DE RENOVAÇÃO SUPORTANDO DIAS (ex: 1d) E MESES (ex: 1)
     window.renovarLicencaPrompt = async function(email) {
       const inputQtd = prompt("Quanto deseja adicionar para o revendedor " + email + "?\nDigite o número seguido de 'd' para dias ou apenas o número para meses\n(Ex: 1d para 1 dia, ou 1 para 1 mês)", "1d");
       if (!inputQtd) return;
@@ -513,7 +531,6 @@
       }
     };
 
-    // CARREGA A TABELA AO ABRIR A PÁGINA
     window.addEventListener("DOMContentLoaded", () => {
       carregarLista();
     });
