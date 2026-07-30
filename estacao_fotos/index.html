@@ -5,9 +5,7 @@
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>DigiArt AR - Painel do Operador</title>
 
-  <!-- LIB QR CODE -->
   <script src="https://cdnjs.cloudflare.com/ajax/libs/qrcodejs/1.0.0/qrcode.min.js"></script>
-  <!-- LIB JSZIP PARA GERAR ZIP DAS FOTOS -->
   <script src="https://cdnjs.cloudflare.com/ajax/libs/jszip/3.10.1/jszip.min.js"></script>
 
   <style>
@@ -461,23 +459,24 @@
 </head>
 <body>
 
-  <!-- 1. TELA DE CONFIGURAÇÃO INICIAL -->
   <div id="setupScreen">
     <div class="setup-card">
       <h1>DigiArt AR</h1>
       <p>Configuração do Evento</p>
 
-      <div class="form-group">
-        <label for="inputEmailRevendedor">Seu E-mail Cadastrado:</label>
-        <input type="email" id="inputEmailRevendedor" placeholder="seu-email@dominio.com">
-      </div>
+      <div id="credentialsGroup">
+        <div class="form-group">
+          <label for="inputEmailRevendedor">Seu E-mail Cadastrado:</label>
+          <input type="email" id="inputEmailRevendedor" placeholder="seu-email@dominio.com">
+        </div>
 
-      <div class="form-group">
-        <label for="inputTokenRevendedor">Token de Acesso:</label>
-        <input type="text" id="inputTokenRevendedor" placeholder="Cole seu Token aqui">
-      </div>
+        <div class="form-group">
+          <label for="inputTokenRevendedor">Token de Acesso:</label>
+          <input type="text" id="inputTokenRevendedor" placeholder="Cole seu Token aqui">
+        </div>
 
-      <hr style="border: 0; border-top: 1px solid #222; margin: 20px 0;">
+        <hr style="border: 0; border-top: 1px solid #222; margin: 20px 0;">
+      </div>
 
       <div class="form-group">
         <label for="inputEventId">Nome do Evento:</label>
@@ -495,11 +494,10 @@
         <span class="frame-status" id="frameStatusText">Nenhuma imagem selecionada.</span>
       </div>
 
-      <button class="btn-start" id="btnStartEvent">VALIDAR E INICIAR EVENTO</button>
+      <button class="btn-start" id="btnStartEvent">INICIAR NOVO EVENTO</button>
     </div>
   </div>
 
-  <!-- 2. PAINEL DO OPERADOR AO VIVO -->
   <div id="dashboardContainer">
     <header>
       <div class="logo-area">
@@ -587,6 +585,7 @@
     // ELEMENTOS
     const setupScreen = document.getElementById("setupScreen");
     const dashboardContainer = document.getElementById("dashboardContainer");
+    const credentialsGroup = document.getElementById("credentialsGroup");
 
     const inputEmailRevendedor = document.getElementById("inputEmailRevendedor");
     const inputTokenRevendedor = document.getElementById("inputTokenRevendedor");
@@ -709,20 +708,31 @@
     async function restaurarSessaoAtiva() {
       const emailSalvo = localStorage.getItem("digiart_email_rev");
       const tokenSalvo = localStorage.getItem("digiart_token_rev");
+
+      if (emailSalvo && tokenSalvo) {
+        // Valida silenciosamente em segundo plano se o token ainda é válido
+        const valido = await validarAcessoNoBanco(emailSalvo, tokenSalvo);
+        if (valido) {
+          // Se já tem login válido, esconde a parte de credenciais na tela inicial
+          credentialsGroup.style.display = "none";
+          inputEmailRevendedor.value = emailSalvo;
+          inputTokenRevendedor.value = tokenSalvo;
+        } else {
+          // Se expirou, limpa tudo para exigir novo login
+          localStorage.clear();
+          credentialsGroup.style.display = "block";
+          return;
+        }
+      } else {
+        credentialsGroup.style.display = "block";
+      }
+
       const eventoSalvo = localStorage.getItem("digiart_evento_ativo");
       const nomeSalvo = localStorage.getItem("digiart_nome_evento") || eventoSalvo;
       const tempoFimSalvo = localStorage.getItem("digiart_tempo_fim");
       const dataInicioSalva = localStorage.getItem("digiart_data_inicio");
 
-      if (emailSalvo && tokenSalvo) {
-        const valido = await validarAcessoNoBanco(emailSalvo, tokenSalvo);
-        if (!valido) {
-          alert("Sua licença expirou ou os dados de acesso são inválidos. Faça login novamente.");
-          localStorage.clear();
-          return;
-        }
-      }
-
+      // Se houver um evento em andamento, restaura o painel direto
       if (eventoSalvo && emailSalvo && tokenSalvo) {
         currentEventId = eventoSalvo;
         nomeEventoExibicao = nomeSalvo;
@@ -747,21 +757,28 @@
     }
 
     btnStartEvent.addEventListener("click", async () => {
-      const emailInput = inputEmailRevendedor.value.trim().toLowerCase();
-      const tokenInput = inputTokenRevendedor.value.trim();
+      let emailInput = inputEmailRevendedor.value.trim().toLowerCase();
+      let tokenInput = inputTokenRevendedor.value.trim();
       const nomeInput = inputEventId.value.trim();
       const horasInput = parseInt(inputEventHours.value);
 
-      if (!emailInput || !emailInput.includes("@")) {
-        alert("Por favor, digite seu e-mail de acesso cadastrado!");
-        inputEmailRevendedor.focus();
-        return;
+      // Se as credenciais estiverem ocultas, pega diretamente do localStorage
+      if (credentialsGroup.style.display === "none") {
+        emailInput = localStorage.getItem("digiart_email_rev") || "";
+        tokenInput = localStorage.getItem("digiart_token_rev") || "";
+      } else {
+        if (!emailInput || !emailInput.includes("@")) {
+          alert("Por favor, digite seu e-mail de acesso cadastrado!");
+          inputEmailRevendedor.focus();
+          return;
+        }
+        if (!tokenInput) {
+          alert("Por favor, digite seu token de acesso!");
+          inputTokenRevendedor.focus();
+          return;
+        }
       }
-      if (!tokenInput) {
-        alert("Por favor, digite seu token de acesso!");
-        inputTokenRevendedor.focus();
-        return;
-      }
+
       if (!nomeInput) {
         alert("Por favor, digite o nome do evento!");
         inputEventId.focus();
@@ -783,7 +800,9 @@
       const acessoValido = await validarAcessoNoBanco(emailInput, tokenInput);
       if (!acessoValido) {
         alert("Acesso Negado! E-mail não encontrado, token incorreto ou licença expirada.");
-        btnStartEvent.innerText = "VALIDAR E INICIAR EVENTO";
+        localStorage.clear();
+        credentialsGroup.style.display = "block";
+        btnStartEvent.innerText = "INICIAR NOVO EVENTO";
         btnStartEvent.disabled = false;
         return;
       }
@@ -808,6 +827,7 @@
           criadoEm: agora
         }, { merge: true });
 
+        // Salva credenciais e dados do novo evento
         localStorage.setItem("digiart_email_rev", emailInput);
         localStorage.setItem("digiart_token_rev", tokenInput);
         localStorage.setItem("digiart_evento_ativo", currentEventId);
@@ -830,7 +850,7 @@
         alert("Erro ao processar imagem ou salvar no banco de dados!");
       } finally {
         if (setupScreen.style.display !== "none") {
-          btnStartEvent.innerText = "VALIDAR E INICIAR EVENTO";
+          btnStartEvent.innerText = "INICIAR NOVO EVENTO";
           btnStartEvent.disabled = false;
         }
       }
@@ -839,6 +859,7 @@
     btnFinishEvent.addEventListener("click", () => {
       const confirma = confirm(`Tem certeza que deseja FINALIZAR o evento "${nomeEventoExibicao}"?`);
       if (confirma) {
+        // Remove apenas as chaves do evento ativo. Mantém email e token salvos!
         localStorage.removeItem("digiart_evento_ativo");
         localStorage.removeItem("digiart_nome_evento");
         localStorage.removeItem("digiart_tempo_fim");
@@ -860,9 +881,12 @@
         frameStatusText.innerText = "Nenhuma imagem selecionada.";
         inputFrameFile.value = "";
 
+        // Mantém as credenciais ocultas e pula a tela de login na próxima vez
+        credentialsGroup.style.display = "none";
+
         dashboardContainer.style.display = "none";
         setupScreen.style.display = "flex";
-        btnStartEvent.innerText = "VALIDAR E INICIAR EVENTO";
+        btnStartEvent.innerText = "INICIAR NOVO EVENTO";
         btnStartEvent.disabled = false;
       }
     });
@@ -967,7 +991,6 @@
         console.error("Erro ao atualizar status no Firebase:", err);
       });
 
-      // Roda a roleta selecionando a próxima pendente automaticamente
       const proximaFoto = listaFotosPendentes.find(f => f.id !== fotoParaImprimir.id && f.status === "pendente");
       if (proximaFoto) {
         selecionarFotoParaDestaque(proximaFoto);
@@ -976,7 +999,6 @@
       }
     });
 
-    // FLUXO DE EXCLUSÃO CORRIGIDO E SINCRONIZADO
     btnActionDelete.addEventListener("click", async () => {
       if (!fotoSelecionadaAtual) return;
 
@@ -988,11 +1010,9 @@
           const fotoRef = doc(db, "eventos", currentEventId, "fotos", idParaExcluir);
           await deleteDoc(fotoRef);
 
-          // Atualiza imediatamente a lista local removendo o item excluído para não precisar de F5
           listaFotosPendentes = listaFotosPendentes.filter(f => f.id !== idParaExcluir);
           countQueue.innerText = listaFotosPendentes.length;
 
-          // Seleciona a próxima foto da fila automaticamente ou limpa se acabou
           if (listaFotosPendentes.length > 0) {
             selecionarFotoParaDestaque(listaFotosPendentes[0]);
           } else {
