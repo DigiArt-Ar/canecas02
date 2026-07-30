@@ -676,7 +676,6 @@
       });
     }
 
-    // FUNÇÃO DE VALIDAÇÃO DE SEGURANÇA DIRETO NO FIREBASE (ANULA O F12)
     async function validarAcessoNoBanco(email, tokenInformado) {
       if (!email || !tokenInformado) return false;
       try {
@@ -690,7 +689,6 @@
         const expiraEm = dados.expiraEm;
         const agora = Date.now();
 
-        // Verifica se o token confere e se a licença ainda está ativa
         if (tokenSalvo === tokenInformado.trim() && agora < expiraEm) {
           return true;
         }
@@ -717,7 +715,6 @@
       const dataInicioSalva = localStorage.getItem("digiart_data_inicio");
 
       if (emailSalvo && tokenSalvo) {
-        // Validação obrigatória no Firebase ao abrir a página
         const valido = await validarAcessoNoBanco(emailSalvo, tokenSalvo);
         if (!valido) {
           alert("Sua licença expirou ou os dados de acesso são inválidos. Faça login novamente.");
@@ -749,7 +746,6 @@
       }
     }
 
-    // INICIAR EVENTO COM VALIDAÇÃO DE CREDENCIAIS
     btnStartEvent.addEventListener("click", async () => {
       const emailInput = inputEmailRevendedor.value.trim().toLowerCase();
       const tokenInput = inputTokenRevendedor.value.trim();
@@ -784,7 +780,6 @@
       btnStartEvent.innerText = "VALIDANDO LICENÇA...";
       btnStartEvent.disabled = true;
 
-      // Valida no Firebase antes de deixar iniciar o evento
       const acessoValido = await validarAcessoNoBanco(emailInput, tokenInput);
       if (!acessoValido) {
         alert("Acesso Negado! E-mail não encontrado, token incorreto ou licença expirada.");
@@ -942,7 +937,13 @@
       btnActionPrint.disabled = false;
       btnActionDelete.disabled = false;
 
-      document.querySelectorAll(".queue-item").forEach(el => el.classList.remove("selected"));
+      document.querySelectorAll(".queue-item").forEach(el => {
+        if (el.innerHTML.includes(foto.fotoUrl)) {
+          el.classList.add("selected");
+        } else {
+          el.classList.remove("selected");
+        }
+      });
     }
 
     function limparDestaque() {
@@ -956,7 +957,6 @@
       if (!fotoSelecionadaAtual) return;
 
       const fotoParaImprimir = fotoSelecionadaAtual;
-
       imprimirDireto(fotoParaImprimir.fotoUrl);
 
       totalImpressas++;
@@ -967,8 +967,8 @@
         console.error("Erro ao atualizar status no Firebase:", err);
       });
 
+      // Roda a roleta selecionando a próxima pendente automaticamente
       const proximaFoto = listaFotosPendentes.find(f => f.id !== fotoParaImprimir.id && f.status === "pendente");
-
       if (proximaFoto) {
         selecionarFotoParaDestaque(proximaFoto);
       } else {
@@ -976,14 +976,32 @@
       }
     });
 
+    // FLUXO DE EXCLUSÃO CORRIGIDO E SINCRONIZADO
     btnActionDelete.addEventListener("click", async () => {
       if (!fotoSelecionadaAtual) return;
 
       const confirma = confirm("Deseja realmente excluir esta foto da fila?");
       if (confirma) {
-        const fotoRef = doc(db, "eventos", currentEventId, "fotos", fotoSelecionadaAtual.id);
-        await deleteDoc(fotoRef);
-        fotoSelecionadaAtual = null;
+        const idParaExcluir = fotoSelecionadaAtual.id;
+        
+        try {
+          const fotoRef = doc(db, "eventos", currentEventId, "fotos", idParaExcluir);
+          await deleteDoc(fotoRef);
+
+          // Atualiza imediatamente a lista local removendo o item excluído para não precisar de F5
+          listaFotosPendentes = listaFotosPendentes.filter(f => f.id !== idParaExcluir);
+          countQueue.innerText = listaFotosPendentes.length;
+
+          // Seleciona a próxima foto da fila automaticamente ou limpa se acabou
+          if (listaFotosPendentes.length > 0) {
+            selecionarFotoParaDestaque(listaFotosPendentes[0]);
+          } else {
+            limparDestaque();
+          }
+        } catch (err) {
+          console.error("Erro ao excluir foto:", err);
+          alert("Erro ao excluir a foto do banco de dados.");
+        }
       }
     });
 
