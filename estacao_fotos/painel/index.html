@@ -5,7 +5,9 @@
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>DigiArt AR - Painel do Operador</title>
 
+  <!-- LIB QR CODE -->
   <script src="https://cdnjs.cloudflare.com/ajax/libs/qrcodejs/1.0.0/qrcode.min.js"></script>
+  <!-- LIB JSZIP PARA GERAR ZIP DAS FOTOS -->
   <script src="https://cdnjs.cloudflare.com/ajax/libs/jszip/3.10.1/jszip.min.js"></script>
 
   <style>
@@ -459,11 +461,13 @@
 </head>
 <body>
 
+  <!-- 1. TELA DE CONFIGURAÇÃO INICIAL -->
   <div id="setupScreen">
     <div class="setup-card">
       <h1>DigiArt AR</h1>
       <p>Configuração do Evento</p>
 
+      <!-- Grupo de Credenciais (Será ocultado se o token já estiver salvo) -->
       <div id="credentialsGroup">
         <div class="form-group">
           <label for="inputEmailRevendedor">Seu E-mail Cadastrado:</label>
@@ -498,6 +502,7 @@
     </div>
   </div>
 
+  <!-- 2. PAINEL DO OPERADOR AO VIVO -->
   <div id="dashboardContainer">
     <header>
       <div class="logo-area">
@@ -509,6 +514,13 @@
         <span>Evento Ativo</span>
         <strong id="infoEventId">---</strong>
         <span id="infoEventDate" style="font-size: 0.65rem; color: #aaa; margin-top: 2px;">Início: --/-- --:--</span>
+      </div>
+
+      <!-- Caixa com a Validade/Expiração do Cliente vinda do Master -->
+      <div class="event-info-box" style="border-color: #00FF0033;">
+        <span>Validade da Licença</span>
+        <strong id="infoExpiraLicenca" style="color: #ffaa00;">---</strong>
+        <span style="font-size: 0.65rem; color: #aaa; margin-top: 2px;">Acesso Master</span>
       </div>
 
       <div class="timer-box">
@@ -599,6 +611,7 @@
 
     const infoEventId = document.getElementById("infoEventId");
     const infoEventDate = document.getElementById("infoEventDate");
+    const infoExpiraLicenca = document.getElementById("infoExpiraLicenca");
     const countdownTimer = document.getElementById("countdownTimer");
     const highlightViewer = document.getElementById("highlightViewer");
     const queueList = document.getElementById("queueList");
@@ -676,12 +689,12 @@
     }
 
     async function validarAcessoNoBanco(email, tokenInformado) {
-      if (!email || !tokenInformado) return false;
+      if (!email || !tokenInformado) return null;
       try {
         const docRef = doc(db, "revendedores", email.trim().toLowerCase());
         const docSnap = await getDoc(docRef);
 
-        if (!docSnap.exists()) return false;
+        if (!docSnap.exists()) return null;
 
         const dados = docSnap.data();
         const tokenSalvo = dados.token;
@@ -689,12 +702,13 @@
         const agora = Date.now();
 
         if (tokenSalvo === tokenInformado.trim() && agora < expiraEm) {
-          return true;
+          // Retorna os dados do revendedor (incluindo a expiração) se válido
+          return dados;
         }
-        return false;
+        return null;
       } catch (err) {
         console.error("Erro ao validar token:", err);
-        return false;
+        return null;
       }
     }
 
@@ -711,12 +725,15 @@
 
       if (emailSalvo && tokenSalvo) {
         // Valida silenciosamente em segundo plano se o token ainda é válido
-        const valido = await validarAcessoNoBanco(emailSalvo, tokenSalvo);
-        if (valido) {
+        const dadosRevendedor = await validarAcessoNoBanco(emailSalvo, tokenSalvo);
+        if (dadosRevendedor) {
           // Se já tem login válido, esconde a parte de credenciais na tela inicial
           credentialsGroup.style.display = "none";
           inputEmailRevendedor.value = emailSalvo;
           inputTokenRevendedor.value = tokenSalvo;
+          
+          // Salva a expiração atualizada no localStorage
+          localStorage.setItem("digiart_expira_em", dadosRevendedor.expiraEm);
         } else {
           // Se expirou, limpa tudo para exigir novo login
           localStorage.clear();
@@ -731,6 +748,7 @@
       const nomeSalvo = localStorage.getItem("digiart_nome_evento") || eventoSalvo;
       const tempoFimSalvo = localStorage.getItem("digiart_tempo_fim");
       const dataInicioSalva = localStorage.getItem("digiart_data_inicio");
+      const expiraEmSalvo = localStorage.getItem("digiart_expira_em");
 
       // Se houver um evento em andamento, restaura o painel direto
       if (eventoSalvo && emailSalvo && tokenSalvo) {
@@ -744,6 +762,12 @@
         if (dataInicioSalva) {
           const dt = new Date(dataInicioSalva);
           infoEventDate.innerText = `Início: ${dt.toLocaleDateString('pt-BR')} ${dt.toLocaleTimeString('pt-BR', {hour: '2-digit', minute:'2-digit'})}`;
+        }
+
+        // Exibe a data de expiração formatada no painel
+        if (expiraEmSalvo) {
+          const dtExp = new Date(parseInt(expiraEmSalvo));
+          infoExpiraLicenca.innerText = `${dtExp.toLocaleDateString('pt-BR')} ${dtExp.toLocaleTimeString('pt-BR', {hour: '2-digit', minute:'2-digit'})}`;
         }
 
         gerarQRCodeCliente(currentEventId);
@@ -797,8 +821,8 @@
       btnStartEvent.innerText = "VALIDANDO LICENÇA...";
       btnStartEvent.disabled = true;
 
-      const acessoValido = await validarAcessoNoBanco(emailInput, tokenInput);
-      if (!acessoValido) {
+      const dadosRevendedor = await validarAcessoNoBanco(emailInput, tokenInput);
+      if (!dadosRevendedor) {
         alert("Acesso Negado! E-mail não encontrado, token incorreto ou licença expirada.");
         localStorage.clear();
         credentialsGroup.style.display = "block";
@@ -827,9 +851,10 @@
           criadoEm: agora
         }, { merge: true });
 
-        // Salva credenciais e dados do novo evento
+        // Salva credenciais, expiração e dados do novo evento
         localStorage.setItem("digiart_email_rev", emailInput);
         localStorage.setItem("digiart_token_rev", tokenInput);
+        localStorage.setItem("digiart_expira_em", dadosRevendedor.expiraEm);
         localStorage.setItem("digiart_evento_ativo", currentEventId);
         localStorage.setItem("digiart_nome_evento", nomeEventoExibicao);
         localStorage.setItem("digiart_tempo_fim", tempoFimTimestamp);
@@ -840,6 +865,9 @@
 
         infoEventId.innerText = nomeEventoExibicao;
         infoEventDate.innerText = `Início: ${agora.toLocaleDateString('pt-BR')} ${agora.toLocaleTimeString('pt-BR', {hour: '2-digit', minute:'2-digit'})}`;
+        
+        const dtExp = new Date(dadosRevendedor.expiraEm);
+        infoExpiraLicenca.innerText = `${dtExp.toLocaleDateString('pt-BR')} ${dtExp.toLocaleTimeString('pt-BR', {hour: '2-digit', minute:'2-digit'})}`;
 
         gerarQRCodeCliente(currentEventId);
         iniciarCronometroComSegundos(horasInput * 3600);
