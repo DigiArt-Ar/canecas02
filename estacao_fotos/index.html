@@ -28,48 +28,12 @@
       overflow: hidden;
     }
 
-    /* TELA DE AUTENTICAÇÃO DO REVENDEDOR */
-    #authScreen {
-      position: absolute;
-      top: 0; left: 0;
-      width: 100%; height: 100vh;
-      display: flex;
-      justify-content: center;
-      align-items: center;
-      background-color: #000000;
-      z-index: 300;
-    }
-
-    .auth-card {
-      background-color: #141414;
-      border: 2px solid #00FF00;
-      border-radius: 16px;
-      padding: 30px;
-      width: 100%;
-      max-width: 420px;
-      box-shadow: 0 0 20px rgba(0, 255, 0, 0.15);
-    }
-
-    .auth-card h1 {
-      color: #00FF00;
-      font-size: 1.8rem;
-      margin-bottom: 5px;
-      text-align: center;
-    }
-
-    .auth-card p {
-      color: #aaa;
-      font-size: 0.9rem;
-      margin-bottom: 25px;
-      text-align: center;
-    }
-
     /* 1. TELA DE CONFIGURAÇÃO INICIAL */
     #setupScreen {
       position: absolute;
       top: 0; left: 0;
       width: 100%; height: 100vh;
-      display: none;
+      display: flex;
       justify-content: center;
       align-items: center;
       background-color: #000000;
@@ -497,26 +461,6 @@
 </head>
 <body>
 
-  <!-- TELA DE AUTENTICAÇÃO DO REVENDEDOR -->
-  <div id="authScreen">
-    <div class="auth-card">
-      <h1>DigiArt AR</h1>
-      <p>Ativação do Sistema</p>
-
-      <div class="form-group">
-        <label for="inputAuthEmail">E-mail Cadastrado:</label>
-        <input type="email" id="inputAuthEmail" placeholder="seu@email.com">
-      </div>
-
-      <div class="form-group">
-        <label for="inputAuthToken">Token de Acesso:</label>
-        <input type="text" id="inputAuthToken" placeholder="Insira seu token">
-      </div>
-
-      <button class="btn-start" id="btnAtivarSistema">VALIDAR ACESSO</button>
-    </div>
-  </div>
-
   <!-- 1. TELA DE CONFIGURAÇÃO INICIAL -->
   <div id="setupScreen">
     <div class="setup-card">
@@ -524,13 +468,25 @@
       <p>Configuração do Evento</p>
 
       <div class="form-group">
+        <label for="inputEmailRevendedor">Seu E-mail Cadastrado:</label>
+        <input type="email" id="inputEmailRevendedor" placeholder="seu-email@dominio.com">
+      </div>
+
+      <div class="form-group">
+        <label for="inputTokenRevendedor">Token de Acesso:</label>
+        <input type="text" id="inputTokenRevendedor" placeholder="Cole seu Token aqui">
+      </div>
+
+      <hr style="border: 0; border-top: 1px solid #222; margin: 20px 0;">
+
+      <div class="form-group">
         <label for="inputEventId">Nome do Evento:</label>
-        <input type="text" id="inputEventId" placeholder="Ex: 15 Anos de Maria Eduarda" value="">
+        <input type="text" id="inputEventId" placeholder="Ex: 15 Anos de Maria Eduarda">
       </div>
 
       <div class="form-group">
         <label for="inputEventHours">Duração do Evento (Horas):</label>
-        <input type="number" id="inputEventHours" placeholder="Ex: 4" value="" min="1" max="12">
+        <input type="number" id="inputEventHours" placeholder="Ex: 4" min="1" max="12">
       </div>
 
       <div class="form-group">
@@ -539,7 +495,7 @@
         <span class="frame-status" id="frameStatusText">Nenhuma imagem selecionada.</span>
       </div>
 
-      <button class="btn-start" id="btnStartEvent">INICIAR EVENTO</button>
+      <button class="btn-start" id="btnStartEvent">VALIDAR E INICIAR EVENTO</button>
     </div>
   </div>
 
@@ -628,16 +584,12 @@
     const app = initializeApp(firebaseConfig);
     const db = getFirestore(app);
 
-    // ELEMENTOS DE AUTH
-    const authScreen = document.getElementById("authScreen");
-    const inputAuthEmail = document.getElementById("inputAuthEmail");
-    const inputAuthToken = document.getElementById("inputAuthToken");
-    const btnAtivarSistema = document.getElementById("btnAtivarSistema");
-
     // ELEMENTOS
     const setupScreen = document.getElementById("setupScreen");
     const dashboardContainer = document.getElementById("dashboardContainer");
 
+    const inputEmailRevendedor = document.getElementById("inputEmailRevendedor");
+    const inputTokenRevendedor = document.getElementById("inputTokenRevendedor");
     const inputEventId = document.getElementById("inputEventId");
     const inputEventHours = document.getElementById("inputEventHours");
     const inputFrameFile = document.getElementById("inputFrameFile");
@@ -665,78 +617,6 @@
     let fotoSelecionadaAtual = null;
     let listaFotosPendentes = [];
 
-    // VERIFICAR AUTENTICAÇÃO AO ABRIR
-    async function verificarAutenticacao() {
-      const emailSalvo = localStorage.getItem("digiart_rev_email");
-      const tokenSalvo = localStorage.getItem("digiart_rev_token");
-      const validadeSalva = localStorage.getItem("digiart_rev_expira");
-
-      // Se tem dados salvos e a licença ainda está no prazo no navegador
-      if (emailSalvo && tokenSalvo && validadeSalva && Date.now() < parseInt(validadeSalva)) {
-        authScreen.style.display = "none";
-        restaurarSessaoAtiva();
-        return;
-      }
-
-      // Se não tem ou expirou, limpa e mostra a tela de login
-      localStorage.removeItem("digiart_rev_email");
-      localStorage.removeItem("digiart_rev_token");
-      localStorage.removeItem("digiart_rev_expira");
-      authScreen.style.display = "flex";
-    }
-
-    // CLIQUE EM VALIDAR ACESSO
-    btnAtivarSistema.addEventListener("click", async () => {
-      const email = inputAuthEmail.value.trim().toLowerCase();
-      const token = inputAuthToken.value.trim();
-
-      if (!email || !token) {
-        alert("Preencha o e-mail e o token de acesso!");
-        return;
-      }
-
-      btnAtivarSistema.innerText = "VERIFICANDO...";
-      btnAtivarSistema.disabled = true;
-
-      try {
-        const docRef = doc(db, "revendedores", email);
-        const docSnap = await getDoc(docRef);
-
-        if (!docSnap.exists()) {
-          alert("E-mail não encontrado ou sem acesso autorizado.");
-          return;
-        }
-
-        const dados = docSnap.data();
-
-        if (dados.token !== token) {
-          alert("Token incorreto!");
-          return;
-        }
-
-        if (Date.now() > dados.expiraEm) {
-          alert("Sua licença expirou! Entre em contato com o suporte.");
-          return;
-        }
-
-        // Salva credenciais válidas localmente
-        localStorage.setItem("digiart_rev_email", email);
-        localStorage.setItem("digiart_rev_token", token);
-        localStorage.setItem("digiart_rev_expira", dados.expiraEm);
-
-        authScreen.style.display = "none";
-        restaurarSessaoAtiva();
-
-      } catch (err) {
-        console.error("Erro ao validar token:", err);
-        alert("Erro de conexão ao verificar o acesso.");
-      } finally {
-        btnAtivarSistema.innerText = "VALIDAR ACESSO";
-        btnAtivarSistema.disabled = false;
-      }
-    });
-
-    // GERAR ID CURTO ALEATÓRIO DE 6 CARACTERES
     function gerarIdCurto() {
       const caracteres = 'abcdefghijklmnopqrstuvwxyz0123456789';
       let resultado = '';
@@ -746,13 +626,11 @@
       return resultado;
     }
 
-    // MONITOR DE SELEÇÃO DA MOLDURA
     inputFrameFile.addEventListener("change", (e) => {
       if (e.target.files.length > 0) {
         const file = e.target.files[0];
         frameStatusText.style.color = "#00FF00";
         frameStatusText.innerText = `⏳ Lendo arquivo: ${file.name}...`;
-        
         setTimeout(() => {
           frameStatusText.innerText = `✅ Arquivo carregado: ${file.name}`;
         }, 300);
@@ -762,7 +640,6 @@
       }
     });
 
-    // COMPRESSOR DE MOLDURA EM CANVAS
     function comprimirMolduraPNG(file, maxDimension = 1200) {
       return new Promise((resolve, reject) => {
         const reader = new FileReader();
@@ -791,13 +668,37 @@
             const ctx = canvas.getContext("2d");
             ctx.drawImage(img, 0, 0, width, height);
 
-            const compressedBase64 = canvas.toDataURL("image/png");
-            resolve(compressedBase64);
+            resolve(canvas.toDataURL("image/png"));
           };
           img.onerror = (err) => reject(err);
         };
         reader.onerror = (err) => reject(err);
       });
+    }
+
+    // FUNÇÃO DE VALIDAÇÃO DE SEGURANÇA DIRETO NO FIREBASE (ANULA O F12)
+    async function validarAcessoNoBanco(email, tokenInformado) {
+      if (!email || !tokenInformado) return false;
+      try {
+        const docRef = doc(db, "revendedores", email.trim().toLowerCase());
+        const docSnap = await getDoc(docRef);
+
+        if (!docSnap.exists()) return false;
+
+        const dados = docSnap.data();
+        const tokenSalvo = dados.token;
+        const expiraEm = dados.expiraEm;
+        const agora = Date.now();
+
+        // Verifica se o token confere e se a licença ainda está ativa
+        if (tokenSalvo === tokenInformado.trim() && agora < expiraEm) {
+          return true;
+        }
+        return false;
+      } catch (err) {
+        console.error("Erro ao validar token:", err);
+        return false;
+      }
     }
 
     window.addEventListener("beforeunload", (e) => {
@@ -808,12 +709,24 @@
     });
 
     async function restaurarSessaoAtiva() {
+      const emailSalvo = localStorage.getItem("digiart_email_rev");
+      const tokenSalvo = localStorage.getItem("digiart_token_rev");
       const eventoSalvo = localStorage.getItem("digiart_evento_ativo");
       const nomeSalvo = localStorage.getItem("digiart_nome_evento") || eventoSalvo;
       const tempoFimSalvo = localStorage.getItem("digiart_tempo_fim");
       const dataInicioSalva = localStorage.getItem("digiart_data_inicio");
 
-      if (eventoSalvo) {
+      if (emailSalvo && tokenSalvo) {
+        // Validação obrigatória no Firebase ao abrir a página
+        const valido = await validarAcessoNoBanco(emailSalvo, tokenSalvo);
+        if (!valido) {
+          alert("Sua licença expirou ou os dados de acesso são inválidos. Faça login novamente.");
+          localStorage.clear();
+          return;
+        }
+      }
+
+      if (eventoSalvo && emailSalvo && tokenSalvo) {
         currentEventId = eventoSalvo;
         nomeEventoExibicao = nomeSalvo;
         
@@ -833,38 +746,55 @@
           const restanteSegundos = Math.max(0, Math.floor((parseInt(tempoFimSalvo) - Date.now()) / 1000));
           iniciarCronometroComSegundos(restanteSegundos);
         }
-      } else {
-        setupScreen.style.display = "flex";
       }
     }
 
-    // INICIAR EVENTO
+    // INICIAR EVENTO COM VALIDAÇÃO DE CREDENCIAIS
     btnStartEvent.addEventListener("click", async () => {
+      const emailInput = inputEmailRevendedor.value.trim().toLowerCase();
+      const tokenInput = inputTokenRevendedor.value.trim();
       const nomeInput = inputEventId.value.trim();
+      const horasInput = parseInt(inputEventHours.value);
+
+      if (!emailInput || !emailInput.includes("@")) {
+        alert("Por favor, digite seu e-mail de acesso cadastrado!");
+        inputEmailRevendedor.focus();
+        return;
+      }
+      if (!tokenInput) {
+        alert("Por favor, digite seu token de acesso!");
+        inputTokenRevendedor.focus();
+        return;
+      }
       if (!nomeInput) {
         alert("Por favor, digite o nome do evento!");
         inputEventId.focus();
         return;
       }
-
-      const horasInput = parseInt(inputEventHours.value);
       if (!horasInput || horasInput < 1) {
         alert("Por favor, informe a duração em horas do evento!");
         inputEventHours.focus();
         return;
       }
-
       if (inputFrameFile.files.length === 0) {
         alert("Por favor, selecione a imagem PNG da moldura!");
         return;
       }
 
-      nomeEventoExibicao = nomeInput;
-      currentEventId = gerarIdCurto();
-
-      btnStartEvent.innerText = "INICIANDO...";
+      btnStartEvent.innerText = "VALIDANDO LICENÇA...";
       btnStartEvent.disabled = true;
 
+      // Valida no Firebase antes de deixar iniciar o evento
+      const acessoValido = await validarAcessoNoBanco(emailInput, tokenInput);
+      if (!acessoValido) {
+        alert("Acesso Negado! E-mail não encontrado, token incorreto ou licença expirada.");
+        btnStartEvent.innerText = "VALIDAR E INICIAR EVENTO";
+        btnStartEvent.disabled = false;
+        return;
+      }
+
+      nomeEventoExibicao = nomeInput;
+      currentEventId = gerarIdCurto();
       let molduraBase64 = "";
 
       try {
@@ -883,6 +813,8 @@
           criadoEm: agora
         }, { merge: true });
 
+        localStorage.setItem("digiart_email_rev", emailInput);
+        localStorage.setItem("digiart_token_rev", tokenInput);
         localStorage.setItem("digiart_evento_ativo", currentEventId);
         localStorage.setItem("digiart_nome_evento", nomeEventoExibicao);
         localStorage.setItem("digiart_tempo_fim", tempoFimTimestamp);
@@ -903,13 +835,12 @@
         alert("Erro ao processar imagem ou salvar no banco de dados!");
       } finally {
         if (setupScreen.style.display !== "none") {
-          btnStartEvent.innerText = "INICIAR EVENTO";
+          btnStartEvent.innerText = "VALIDAR E INICIAR EVENTO";
           btnStartEvent.disabled = false;
         }
       }
     });
 
-    // FINALIZAR EVENTO
     btnFinishEvent.addEventListener("click", () => {
       const confirma = confirm(`Tem certeza que deseja FINALIZAR o evento "${nomeEventoExibicao}"?`);
       if (confirma) {
@@ -936,12 +867,11 @@
 
         dashboardContainer.style.display = "none";
         setupScreen.style.display = "flex";
-        btnStartEvent.innerText = "INICIAR EVENTO";
+        btnStartEvent.innerText = "VALIDAR E INICIAR EVENTO";
         btnStartEvent.disabled = false;
       }
     });
 
-    // QR CODE COM ID CURTO
     function gerarQRCodeCliente(eventId) {
       const urlBase = window.location.origin + window.location.pathname.replace('/painel', '');
       const linkCamera = `${urlBase}/camera/?evento=${eventId}`;
@@ -957,7 +887,6 @@
       });
     }
 
-    // MONITORAR FILA
     function monitorarFotos() {
       if (unsubscribeSnapshot) unsubscribeSnapshot();
 
@@ -1023,7 +952,6 @@
       btnActionDelete.disabled = true;
     }
 
-    // BOTAO IMPRIMIR
     btnActionPrint.addEventListener("click", () => {
       if (!fotoSelecionadaAtual) return;
 
@@ -1048,7 +976,6 @@
       }
     });
 
-    // BOTAO EXCLUIR
     btnActionDelete.addEventListener("click", async () => {
       if (!fotoSelecionadaAtual) return;
 
@@ -1060,7 +987,6 @@
       }
     });
 
-    // EXPORTAR ZIP
     btnDownloadZip.addEventListener("click", async () => {
       if (!currentEventId) return;
 
@@ -1110,7 +1036,6 @@
       }
     });
 
-    // IMPRESSÃO DIRETA
     function imprimirDireto(url) {
       let iframe = document.getElementById("printFrame");
       if (!iframe) {
@@ -1186,7 +1111,7 @@
     }
 
     window.addEventListener("DOMContentLoaded", () => {
-      verificarAutenticacao();
+      restaurarSessaoAtiva();
     });
   </script>
 </body>
