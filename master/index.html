@@ -429,7 +429,7 @@
           primeiroAcesso: true
         });
 
-        // Dispara o e-mail via EmailJS com a Chave Pública correta
+        // Dispara o e-mail via EmailJS com o novo Template ID correto
         const templateParams = {
           to_email: email,
           to_name: nome,
@@ -437,7 +437,7 @@
           token_acesso: token
         };
 
-        await emailjs.send('service_5cbhijz', 'template_qhz5yun', templateParams);
+        await emailjs.send('service_5cbhijz', 'template_rx3xjmj', templateParams);
 
         txtTokenGerado.innerText = token;
         tokenResultBox.style.display = "flex";
@@ -524,7 +524,7 @@
         await deleteDoc(doc(db, "revendedores", email));
         carregarLista();
       } catch (err) {
-        console.error("Erro суда", err);
+        console.error("Erro ao excluir:", err);
         alert("Erro ao excluir revendedor.");
       }
     };
