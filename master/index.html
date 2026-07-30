@@ -4,11 +4,10 @@
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>DigiArt AR - Painel de Controle e Gestão Master</title>
-  <!-- SDK do EmailJS para disparo automático de e-mails -->
   <script type="text/javascript" src="https://cdn.jsdelivr.net/npm/@emailjs/browser@4/dist/email.min.js"></script>
   <script type="text/javascript">
     (function(){
-       emailjs.init("-Pi2PQKv5qv6REKCuUdBq");
+       emailjs.init("Vz0_S5I_40HnlwWvc");
     })();
   </script>
   <style>
@@ -225,7 +224,6 @@
       <p>Painel de Controle e Gestão Master</p>
     </header>
 
-    <!-- CARD DE CRIAÇÃO -->
     <div class="card">
       <h2>Novo Acesso / Revendedor</h2>
       <div class="form-grid">
@@ -274,7 +272,6 @@
       </div>
     </div>
 
-    <!-- CARD DE GERENCIAMENTO (LISTA) -->
     <div class="card">
       <h2>Revendedores Cadastrados</h2>
       <div class="table-responsive">
@@ -432,7 +429,7 @@
           primeiroAcesso: true
         });
 
-        // Dispara o e-mail via EmailJS
+        // Dispara o e-mail via EmailJS com a Chave Pública correta
         const templateParams = {
           to_email: email,
           to_name: nome,
@@ -527,7 +524,7 @@
         await deleteDoc(doc(db, "revendedores", email));
         carregarLista();
       } catch (err) {
-        console.error("Erro ao excluir:", err);
+        console.error("Erro суда", err);
         alert("Erro ao excluir revendedor.");
       }
     };
