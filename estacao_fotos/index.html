@@ -1250,11 +1250,15 @@
 
     function imprimirDireto(url, formato) {
       let tamanhoPage = "10cm 15cm";
-      let imgWidth = "9.8cm";
-      let imgHeight = "14.1cm";
+      let larguraPapel = "10cm";
+      let alturaPapel = "15cm";
+      let imgWidth = "9.3cm";
+      let imgHeight = "13.8cm";
 
       if (formato === "A7") {
         tamanhoPage = "7cm 10cm";
+        larguraPapel = "7cm";
+        alturaPapel = "10cm";
         imgWidth = "6.8cm";
         imgHeight = "10.1cm";
       }
@@ -1283,8 +1287,8 @@
               }
               body {
                 margin: 0;
-                width: ${tamanhoPage.split(' ')[0]};
-                height: ${tamanhoPage.split(' ')[1]};
+                width: ${larguraPapel};
+                height: ${alturaPapel};
                 display: flex;
                 justify-content: center;
                 align-items: center;
