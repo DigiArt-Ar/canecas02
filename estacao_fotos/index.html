@@ -28,8 +28,8 @@
       overflow: hidden;
     }
 
-    /* 1. TELA DE CONFIGURAÇÃO INICIAL */
-    #setupScreen {
+    /* TELAS GERAIS DE FLUXO */
+    .screen-layer {
       position: absolute;
       top: 0; left: 0;
       width: 100%; height: 100vh;
@@ -102,7 +102,7 @@
       display: block;
     }
 
-    .btn-start {
+    .btn-action {
       width: 100%;
       padding: 14px;
       border-radius: 8px;
@@ -113,11 +113,27 @@
       font-weight: bold;
       cursor: pointer;
       margin-top: 10px;
+      transition: background 0.2s;
     }
 
-    .btn-start:disabled {
+    .btn-action:hover {
+      background-color: #00cc00;
+    }
+
+    .btn-action:disabled {
       background-color: #555;
       cursor: not-allowed;
+    }
+
+    .btn-secondary {
+      background-color: transparent;
+      color: #00FF00;
+      border: 1px solid #00FF00;
+      margin-top: 10px;
+    }
+
+    .btn-secondary:hover {
+      background-color: #00FF0011;
     }
 
     /* 2. PAINEL DO OPERADOR AO VIVO */
@@ -461,26 +477,51 @@
 </head>
 <body>
 
-  <!-- 1. TELA DE CONFIGURAÇÃO INICIAL -->
-  <div id="setupScreen">
+  <!-- TELA 1: LOGIN COM TOKEN (PRIMEIRO ACESSO) -->
+  <div id="loginScreen" class="screen-layer">
+    <div class="setup-card">
+      <h1>DigiArt AR</h1>
+      <p>Acesso ao Painel do Operador</p>
+
+      <div class="form-group">
+        <label for="loginEmail">E-mail Cadastrado:</label>
+        <input type="email" id="loginEmail" placeholder="seu-email@dominio.com">
+      </div>
+
+      <div class="form-group">
+        <label for="loginToken">Senha ou Token de Acesso:</label>
+        <input type="password" id="loginToken" placeholder="Digite seu Token ou Senha">
+      </div>
+
+      <button class="btn-action" id="btnLoginSubmit">ENTRAR</button>
+    </div>
+  </div>
+
+  <!-- TELA 1.1: CRIAÇÃO OBRIGATÓRIA DE SENHA (PRIMEIRO ACESSO COM TOKEN) -->
+  <div id="newPasswordScreen" class="screen-layer" style="display: none;">
+    <div class="setup-card">
+      <h1>Primeiro Acesso</h1>
+      <p>Por segurança, crie uma senha definitiva para seus próximos logins.</p>
+
+      <div class="form-group">
+        <label for="newPassInput">Nova Senha:</label>
+        <input type="password" id="newPassInput" placeholder="Mínimo de 6 caracteres">
+      </div>
+
+      <div class="form-group">
+        <label for="confirmPassInput">Confirme a Nova Senha:</label>
+        <input type="password" id="confirmPassInput" placeholder="Digite a senha novamente">
+      </div>
+
+      <button class="btn-action" id="btnSaveNewPassword">CRIAR SENHA E CONTINUAR</button>
+    </div>
+  </div>
+
+  <!-- TELA 2: CONFIGURAÇÃO DO EVENTO (COM OPÇÃO DE USAR PROJETO EXISTENTE) -->
+  <div id="setupScreen" class="screen-layer" style="display: none;">
     <div class="setup-card">
       <h1>DigiArt AR</h1>
       <p>Configuração do Evento</p>
-
-      <!-- Grupo de Credenciais (Será ocultado se o token já estiver salvo) -->
-      <div id="credentialsGroup">
-        <div class="form-group">
-          <label for="inputEmailRevendedor">Seu E-mail Cadastrado:</label>
-          <input type="email" id="inputEmailRevendedor" placeholder="seu-email@dominio.com">
-        </div>
-
-        <div class="form-group">
-          <label for="inputTokenRevendedor">Token de Acesso:</label>
-          <input type="text" id="inputTokenRevendedor" placeholder="Cole seu Token aqui">
-        </div>
-
-        <hr style="border: 0; border-top: 1px solid #222; margin: 20px 0;">
-      </div>
 
       <div class="form-group">
         <label for="inputEventId">Nome do Evento:</label>
@@ -498,11 +539,12 @@
         <span class="frame-status" id="frameStatusText">Nenhuma imagem selecionada.</span>
       </div>
 
-      <button class="btn-start" id="btnStartEvent">INICIAR NOVO EVENTO</button>
+      <button class="btn-action" id="btnStartEvent">INICIAR NOVO EVENTO</button>
+      <button class="btn-action btn-secondary" id="btnUseExistingProject">📂 USAR PROJETO EXISTENTE</button>
     </div>
   </div>
 
-  <!-- 2. PAINEL DO OPERADOR AO VIVO -->
+  <!-- PAINEL DO OPERADOR AO VIVO -->
   <div id="dashboardContainer">
     <header>
       <div class="logo-area">
@@ -516,7 +558,6 @@
         <span id="infoEventDate" style="font-size: 0.65rem; color: #aaa; margin-top: 2px;">Início: --/-- --:--</span>
       </div>
 
-      <!-- Caixa com a Validade/Expiração do Cliente vinda do Master -->
       <div class="event-info-box" style="border-color: #00FF0033;">
         <span>Validade da Licença</span>
         <strong id="infoExpiraLicenca" style="color: #ffaa00;">---</strong>
@@ -594,21 +635,33 @@
     const app = initializeApp(firebaseConfig);
     const db = getFirestore(app);
 
-    // ELEMENTOS
+    // TELAS
+    const loginScreen = document.getElementById("loginScreen");
+    const newPasswordScreen = document.getElementById("newPasswordScreen");
     const setupScreen = document.getElementById("setupScreen");
     const dashboardContainer = document.getElementById("dashboardContainer");
-    const credentialsGroup = document.getElementById("credentialsGroup");
 
-    const inputEmailRevendedor = document.getElementById("inputEmailRevendedor");
-    const inputTokenRevendedor = document.getElementById("inputTokenRevendedor");
+    // CAMPOS DE LOGIN
+    const loginEmail = document.getElementById("loginEmail");
+    const loginToken = document.getElementById("loginToken");
+    const btnLoginSubmit = document.getElementById("btnLoginSubmit");
+
+    // CAMPOS DE NOVA SENHA
+    const newPassInput = document.getElementById("newPassInput");
+    const confirmPassInput = document.getElementById("confirmPassInput");
+    const btnSaveNewPassword = document.getElementById("btnSaveNewPassword");
+
+    // CAMPOS DE CONFIGURAÇÃO DE EVENTO
     const inputEventId = document.getElementById("inputEventId");
     const inputEventHours = document.getElementById("inputEventHours");
     const inputFrameFile = document.getElementById("inputFrameFile");
     const frameStatusText = document.getElementById("frameStatusText");
     const btnStartEvent = document.getElementById("btnStartEvent");
+    const btnUseExistingProject = document.getElementById("btnUseExistingProject");
     const btnFinishEvent = document.getElementById("btnFinishEvent");
     const btnDownloadZip = document.getElementById("btnDownloadZip");
 
+    // PAINEL AO VIVO
     const infoEventId = document.getElementById("infoEventId");
     const infoEventDate = document.getElementById("infoEventDate");
     const infoExpiraLicenca = document.getElementById("infoExpiraLicenca");
@@ -637,6 +690,48 @@
       }
       return resultado;
     }
+
+    // CONTROLE DE DUPLICIDADE (SESSION ID ÚNICO POR ABA/DISPOSITIVO)
+    const sessionIdUnico = Math.random().toString(36.substring(2));
+
+    async function verificarDuplicidadeSessao(email) {
+      try {
+        const docRef = doc(db, "revendedores", email);
+        const docSnap = await getDoc(docRef);
+        if (docSnap.exists()) {
+          const dados = docSnap.data();
+          const sessaoAtiva = dados.sessaoAtivaId;
+          const ultimoHeartbeat = dados.ultimoHeartbeat || 0;
+          const agora = Date.now();
+
+          // Se houver outra sessão ativa nos últimos 30 segundos, bloqueia
+          if (sessaoAtiva && sessaoAtiva !== sessionIdUnico && (agora - ultimoHeartbeat < 30000)) {
+            return false; // Conflito: já está aberto em outro lugar
+          }
+
+          // Atualiza a sessão atual
+          await updateDoc(docRef, {
+            sessaoAtivaId: sessionIdUnico,
+            ultimoHeartbeat: agora
+          });
+        }
+        return true;
+      } catch (e) {
+        console.error("Erro ao checar duplicidade:", e);
+        return true;
+      }
+    }
+
+    // Heartbeat periódico para manter a sessão ativa
+    setInterval(async () => {
+      const emailLogado = localStorage.getItem("digiart_email_rev");
+      if (emailLogado && dashboardContainer.style.display === "flex") {
+        try {
+          const docRef = doc(db, "revendedores", emailLogado);
+          await updateDoc(docRef, { ultimoHeartbeat: Date.now() });
+        } catch (e) {}
+      }
+    }, 15000);
 
     inputFrameFile.addEventListener("change", (e) => {
       if (e.target.files.length > 0) {
@@ -688,120 +783,223 @@
       });
     }
 
-    async function validarAcessoNoBanco(email, tokenInformado) {
-      if (!email || !tokenInformado) return null;
-      try {
-        const docRef = doc(db, "revendedores", email.trim().toLowerCase());
-        const docSnap = await getDoc(docRef);
-
-        if (!docSnap.exists()) return null;
-
-        const dados = docSnap.data();
-        const tokenSalvo = dados.token;
-        const expiraEm = dados.expiraEm;
-        const agora = Date.now();
-
-        if (tokenSalvo === tokenInformado.trim() && agora < expiraEm) {
-          // Retorna os dados do revendedor (incluindo a expiração) se válido
-          return dados;
-        }
-        return null;
-      } catch (err) {
-        console.error("Erro ao validar token:", err);
-        return null;
-      }
-    }
-
-    window.addEventListener("beforeunload", (e) => {
-      if (currentEventId) {
-        e.preventDefault();
-        e.returnValue = "";
-      }
-    });
-
+    // RESTAURAR SESSÃO AO CARREGAR A PÁGINA
     async function restaurarSessaoAtiva() {
       const emailSalvo = localStorage.getItem("digiart_email_rev");
       const tokenSalvo = localStorage.getItem("digiart_token_rev");
+      const senhaSalva = localStorage.getItem("digiart_senha_cadastrada");
+      const expiraSalvo = localStorage.getItem("digiart_expira_em");
 
-      if (emailSalvo && tokenSalvo) {
-        // Valida silenciosamente em segundo plano se o token ainda é válido
-        const dadosRevendedor = await validarAcessoNoBanco(emailSalvo, tokenSalvo);
-        if (dadosRevendedor) {
-          // Se já tem login válido, esconde a parte de credenciais na tela inicial
-          credentialsGroup.style.display = "none";
-          inputEmailRevendedor.value = emailSalvo;
-          inputTokenRevendedor.value = tokenSalvo;
-          
-          // Salva a expiração atualizada no localStorage
-          localStorage.setItem("digiart_expira_em", dadosRevendedor.expiraEm);
-        } else {
-          // Se expirou, limpa tudo para exigir novo login
+      if (emailSalvo && expiraSalvo && Date.now() < parseInt(expiraSalvo)) {
+        // Verifica duplicidade
+        const permitido = await verificarDuplicidadeSessao(emailSalvo);
+        if (!permitido) {
+          alert("Este login já está sendo utilizado em outro computador ou aba!");
           localStorage.clear();
-          credentialsGroup.style.display = "block";
+          loginScreen.style.display = "flex";
           return;
         }
+
+        const eventoSalvo = localStorage.getItem("digiart_evento_ativo");
+        const nomeSalvo = localStorage.getItem("digiart_nome_evento");
+        const tempoFimSalvo = localStorage.getItem("digiart_tempo_fim");
+        const dataInicioSalva = localStorage.getItem("digiart_data_inicio");
+
+        if (eventoSalvo && nomeSalvo) {
+          // Já tem evento rodando, vai direto pro painel
+          currentEventId = eventoSalvo;
+          nomeEventoExibicao = nomeSalvo;
+
+          loginScreen.style.display = "none";
+          setupScreen.style.display = "none";
+          dashboardContainer.style.display = "flex";
+
+          infoEventId.innerText = nomeEventoExibicao;
+          if (dataInicioSalva) {
+            const dt = new Date(dataInicioSalva);
+            infoEventDate.innerText = `Início: ${dt.toLocaleDateString('pt-BR')} ${dt.toLocaleTimeString('pt-BR', {hour: '2-digit', minute:'2-digit'})}`;
+          }
+
+          const dtExp = new Date(parseInt(expiraSalvo));
+          infoExpiraLicenca.innerText = `${dtExp.toLocaleDateString('pt-BR')} ${dtExp.toLocaleTimeString('pt-BR', {hour: '2-digit', minute:'2-digit'})}`;
+
+          gerarQRCodeCliente(currentEventId);
+          monitorarFotos();
+
+          if (tempoFimSalvo) {
+            const restanteSegundos = Math.max(0, Math.floor((parseInt(tempoFimSalvo) - Date.now()) / 1000));
+            iniciarCronometroComSegundos(restanteSegundos);
+          }
+        } else {
+          // Sem evento ativo, vai para a tela de setup (com opção de usar projeto existente)
+          loginScreen.style.display = "none";
+          setupScreen.style.display = "flex";
+        }
       } else {
-        credentialsGroup.style.display = "block";
+        localStorage.clear();
+        loginScreen.style.display = "flex";
+      }
+    }
+
+    // FLUXO DE LOGIN
+    btnLoginSubmit.addEventListener("click", async () => {
+      const email = loginEmail.value.trim().toLowerCase();
+      const senhaInformada = loginToken.value.trim();
+
+      if (!email || !email.includes("@")) {
+        alert("Digite um e-mail válido!");
+        return;
+      }
+      if (!senhaInformada) {
+        alert("Digite sua senha ou token!");
+        return;
       }
 
+      btnLoginSubmit.innerText = "VERIFICANDO...";
+      btnLoginSubmit.disabled = true;
+
+      try {
+        const docRef = doc(db, "revendedores", email);
+        const docSnap = await getDoc(docRef);
+
+        if (!docSnap.exists()) {
+          alert("E-mail não encontrado no sistema.");
+          btnLoginSubmit.innerText = "ENTRAR";
+          btnLoginSubmit.disabled = false;
+          return;
+        }
+
+        const dados = docSnap.data();
+        const agora = Date.now();
+
+        if (agora >= dados.expiraEm) {
+          alert("Sua licença de acesso expirou. Entre em contato com o suporte.");
+          btnLoginSubmit.innerText = "ENTRAR";
+          btnLoginSubmit.disabled = false;
+          return;
+        }
+
+        // Verifica duplicidade
+        const permitido = await verificarDuplicidadeSessao(email);
+        if (!permitido) {
+          alert("Este login já está aberto em outro computador!");
+          btnLoginSubmit.innerText = "ENTRAR";
+          btnLoginSubmit.disabled = false;
+          return;
+        }
+
+        // Regra de Primeiro Acesso (se o usuário usa o token provisório ou primeiroAcesso == true)
+        if (dados.primeiroAcesso || dados.token === senhaInformada) {
+          localStorage.setItem("digiart_temp_email", email);
+          localStorage.setItem("digiart_expira_em", dados.expiraEm);
+          loginScreen.style.display = "none";
+          newPasswordScreen.style.display = "flex";
+          return;
+        }
+
+        // Login com senha definitiva já cadastrada
+        if (dados.senhaDefinitiva === senhaInformada) {
+          localStorage.setItem("digiart_email_rev", email);
+          localStorage.setItem("digiart_expira_em", dados.expiraEm);
+
+          loginScreen.style.display = "none";
+          setupScreen.style.display = "flex";
+          return;
+        }
+
+        alert("Senha ou token incorreto!");
+      } catch (err) {
+        console.error("Erro no login:", err);
+        alert("Erro ao conectar com o banco de dados.");
+      } finally {
+        btnLoginSubmit.innerText = "ENTRAR";
+        btnLoginSubmit.disabled = false;
+      }
+    });
+
+    // CADASTRAR SENHA DEFINITIVA NO PRIMEIRO ACESSO
+    btnSaveNewPassword.addEventListener("click", async () => {
+      const novaSenha = newPassInput.value.trim();
+      const confirmaSenha = confirmPassInput.value.trim();
+      const email = localStorage.getItem("digiart_temp_email");
+
+      if (!novaSenha || novaSenha.length < 6) {
+        alert("A senha precisa ter pelo menos 6 caracteres.");
+        return;
+      }
+      if (novaSenha !== confirmaSenha) {
+        alert("As senhas não coincidem!");
+        return;
+      }
+
+      btnSaveNewPassword.innerText = "SALVANDO...";
+      btnSaveNewPassword.disabled = true;
+
+      try {
+        const docRef = doc(db, "revendedores", email);
+        await updateDoc(docRef, {
+          senhaDefinitiva: novaSenha,
+          primeiroAcesso: false
+        });
+
+        localStorage.setItem("digiart_email_rev", email);
+        localStorage.removeItem("digiart_temp_email");
+
+        newPasswordScreen.style.display = "none";
+        setupScreen.style.display = "flex";
+        alert("Senha definida com sucesso!");
+      } catch (err) {
+        console.error("Erro ao salvar senha:", err);
+        alert("Erro ao salvar a nova senha.");
+      } finally {
+        btnSaveNewPassword.innerText = "CRIAR SENHA E CONTINUAR";
+        btnSaveNewPassword.disabled = false;
+      }
+    });
+
+    // BOTÃO: USAR PROJETO EXISTENTE (Recuperar último evento salvo no LocalStorage)
+    btnUseExistingProject.addEventListener("click", () => {
       const eventoSalvo = localStorage.getItem("digiart_evento_ativo");
-      const nomeSalvo = localStorage.getItem("digiart_nome_evento") || eventoSalvo;
+      const nomeSalvo = localStorage.getItem("digiart_nome_evento");
       const tempoFimSalvo = localStorage.getItem("digiart_tempo_fim");
       const dataInicioSalva = localStorage.getItem("digiart_data_inicio");
       const expiraEmSalvo = localStorage.getItem("digiart_expira_em");
 
-      // Se houver um evento em andamento, restaura o painel direto
-      if (eventoSalvo && emailSalvo && tokenSalvo) {
-        currentEventId = eventoSalvo;
-        nomeEventoExibicao = nomeSalvo;
-        
-        setupScreen.style.display = "none";
-        dashboardContainer.style.display = "flex";
-
-        infoEventId.innerText = nomeEventoExibicao;
-        if (dataInicioSalva) {
-          const dt = new Date(dataInicioSalva);
-          infoEventDate.innerText = `Início: ${dt.toLocaleDateString('pt-BR')} ${dt.toLocaleTimeString('pt-BR', {hour: '2-digit', minute:'2-digit'})}`;
-        }
-
-        // Exibe a data de expiração formatada no painel
-        if (expiraEmSalvo) {
-          const dtExp = new Date(parseInt(expiraEmSalvo));
-          infoExpiraLicenca.innerText = `${dtExp.toLocaleDateString('pt-BR')} ${dtExp.toLocaleTimeString('pt-BR', {hour: '2-digit', minute:'2-digit'})}`;
-        }
-
-        gerarQRCodeCliente(currentEventId);
-        monitorarFotos();
-
-        if (tempoFimSalvo) {
-          const restanteSegundos = Math.max(0, Math.floor((parseInt(tempoFimSalvo) - Date.now()) / 1000));
-          iniciarCronometroComSegundos(restanteSegundos);
-        }
+      if (!eventoSalvo || !nomeSalvo) {
+        alert("Nenhum projeto ou evento anterior foi encontrado neste computador.");
+        return;
       }
-    }
 
+      currentEventId = eventoSalvo;
+      nomeEventoExibicao = nomeSalvo;
+
+      setupScreen.style.display = "none";
+      dashboardContainer.style.display = "flex";
+
+      infoEventId.innerText = nomeEventoExibicao;
+      if (dataInicioSalva) {
+        const dt = new Date(dataInicioSalva);
+        infoEventDate.innerText = `Início: ${dt.toLocaleDateString('pt-BR')} ${dt.toLocaleTimeString('pt-BR', {hour: '2-digit', minute:'2-digit'})}`;
+      }
+
+      if (expiraEmSalvo) {
+        const dtExp = new Date(parseInt(expiraEmSalvo));
+        infoExpiraLicenca.innerText = `${dtExp.toLocaleDateString('pt-BR')} ${dtExp.toLocaleTimeString('pt-BR', {hour: '2-digit', minute:'2-digit'})}`;
+      }
+
+      gerarQRCodeCliente(currentEventId);
+      monitorarFotos();
+
+      if (tempoFimSalvo) {
+        const restanteSegundos = Math.max(0, Math.floor((parseInt(tempoFimSalvo) - Date.now()) / 1000));
+        iniciarCronometroComSegundos(restanteSegundos);
+      }
+    });
+
+    // INICIAR NOVO EVENTO
     btnStartEvent.addEventListener("click", async () => {
-      let emailInput = inputEmailRevendedor.value.trim().toLowerCase();
-      let tokenInput = inputTokenRevendedor.value.trim();
       const nomeInput = inputEventId.value.trim();
       const horasInput = parseInt(inputEventHours.value);
-
-      // Se as credenciais estiverem ocultas, pega diretamente do localStorage
-      if (credentialsGroup.style.display === "none") {
-        emailInput = localStorage.getItem("digiart_email_rev") || "";
-        tokenInput = localStorage.getItem("digiart_token_rev") || "";
-      } else {
-        if (!emailInput || !emailInput.includes("@")) {
-          alert("Por favor, digite seu e-mail de acesso cadastrado!");
-          inputEmailRevendedor.focus();
-          return;
-        }
-        if (!tokenInput) {
-          alert("Por favor, digite seu token de acesso!");
-          inputTokenRevendedor.focus();
-          return;
-        }
-      }
 
       if (!nomeInput) {
         alert("Por favor, digite o nome do evento!");
@@ -818,27 +1016,15 @@
         return;
       }
 
-      btnStartEvent.innerText = "VALIDANDO LICENÇA...";
+      btnStartEvent.innerText = "OTIMIZANDO MOLDURA...";
       btnStartEvent.disabled = true;
-
-      const dadosRevendedor = await validarAcessoNoBanco(emailInput, tokenInput);
-      if (!dadosRevendedor) {
-        alert("Acesso Negado! E-mail não encontrado, token incorreto ou licença expirada.");
-        localStorage.clear();
-        credentialsGroup.style.display = "block";
-        btnStartEvent.innerText = "INICIAR NOVO EVENTO";
-        btnStartEvent.disabled = false;
-        return;
-      }
 
       nomeEventoExibicao = nomeInput;
       currentEventId = gerarIdCurto();
-      let molduraBase64 = "";
 
       try {
-        btnStartEvent.innerText = "OTIMIZANDO MOLDURA...";
         frameStatusText.innerText = "⏳ Otimizando imagem para o sistema...";
-        molduraBase64 = await comprimirMolduraPNG(inputFrameFile.files[0], 1200);
+        const molduraBase64 = await comprimirMolduraPNG(inputFrameFile.files[0], 1200);
 
         btnStartEvent.innerText = "SALVANDO EVENTO...";
 
@@ -851,10 +1037,6 @@
           criadoEm: agora
         }, { merge: true });
 
-        // Salva credenciais, expiração e dados do novo evento
-        localStorage.setItem("digiart_email_rev", emailInput);
-        localStorage.setItem("digiart_token_rev", tokenInput);
-        localStorage.setItem("digiart_expira_em", dadosRevendedor.expiraEm);
         localStorage.setItem("digiart_evento_ativo", currentEventId);
         localStorage.setItem("digiart_nome_evento", nomeEventoExibicao);
         localStorage.setItem("digiart_tempo_fim", tempoFimTimestamp);
@@ -866,8 +1048,11 @@
         infoEventId.innerText = nomeEventoExibicao;
         infoEventDate.innerText = `Início: ${agora.toLocaleDateString('pt-BR')} ${agora.toLocaleTimeString('pt-BR', {hour: '2-digit', minute:'2-digit'})}`;
         
-        const dtExp = new Date(dadosRevendedor.expiraEm);
-        infoExpiraLicenca.innerText = `${dtExp.toLocaleDateString('pt-BR')} ${dtExp.toLocaleTimeString('pt-BR', {hour: '2-digit', minute:'2-digit'})}`;
+        const expiraEmSalvo = localStorage.getItem("digiart_expira_em");
+        if (expiraEmSalvo) {
+          const dtExp = new Date(parseInt(expiraEmSalvo));
+          infoExpiraLicenca.innerText = `${dtExp.toLocaleDateString('pt-BR')} ${dtExp.toLocaleTimeString('pt-BR', {hour: '2-digit', minute:'2-digit'})}`;
+        }
 
         gerarQRCodeCliente(currentEventId);
         iniciarCronometroComSegundos(horasInput * 3600);
@@ -877,17 +1062,14 @@
         console.error("Erro ao iniciar evento:", erro);
         alert("Erro ao processar imagem ou salvar no banco de dados!");
       } finally {
-        if (setupScreen.style.display !== "none") {
-          btnStartEvent.innerText = "INICIAR NOVO EVENTO";
-          btnStartEvent.disabled = false;
-        }
+        btnStartEvent.innerText = "INICIAR NOVO EVENTO";
+        btnStartEvent.disabled = false;
       }
     });
 
     btnFinishEvent.addEventListener("click", () => {
       const confirma = confirm(`Tem certeza que deseja FINALIZAR o evento "${nomeEventoExibicao}"?`);
       if (confirma) {
-        // Remove apenas as chaves do evento ativo. Mantém email e token salvos!
         localStorage.removeItem("digiart_evento_ativo");
         localStorage.removeItem("digiart_nome_evento");
         localStorage.removeItem("digiart_tempo_fim");
@@ -909,13 +1091,8 @@
         frameStatusText.innerText = "Nenhuma imagem selecionada.";
         inputFrameFile.value = "";
 
-        // Mantém as credenciais ocultas e pula a tela de login na próxima vez
-        credentialsGroup.style.display = "none";
-
         dashboardContainer.style.display = "none";
         setupScreen.style.display = "flex";
-        btnStartEvent.innerText = "INICIAR NOVO EVENTO";
-        btnStartEvent.disabled = false;
       }
     });
 
