@@ -4,13 +4,6 @@
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>DigiArt AR - Painel de Controle e Gestão Master</title>
-  <!-- SDK do EmailJS -->
-  <script type="text/javascript" src="https://cdn.jsdelivr.net/npm/@emailjs/browser@4/dist/email.min.js"></script>
-  <script type="text/javascript">
-    (function(){
-       emailjs.init("w4lyNIOgay4bWmvz4");
-    })();
-  </script>
   <style>
     * {
       box-sizing: border-box;
@@ -335,7 +328,7 @@
 
     function calcularMilisegundos(valorStr) {
       if (valorStr === "dia_1") {
-        return 24 * 3600 * 1000;
+        return 24 * 3600 * 1000; // 1 dia em ms
       } else {
         const meses = parseInt(valorStr.replace("mes_", ""));
         return meses * 30 * 24 * 3600 * 1000;
@@ -392,7 +385,7 @@
       }
     }
 
-    // GERAR NOVO ACESSO E DISPARAR E-MAIL AUTOMÁTICO
+    // GERAR NOVO ACESSO
     btnGerar.addEventListener("click", async () => {
       const nome = inputNome.value.trim();
       const email = inputEmail.value.trim().toLowerCase();
@@ -415,32 +408,20 @@
         return;
       }
 
-      btnGerar.innerText = "GERANDO E ENVIANDO...";
+      btnGerar.innerText = "GERANDO...";
       btnGerar.disabled = true;
 
       try {
         const token = gerarTokenAleatorio();
         const expiraEm = Date.now() + calcularMilisegundos(valorPrazo);
 
-        // Salva no Firebase
         await setDoc(doc(db, "revendedores", email), {
           nome: nome,
           telefone: telefone,
           token: token,
           expiraEm: expiraEm,
-          criadoEm: Date.now(),
-          primeiroAcesso: true
+          criadoEm: Date.now()
         });
-
-        // Dispara o e-mail via EmailJS com a nova Public Key e o template ID correto
-        const templateParams = {
-          to_name: nome,
-          to_email: email,
-          token_acesso: token,
-          painel_url: "https://digiart-ar.com.br/estacao_fotos/painel/"
-        };
-
-        await emailjs.send('service_5cbhijz', 'template_rx3xjmj', templateParams);
 
         txtTokenGerado.innerText = token;
         tokenResultBox.style.display = "flex";
@@ -450,12 +431,11 @@
         inputTelefone.value = "";
         selectPrazo.value = "mes_12";
         
-        alert("Acesso gerado com sucesso e e-mail disparado para o cliente!");
         carregarLista();
 
       } catch (err) {
-        console.error("Erro ao salvar ou enviar e-mail:", err);
-        alert("Acesso gerado no banco, mas houve falha no envio do e-mail.");
+        console.error("Erro ao salvar:", err);
+        alert("Erro ao gerar acesso no Firebase.");
       } finally {
         btnGerar.innerText = "GERAR ACESSO E TOKEN";
         btnGerar.disabled = false;
@@ -468,6 +448,7 @@
       setTimeout(() => btnCopiarToken.innerText = "Copiar Token", 2000);
     });
 
+    // FUNÇÃO DE RENOVAÇÃO SUPORTANDO DIAS (ex: 1d) E MESES (ex: 1)
     window.renovarLicencaPrompt = async function(email) {
       const inputQtd = prompt("Quanto deseja adicionar para o revendedor " + email + "?\nDigite o número seguido de 'd' para dias ou apenas o número para meses\n(Ex: 1d para 1 dia, ou 1 para 1 mês)", "1d");
       if (!inputQtd) return;
@@ -532,9 +513,10 @@
       }
     };
 
+    // CARREGA A TABELA AO ABRIR A PÁGINA
     window.addEventListener("DOMContentLoaded", () => {
       carregarLista();
     });
   </script>
 </body>
-</html>
+  </html>
