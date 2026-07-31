@@ -810,17 +810,28 @@
           return;
         }
 
-        const permitido = await verificarDuplicidadeSessao(email);
-        if (!permitido) {
-          alert("Sessão já ativa em outro local.");
+        // Força o encerramento da sessão anterior atualizando o sessionIdUnico para esta nova sessão
+        await updateDoc(docRef, {
+          sessaoAtivaId: sessionIdUnico,
+          ultimoHeartbeat: Date.now()
+        });
+
+        // Verifica se o usuário digitou a senha definitiva já cadastrada
+        if (dados.senhaDefinitiva && dados.senhaDefinitiva === tokenInformado) {
+          localStorage.setItem("digiart_email_rev", email);
+          localStorage.setItem("digiart_expira_em", dados.expiraEm);
+          
+          // Pula direto para o setup/painel do evento sem pedir alteração de senha
+          mostrarTela(setupScreen);
           return;
         }
 
-        if (dados.token === tokenInformado || dados.senhaDefinitiva === tokenInformado) {
+        // Se digitou o token temporário (ou primeiro acesso)
+        if (dados.token === tokenInformado || dados.primeiroAcesso !== false) {
           localStorage.setItem("digiart_temp_email", email);
           localStorage.setItem("digiart_expira_em", dados.expiraEm);
 
-          // Vai para a tela obrigatória de alteração de senha
+          // Vai para a tela obrigatória de alteração de senha apenas se for o token
           mostrarTela(changePasswordScreen);
         } else {
           alert("Token ou senha incorretos!");
