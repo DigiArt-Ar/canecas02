@@ -357,11 +357,24 @@
           const isAtivo = agora < expiraEm;
           const dataFormatada = new Date(expiraEm).toLocaleDateString('pt-BR', { day: '2-digit', month: '2-digit', year: 'numeric', hour: '2-digit', minute: '2-digit' });
 
+          // Mensagem padrão automatizada para o e-mail
+          const assuntoEmail = encodeURIComponent("Acesso ao Painel DigiArt AR");
+          const corpoEmail = encodeURIComponent(
+            `Olá ${nome},\n\n` +
+            `Seu acesso ao Painel de Controle e Gestão Master da DigiArt AR foi liberado!\n\n` +
+            `Link do Painel: https://digiart-ar.com.br/master/\n` +
+            `Seu Token de Acesso: ${token}\n\n` +
+            `Lembre-se que ao entrar com o token, o sistema pedirá para você definir a sua senha definitiva.\n\n` +
+            `Cordialmente,\n` +
+            `Equipe DigiArt AR`
+          );
+          const mailtoLink = `mailto:${email}?subject=${assuntoEmail}&body=${corpoEmail}`;
+
           const tr = document.createElement("tr");
           tr.innerHTML = `
             <td>
               <strong>${nome}</strong><br>
-              <small style="color: #00FF00;">${email}</small><br>
+              <a href="${mailtoLink}" style="color: #00FF00; text-decoration: underline;" title="Clique para enviar o e-mail de acesso">${email}</a><br>
               <small style="color: #888;">📞 ${telefone}</small>
             </td>
             <td><code style="color: #00FF00; font-size: 1rem;">${token}</code></td>
@@ -474,14 +487,15 @@
 
       try {
         const docRef = doc(db, "revendedores", email);
-        const docSnap = await getDoc(docRef);
+        const docSnap = import { getDoc } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-firestore.js"; // Já importado no topo
+        const snap = await getDoc(docRef);
 
-        if (!docSnap.exists()) {
+        if (!snap.exists()) {
           alert("Revendedor não encontrado.");
           return;
         }
 
-        const dados = docSnap.data();
+        const dados = snap.data();
         const validadeAtual = dados.expiraEm;
         const agora = Date.now();
 
@@ -519,4 +533,4 @@
     });
   </script>
 </body>
-  </html>
+</html>
