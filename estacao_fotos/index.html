@@ -651,7 +651,6 @@
       return resultado;
     }
 
-    // CONTROLE DE SESSÃO ÚNICA (PREVENÇÃO DE DUPLICIDADE)
     const sessionIdUnico = Math.random().toString(36).substring(2);
 
     async function verificarDuplicidadeSessao(email) {
@@ -750,6 +749,7 @@
           nomeEventoExibicao = nomeSalvo;
 
           loginScreen.style.display = "none";
+          changePasswordScreen.style.display = "none";
           setupScreen.style.display = "none";
           dashboardContainer.style.display = "flex";
 
@@ -763,15 +763,17 @@
           }
         } else {
           loginScreen.style.display = "none";
+          changePasswordScreen.style.display = "none";
           setupScreen.style.display = "flex";
         }
       } else {
         localStorage.clear();
         loginScreen.style.display = "flex";
+        changePasswordScreen.style.display = "none";
+        setupScreen.style.display = "none";
       }
     }
 
-    // FLUXO DE LOGIN: e-mail e o token enviado
     btnLoginSubmit.addEventListener("click", async () => {
       const email = loginEmail.value.trim().toLowerCase();
       const tokenInformado = loginToken.value.trim();
@@ -805,13 +807,11 @@
           return;
         }
 
-        // Verifica se bate com o token do banco ou com a senha definitiva já criada
         if (dados.token === tokenInformado || dados.senhaDefinitiva === tokenInformado) {
           localStorage.setItem("digiart_temp_email", email);
           localStorage.setItem("digiart_expira_em", dados.expiraEm);
 
           loginScreen.style.display = "none";
-          // REGRA PRINCIPAL: Exige alteração obrigatória da senha logo após o primeiro login com o token
           changePasswordScreen.style.display = "flex";
         } else {
           alert("Token ou senha incorretos!");
@@ -824,7 +824,6 @@
       }
     });
 
-    // SALVAR NOVA SENHA DEFINITIVA
     btnSavePassword.addEventListener("click", async () => {
       const novaSenha = newPasswordInput.value.trim();
       const confirma = confirmPasswordInput.value.trim();
@@ -862,7 +861,6 @@
       }
     });
 
-    // BOTÃO: USAR PROJETO EXISTENTE (Recuperação caso dê problema no computador)
     btnUseExistingProject.addEventListener("click", () => {
       const eventoSalvo = localStorage.getItem("digiart_evento_ativo");
       const nomeSalvo = localStorage.getItem("digiart_nome_evento");
