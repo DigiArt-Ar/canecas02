@@ -1,4 +1,3 @@
-
 <!DOCTYPE html>
 <html lang="pt-BR">
 <head>
@@ -6,9 +5,7 @@
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>DigiArt AR - Painel do Operador</title>
 
-  <!-- LIB QR CODE -->
   <script src="https://cdnjs.cloudflare.com/ajax/libs/qrcodejs/1.0.0/qrcode.min.js"></script>
-  <!-- LIB JSZIP PARA GERAR ZIP DAS FOTOS -->
   <script src="https://cdnjs.cloudflare.com/ajax/libs/jszip/3.10.1/jszip.min.js"></script>
 
   <style>
@@ -80,7 +77,7 @@
       font-weight: bold;
     }
 
-    .form-group input {
+    .form-group input, .form-group select {
       width: 100%;
       padding: 12px;
       border-radius: 8px;
@@ -91,7 +88,7 @@
       outline: none;
     }
 
-    .form-group input:focus {
+    .form-group input:focus, .form-group select:focus {
       border-color: #00FF00;
     }
 
@@ -329,6 +326,35 @@
       gap: 15px;
       width: 100%;
       margin-top: 12px;
+      align-items: center;
+    }
+
+    .print-config-group {
+      display: flex;
+      flex-direction: column;
+      gap: 4px;
+    }
+
+    .print-config-group label {
+      font-size: 0.7rem;
+      color: #00FF00;
+      font-weight: bold;
+      text-transform: uppercase;
+    }
+
+    .print-config-group select {
+      background-color: #1c1c1c;
+      color: #fff;
+      border: 1px solid #333;
+      padding: 10px;
+      border-radius: 8px;
+      font-size: 0.9rem;
+      outline: none;
+      cursor: pointer;
+    }
+
+    .print-config-group select:focus {
+      border-color: #00FF00;
     }
 
     .btn-action-print {
@@ -460,7 +486,6 @@
 </head>
 <body>
 
-  <!-- TELA 1: LOGIN COM E-MAIL E TOKEN -->
   <div id="loginScreen" class="screen-layer active">
     <div class="setup-card">
       <h1>DigiArt AR</h1>
@@ -480,7 +505,6 @@
     </div>
   </div>
 
-  <!-- TELA 1.1: ALTERAÇÃO OBRIGATÓRIA DE SENHA APÓS O LOGIN COM TOKEN -->
   <div id="changePasswordScreen" class="screen-layer">
     <div class="setup-card">
       <h1>Alterar Senha</h1>
@@ -500,7 +524,6 @@
     </div>
   </div>
 
-  <!-- TELA 2: CONFIGURAÇÃO DO EVENTO ( COM OPÇÃO DE USAR PROJETO EXISTENTE ) -->
   <div id="setupScreen" class="screen-layer">
     <div class="setup-card">
       <h1>DigiArt AR</h1>
@@ -527,7 +550,6 @@
     </div>
   </div>
 
-  <!-- PAINEL DO OPERADOR AO VIVO -->
   <div id="dashboardContainer">
     <header>
       <div class="logo-area">
@@ -572,6 +594,13 @@
           </div>
 
           <div class="action-bar">
+            <div class="print-config-group">
+              <label for="paperSizeSelect">Formato:</label>
+              <select id="paperSizeSelect">
+                <option value="A7">Papel A7 (7x10cm)</option>
+                <option value="A6" selected>Papel A6 (10x15cm)</option>
+              </select>
+            </div>
             <button class="btn-action-print" id="btnActionPrint" disabled>🖨️ IMPRIMIR FOTO</button>
             <button class="btn-action-delete" id="btnActionDelete" disabled>🗑️ EXCLUIR</button>
           </div>
@@ -642,6 +671,7 @@
 
     const btnActionPrint = document.getElementById("btnActionPrint");
     const btnActionDelete = document.getElementById("btnActionDelete");
+    const paperSizeSelect = document.getElementById("paperSizeSelect");
 
     let currentEventId = "";
     let nomeEventoExibicao = "";
@@ -1165,7 +1195,9 @@
     btnActionPrint.addEventListener("click", () => {
       if (!fotoSelecionadaAtual) return;
       const fotoParaImprimir = fotoSelecionadaAtual;
-      imprimirDireto(fotoParaImprimir.fotoUrl);
+      const formatoEscolhido = paperSizeSelect.value; // 'A7' ou 'A6'
+      
+      imprimirDireto(fotoParaImprimir.fotoUrl, formatoEscolhido);
 
       totalImpressas++;
       countPrinted.innerText = totalImpressas;
@@ -1211,7 +1243,18 @@
       }
     });
 
-    function imprimirDireto(url) {
+    function imprimirDireto(url, formato) {
+      // Define as dimensões exatas baseadas na escolha do operador
+      let larguraCSS = "10cm";
+      let alturaCSS = "15cm";
+      let tamanhoPage = "10cm 15cm";
+
+      if (formato === "A7") {
+        larguraCSS = "7cm";
+        alturaCSS = "10cm";
+        tamanhoPage = "7cm 10cm";
+      }
+
       let iframe = document.getElementById("printFrame");
       if (!iframe) {
         iframe = document.createElement("iframe");
@@ -1221,7 +1264,42 @@
       }
       const docIframe = iframe.contentWindow.document;
       docIframe.open();
-      docIframe.write(`<html><body style="margin:0"><img src="${url}" style="width:100%" onload="window.print();"/></body></html>`);
+      docIframe.write(`
+        <html>
+          <head>
+            <style>
+              @page {
+                size: ${tamanhoPage};
+                margin: 0mm;
+              }
+              * {
+                box-sizing: border-box;
+                -webkit-print-color-adjust: exact;
+                print-color-adjust: exact;
+              }
+              body {
+                margin: 0;
+                padding: 0;
+                width: ${larguraCSS};
+                height: ${alturaCSS};
+                display: flex;
+                justify-content: center;
+                align-items: center;
+                background-color: #ffffff;
+                overflow: hidden;
+              }
+              img {
+                width: 100%;
+                height: 100%;
+                object-fit: contain;
+              }
+            </style>
+          </head>
+          <body>
+            <img src="${url}" onload="setTimeout(() => { window.print(); }, 300);"/>
+          </body>
+        </html>
+      `);
       docIframe.close();
     }
 
