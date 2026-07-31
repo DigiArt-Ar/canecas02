@@ -1249,15 +1249,14 @@
     });
 
     function imprimirDireto(url, formato) {
-      let larguraCSS = "10cm";
-      let alturaCSS = "15cm";
       let tamanhoPage = "10cm 15cm";
-      let margemBorda = "4mm"; // Margem uniforme desejada em toda a volta
+      let imgWidth = "9.8cm";
+      let imgHeight = "14.1cm";
 
       if (formato === "A7") {
-        larguraCSS = "7cm";
-        alturaCSS = "10cm";
         tamanhoPage = "7cm 10cm";
+        imgWidth = "6.8cm";
+        imgHeight = "10.1cm";
       }
 
       let iframe = document.getElementById("printFrame");
@@ -1284,10 +1283,8 @@
               }
               body {
                 margin: 0;
-                width: ${larguraCSS};
-                height: ${alturaCSS};
-                /* Padding idêntico em todos os 4 lados (topo, direita, baixo, esquerda) */
-                padding: ${margemBorda};
+                width: ${tamanhoPage.split(' ')[0]};
+                height: ${tamanhoPage.split(' ')[1]};
                 display: flex;
                 justify-content: center;
                 align-items: center;
@@ -1295,9 +1292,9 @@
                 overflow: hidden;
               }
               img {
-                width: 100%;
-                height: 100%;
-                object-fit: contain;
+                width: ${imgWidth};
+                height: ${imgHeight};
+                object-fit: fill;
               }
             </style>
           </head>
