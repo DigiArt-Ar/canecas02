@@ -29,14 +29,18 @@
     }
 
     .screen-layer {
-      position: absolute;
+      position: fixed;
       top: 0; left: 0;
       width: 100%; height: 100vh;
-      display: flex;
+      display: none; /* Oculto por padrão para evitar sobreposição */
       justify-content: center;
       align-items: center;
       background-color: #000000;
       z-index: 200;
+    }
+
+    .screen-layer.active {
+      display: flex; /* Exibe apenas a camada ativa */
     }
 
     .setup-card {
@@ -136,6 +140,10 @@
       height: 100vh;
       display: none;
       flex-direction: column;
+    }
+
+    #dashboardContainer.active {
+      display: flex;
     }
 
     header {
@@ -452,7 +460,7 @@
 <body>
 
   <!-- TELA 1: LOGIN COM E-MAIL E TOKEN -->
-  <div id="loginScreen" class="screen-layer">
+  <div id="loginScreen" class="screen-layer active">
     <div class="setup-card">
       <h1>DigiArt AR</h1>
       <p>Painel do Operador - Faça login com seu Token</p>
@@ -472,7 +480,7 @@
   </div>
 
   <!-- TELA 1.1: ALTERAÇÃO OBRIGATÓRIA DE SENHA APÓS O LOGIN COM TOKEN -->
-  <div id="changePasswordScreen" class="screen-layer" style="display: none;">
+  <div id="changePasswordScreen" class="screen-layer">
     <div class="setup-card">
       <h1>Alterar Senha</h1>
       <p>Por segurança, o sistema exige que você defina uma nova senha definitiva agora.</p>
@@ -492,7 +500,7 @@
   </div>
 
   <!-- TELA 2: CONFIGURAÇÃO DO EVENTO ( COM OPÇÃO DE USAR PROJETO EXISTENTE ) -->
-  <div id="setupScreen" class="screen-layer" style="display: none;">
+  <div id="setupScreen" class="screen-layer">
     <div class="setup-card">
       <h1>DigiArt AR</h1>
       <p>Configuração do Evento</p>
@@ -514,7 +522,7 @@
       </div>
 
       <button class="btn-action" id="btnStartEvent">INICIAR NOVO EVENTO</button>
-      <button class="btn-action btn-secondary" id="btnUseExistingProject">📂 USAR PROJETO EXISTENTE</button>
+      <button class="btn-action btn-secondary" id="btnUseExistingProject">📂 USAR PROJETO ANTERIOR (RECUPERAÇÃO)</button>
     </div>
   </div>
 
@@ -680,7 +688,7 @@
 
     setInterval(async () => {
       const emailLogado = localStorage.getItem("digiart_email_rev");
-      if (emailLogado && dashboardContainer.style.display === "flex") {
+      if (emailLogado && dashboardContainer.classList.contains("active")) {
         try {
           const docRef = doc(db, "revendedores", emailLogado);
           await updateDoc(docRef, { ultimoHeartbeat: Date.now() });
@@ -727,6 +735,16 @@
       });
     }
 
+    // Funções de controle de telas limpas (sem sobreposição)
+    function mostrarTela(telaElemento) {
+      loginScreen.classList.remove("active");
+      changePasswordScreen.classList.remove("active");
+      setupScreen.classList.remove("active");
+      dashboardContainer.classList.remove("active");
+
+      telaElemento.classList.add("active");
+    }
+
     async function verificarEstadoInicial() {
       const emailSalvo = localStorage.getItem("digiart_email_rev");
       const expiraSalvo = localStorage.getItem("digiart_expira_em");
@@ -736,7 +754,7 @@
         if (!permitido) {
           alert("Esta sessão já está aberta em outro computador!");
           localStorage.clear();
-          exibirTelaLogin();
+          mostrarTela(loginScreen);
           return;
         }
 
@@ -748,11 +766,7 @@
           currentEventId = eventoSalvo;
           nomeEventoExibicao = nomeSalvo;
 
-          loginScreen.style.display = "none";
-          changePasswordScreen.style.display = "none";
-          setupScreen.style.display = "none";
-          dashboardContainer.style.display = "flex";
-
+          mostrarTela(dashboardContainer);
           infoEventId.innerText = nomeEventoExibicao;
           gerarQRCodeCliente(currentEventId);
           monitorarFotos();
@@ -762,20 +776,11 @@
             iniciarCronometroComSegundos(restanteSegundos);
           }
         } else {
-          loginScreen.style.display = "none";
-          changePasswordScreen.style.display = "none";
-          setupScreen.style.display = "flex";
+          mostrarTela(setupScreen);
         }
       } else {
-        exibirTelaLogin();
+        mostrarTela(loginScreen);
       }
-    }
-
-    function exibirTelaLogin() {
-      loginScreen.style.display = "flex";
-      changePasswordScreen.style.display = "none";
-      setupScreen.style.display = "none";
-      dashboardContainer.style.display = "none";
     }
 
     btnLoginSubmit.addEventListener("click", async () => {
@@ -815,8 +820,8 @@
           localStorage.setItem("digiart_temp_email", email);
           localStorage.setItem("digiart_expira_em", dados.expiraEm);
 
-          loginScreen.style.display = "none";
-          changePasswordScreen.style.display = "flex";
+          // Vai para a tela obrigatória de alteração de senha
+          mostrarTela(changePasswordScreen);
         } else {
           alert("Token ou senha incorretos!");
         }
@@ -855,8 +860,8 @@
         localStorage.setItem("digiart_email_rev", email);
         localStorage.removeItem("digiart_temp_email");
 
-        changePasswordScreen.style.display = "none";
-        setupScreen.style.display = "flex";
+        // Após salvar a senha, vai para a tela de setup do evento
+        mostrarTela(setupScreen);
       } catch (err) {
         alert("Erro ao salvar senha.");
       } finally {
@@ -871,16 +876,14 @@
       const tempoFimSalvo = localStorage.getItem("digiart_tempo_fim");
 
       if (!eventoSalvo || !nomeSalvo) {
-        alert("Nenhum projeto anterior salvo neste computador.");
+        alert("Nenhum projeto anterior salvo neste computador para recuperação.");
         return;
       }
 
       currentEventId = eventoSalvo;
       nomeEventoExibicao = nomeSalvo;
 
-      setupScreen.style.display = "none";
-      dashboardContainer.style.display = "flex";
-
+      mostrarTela(dashboardContainer);
       infoEventId.innerText = nomeEventoExibicao;
       gerarQRCodeCliente(currentEventId);
       monitorarFotos();
@@ -920,9 +923,7 @@
         localStorage.setItem("digiart_nome_evento", nomeEventoExibicao);
         localStorage.setItem("digiart_tempo_fim", tempoFimTimestamp);
 
-        setupScreen.style.display = "none";
-        dashboardContainer.style.display = "flex";
-
+        mostrarTela(dashboardContainer);
         infoEventId.innerText = nomeEventoExibicao;
         gerarQRCodeCliente(currentEventId);
         iniciarCronometroComSegundos(horasInput * 3600);
