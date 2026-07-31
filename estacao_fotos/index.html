@@ -649,6 +649,7 @@
     let unsubscribeSnapshot = null;
     let fotoSelecionadaAtual = null;
     let listaFotosPendentes = [];
+    let unsubscribeRevendedor = null; // Listener em tempo real para o controle de sessão ativa
 
     function gerarIdCurto() {
       const caracteres = 'abcdefghijklmnopqrstuvwxyz0123456789';
@@ -661,34 +662,73 @@
 
     const sessionIdUnico = Math.random().toString(36).substring(2);
 
-    async function verificarDuplicidadeSessao(email) {
-      try {
-        const docRef = doc(db, "revendedores", email);
-        const docSnap = await getDoc(docRef);
-        if (docSnap.exists()) {
-          const dados = docSnap.data();
-          const sessaoAtiva = dados.sessaoAtivaId;
-          const ultimoHeartbeat = dados.ultimoHeartbeat || 0;
-          const agora = Date.now();
+    // Monitora em tempo real a sessão e o projeto ativo no Firestore para derrubar abas duplicadas e sincronizar projetos
+    function iniciarMonitoramentoRevendedor(email) {
+      if (unsubscribeRevendedor) unsubscribeRevendedor();
+      const docRef = doc(db, "revendedores", email);
+      
+      unsubscribeRevendedor = onSnapshot(docRef, (docSnap) => {
+        if (!docSnap.exists()) return;
+        const dados = docSnap.data();
 
-          if (sessaoAtiva && sessaoAtiva !== sessionIdUnico && (agora - ultimoHeartbeat < 30000)) {
-            return false;
-          }
-
-          await updateDoc(docRef, {
-            sessaoAtivaId: sessionIdUnico,
-            ultimoHeartbeat: agora
-          });
+        // 1. Controle de Sessão Única Ativa (Força logout se outro aparelho assumiu)
+        if (dados.sessaoAtivaId && dados.sessaoAtivaId !== sessionIdUnico) {
+          alert("Esta conta foi acessada em outro dispositivo. Esta sessão será encerrada.");
+          if (unsubscribeRevendedor) unsubscribeRevendedor();
+          localStorage.clear();
+          mostrarTela(loginScreen);
+          return;
         }
-        return true;
-      } catch (e) {
-        return true;
-      }
+
+        // 2. Sincronização do Projeto/Evento Ativo entre Aparelhos
+        const servidorEventId = dados.currentEventId || "";
+        const servidorNomeEvento = dados.currentEventName || "";
+        const servidorTempoFim = dados.currentEventEndTime || 0;
+
+        if (servidorEventId && servidorNomeEvento) {
+          // Se o painel ainda não está conectado no mesmo evento do servidor, atualiza automaticamente
+          if (currentEventId !== servidorEventId) {
+            currentEventId = servidorEventId;
+            nomeEventoExibicao = servidorNomeEvento;
+
+            localStorage.setItem("digiart_evento_ativo", currentEventId);
+            localStorage.setItem("digiart_nome_evento", nomeEventoExibicao);
+            if (servidorTempoFim) {
+              localStorage.setItem("digiart_tempo_fim", servidorTempoFim);
+            }
+
+            // Se estiver na tela de setup ou login, pula direto para o painel sincronizado
+            if (!dashboardContainer.classList.contains("active")) {
+              mostrarTela(dashboardContainer);
+            }
+
+            infoEventId.innerText = nomeEventoExibicao;
+            gerarQRCodeCliente(currentEventId);
+            monitorarFotos();
+
+            if (servidorTempoFim) {
+              const restanteSegundos = Math.max(0, Math.floor((servidorTempoFim - Date.now()) / 1000));
+              iniciarCronometroComSegundos(restanteSegundos);
+            }
+          }
+        } else if (currentEventId && !servidorEventId) {
+          // Se o evento foi finalizado remotamente ou limpo
+          currentEventId = "";
+          nomeEventoExibicao = "";
+          localStorage.removeItem("digiart_evento_ativo");
+          localStorage.removeItem("digiart_nome_evento");
+          localStorage.removeItem("digiart_tempo_fim");
+          if (dashboardContainer.classList.contains("active")) {
+            mostrarTela(setupScreen);
+          }
+        }
+      });
     }
 
+    // Heartbeat periódico para manter a sessão ativa atualizada no Firestore
     setInterval(async () => {
       const emailLogado = localStorage.getItem("digiart_email_rev");
-      if (emailLogado && dashboardContainer.classList.contains("active")) {
+      if (emailLogado) {
         try {
           const docRef = doc(db, "revendedores", emailLogado);
           await updateDoc(docRef, { ultimoHeartbeat: Date.now() });
@@ -750,14 +790,47 @@
       const expiraSalvo = localStorage.getItem("digiart_expira_em");
 
       if (emailSalvo && expiraSalvo && Date.now() < parseInt(expiraSalvo)) {
-        const permitido = await verificarDuplicidadeSessao(emailSalvo);
-        if (!permitido) {
-          alert("Esta sessão já está aberta em outro computador!");
-          localStorage.clear();
-          mostrarTela(loginScreen);
-          return;
-        }
+        try {
+          const docRef = doc(db, "revendedores", emailSalvo);
+          const docSnap = await getDoc(docRef);
 
+          if (docSnap.exists()) {
+            const dados = docSnap.data();
+            
+            // Assume imediatamente a sessão no Firestore, derrubando abas/aparelhos anteriores instantaneamente
+            await updateDoc(docRef, {
+              sessaoAtivaId: sessionIdUnico,
+              ultimoHeartbeat: Date.now()
+            });
+
+            iniciarMonitoramentoRevendedor(emailSalvo);
+
+            // Sincroniza o projeto ativo diretamente do Firestore se existir
+            if (dados.currentEventId && dados.currentEventName) {
+              currentEventId = dados.currentEventId;
+              nomeEventoExibicao = dados.currentEventName;
+
+              localStorage.setItem("digiart_evento_ativo", currentEventId);
+              localStorage.setItem("digiart_nome_evento", nomeEventoExibicao);
+              if (dados.currentEventEndTime) {
+                localStorage.setItem("digiart_tempo_fim", dados.currentEventEndTime);
+              }
+
+              mostrarTela(dashboardContainer);
+              infoEventId.innerText = nomeEventoExibicao;
+              gerarQRCodeCliente(currentEventId);
+              monitorarFotos();
+
+              if (dados.currentEventEndTime) {
+                const restanteSegundos = Math.max(0, Math.floor((dados.currentEventEndTime - Date.now()) / 1000));
+                iniciarCronometroComSegundos(restanteSegundos);
+              }
+              return;
+            }
+          }
+        } catch (e) {}
+
+        // Fallback para localStorage caso o Firestore falhe na leitura inicial
         const eventoSalvo = localStorage.getItem("digiart_evento_ativo");
         const nomeSalvo = localStorage.getItem("digiart_nome_evento");
         const tempoFimSalvo = localStorage.getItem("digiart_tempo_fim");
@@ -766,6 +839,7 @@
           currentEventId = eventoSalvo;
           nomeEventoExibicao = nomeSalvo;
 
+          iniciarMonitoramentoRevendedor(emailSalvo);
           mostrarTela(dashboardContainer);
           infoEventId.innerText = nomeEventoExibicao;
           gerarQRCodeCliente(currentEventId);
@@ -776,6 +850,7 @@
             iniciarCronometroComSegundos(restanteSegundos);
           }
         } else {
+          iniciarMonitoramentoRevendedor(emailSalvo);
           mostrarTela(setupScreen);
         }
       } else {
@@ -816,12 +891,33 @@
           ultimoHeartbeat: Date.now()
         });
 
+        iniciarMonitoramentoRevendedor(email);
+
         // Verifica se o usuário digitou a senha definitiva já cadastrada
         if (dados.senhaDefinitiva && dados.senhaDefinitiva === tokenInformado) {
           localStorage.setItem("digiart_email_rev", email);
           localStorage.setItem("digiart_expira_em", dados.expiraEm);
           
-          // Pula direto para o setup/painel do evento sem pedir alteração de senha
+          // Se já houver um projeto ativo salvo no servidor, entra direto nele
+          if (dados.currentEventId && dados.currentEventName) {
+            currentEventId = dados.currentEventId;
+            nomeEventoExibicao = dados.currentEventName;
+            localStorage.setItem("digiart_evento_ativo", currentEventId);
+            localStorage.setItem("digiart_nome_evento", nomeEventoExibicao);
+            if (dados.currentEventEndTime) {
+              localStorage.setItem("digiart_tempo_fim", dados.currentEventEndTime);
+            }
+
+            mostrarTela(dashboardContainer);
+            infoEventId.innerText = nomeEventoExibicao;
+            gerarQRCodeCliente(currentEventId);
+            monitorarFotos();
+            if (dados.currentEventEndTime) {
+              iniciarCronometroComSegundos(Math.max(0, Math.floor((dados.currentEventEndTime - Date.now()) / 1000)));
+            }
+            return;
+          }
+
           mostrarTela(setupScreen);
           return;
         }
@@ -871,6 +967,8 @@
         localStorage.setItem("digiart_email_rev", email);
         localStorage.removeItem("digiart_temp_email");
 
+        iniciarMonitoramentoRevendedor(email);
+
         // Após salvar a senha, vai para a tela de setup do evento
         mostrarTela(setupScreen);
       } catch (err) {
@@ -881,18 +979,44 @@
       }
     });
 
-    btnUseExistingProject.addEventListener("click", () => {
-      const eventoSalvo = localStorage.getItem("digiart_evento_ativo");
-      const nomeSalvo = localStorage.getItem("digiart_nome_evento");
-      const tempoFimSalvo = localStorage.getItem("digiart_tempo_fim");
+    btnUseExistingProject.addEventListener("click", async () => {
+      const emailSalvo = localStorage.getItem("digiart_email_rev");
+      let eventoSalvo = localStorage.getItem("digiart_evento_ativo");
+      let nomeSalvo = localStorage.getItem("digiart_nome_evento");
+      let tempoFimSalvo = localStorage.getItem("digiart_tempo_fim");
+
+      // Tenta recuperar do Firestore caso o localStorage esteja vazio
+      if (!eventoSalvo && emailSalvo) {
+        try {
+          const docRef = doc(db, "revendedores", emailSalvo);
+          const docSnap = await getDoc(docRef);
+          if (docSnap.exists() && docSnap.data().currentEventId) {
+            eventoSalvo = docSnap.data().currentEventId;
+            nomeSalvo = docSnap.data().currentEventName;
+            tempoFimSalvo = docSnap.data().currentEventEndTime;
+          }
+        } catch (e) {}
+      }
 
       if (!eventoSalvo || !nomeSalvo) {
-        alert("Nenhum projeto anterior salvo neste computador para recuperação.");
+        alert("Nenhum projeto anterior salvo neste computador ou na nuvem para recuperação.");
         return;
       }
 
       currentEventId = eventoSalvo;
       nomeEventoExibicao = nomeSalvo;
+
+      // Sincroniza de volta para o documento do revendedor no Firestore
+      if (emailSalvo) {
+        try {
+          const docRef = doc(db, "revendedores", emailSalvo);
+          await updateDoc(docRef, {
+            currentEventId: currentEventId,
+            currentEventName: nomeEventoExibicao,
+            currentEventEndTime: tempoFimSalvo ? parseInt(tempoFimSalvo) : 0
+          });
+        } catch (e) {}
+      }
 
       mostrarTela(dashboardContainer);
       infoEventId.innerText = nomeEventoExibicao;
@@ -919,6 +1043,7 @@
 
       nomeEventoExibicao = nomeInput;
       currentEventId = gerarIdCurto();
+      const emailSalvo = localStorage.getItem("digiart_email_rev");
 
       try {
         const molduraBase64 = await comprimirMolduraPNG(inputFrameFile.files[0], 1200);
@@ -929,6 +1054,16 @@
           molduraUrl: molduraBase64,
           criadoEm: new Date()
         }, { merge: true });
+
+        // Salva o projeto ativo no Firestore para sincronizar instantaneamente entre celular e computador
+        if (emailSalvo) {
+          const docRef = doc(db, "revendedores", emailSalvo);
+          await updateDoc(docRef, {
+            currentEventId: currentEventId,
+            currentEventName: nomeEventoExibicao,
+            currentEventEndTime: tempoFimTimestamp
+          });
+        }
 
         localStorage.setItem("digiart_evento_ativo", currentEventId);
         localStorage.setItem("digiart_nome_evento", nomeEventoExibicao);
@@ -947,8 +1082,20 @@
       }
     });
 
-    btnFinishEvent.addEventListener("click", () => {
+    btnFinishEvent.addEventListener("click", async () => {
       if (confirm("Deseja finalizar o evento atual?")) {
+        const emailSalvo = localStorage.getItem("digiart_email_rev");
+        if (emailSalvo) {
+          try {
+            const docRef = doc(db, "revendedores", emailSalvo);
+            await updateDoc(docRef, {
+              currentEventId: "",
+              currentEventName: "",
+              currentEventEndTime: 0
+            });
+          } catch (e) {}
+        }
+
         localStorage.removeItem("digiart_evento_ativo");
         localStorage.removeItem("digiart_nome_evento");
         localStorage.removeItem("digiart_tempo_fim");
