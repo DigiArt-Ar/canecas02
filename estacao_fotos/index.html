@@ -30,7 +30,7 @@
       position: fixed;
       top: 0; left: 0;
       width: 100%; height: 100vh;
-      display: none; /* Oculto por padrão para evitar sobreposição */
+      display: none;
       justify-content: center;
       align-items: center;
       background-color: #000000;
@@ -38,7 +38,7 @@
     }
 
     .screen-layer.active {
-      display: flex; /* Exibe apenas a camada ativa */
+      display: flex;
     }
 
     .setup-card {
@@ -329,34 +329,6 @@
       align-items: center;
     }
 
-    .print-config-group {
-      display: flex;
-      flex-direction: column;
-      gap: 4px;
-    }
-
-    .print-config-group label {
-      font-size: 0.7rem;
-      color: #00FF00;
-      font-weight: bold;
-      text-transform: uppercase;
-    }
-
-    .print-config-group select {
-      background-color: #1c1c1c;
-      color: #fff;
-      border: 1px solid #333;
-      padding: 10px;
-      border-radius: 8px;
-      font-size: 0.9rem;
-      outline: none;
-      cursor: pointer;
-    }
-
-    .print-config-group select:focus {
-      border-color: #00FF00;
-    }
-
     .btn-action-print {
       flex: 2;
       background-color: #00FF00;
@@ -395,27 +367,64 @@
       min-height: 0;
     }
 
-    .qrcode-box {
+    /* Bloco superior seguro para QR Code e Seletor de Papel */
+    .top-right-panel {
       background-color: #141414;
       border: 1px solid #333;
       border-radius: 12px;
-      padding: 12px;
+      padding: 15px;
       display: flex;
-      align-items: center;
-      justify-content: space-around;
+      flex-direction: column;
+      gap: 12px;
       flex-shrink: 0;
     }
 
-    .qrcode-box p {
+    .qrcode-row {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+    }
+
+    .qrcode-row p {
       font-size: 0.85rem;
       color: #aaa;
-      max-width: 120px;
+      max-width: 140px;
     }
 
     #qrcodeCanvas {
       background-color: #fff;
       padding: 5px;
       border-radius: 6px;
+    }
+
+    .paper-config-box {
+      border-top: 1px solid #222;
+      padding-top: 10px;
+      display: flex;
+      flex-direction: column;
+      gap: 5px;
+    }
+
+    .paper-config-box label {
+      font-size: 0.75rem;
+      color: #00FF00;
+      font-weight: bold;
+      text-transform: uppercase;
+    }
+
+    .paper-config-box select {
+      background-color: #1c1c1c;
+      color: #fff;
+      border: 1px solid #333;
+      padding: 10px;
+      border-radius: 8px;
+      font-size: 0.9rem;
+      outline: none;
+      cursor: pointer;
+    }
+
+    .paper-config-box select:focus {
+      border-color: #00FF00;
     }
 
     .queue-section {
@@ -594,13 +603,6 @@
           </div>
 
           <div class="action-bar">
-            <div class="print-config-group">
-              <label for="paperSizeSelect">Formato:</label>
-              <select id="paperSizeSelect">
-                <option value="A7">Papel A7 (7x10cm)</option>
-                <option value="A6" selected>Papel A6 (10x15cm)</option>
-              </select>
-            </div>
             <button class="btn-action-print" id="btnActionPrint" disabled>🖨️ IMPRIMIR FOTO</button>
             <button class="btn-action-delete" id="btnActionDelete" disabled>🗑️ EXCLUIR</button>
           </div>
@@ -608,9 +610,19 @@
       </div>
 
       <div class="right-column">
-        <div class="qrcode-box">
-          <p><strong>Escaneie para tirar foto:</strong></p>
-          <div id="qrcodeCanvas"></div>
+        <div class="top-right-panel">
+          <div class="qrcode-row">
+            <p><strong>Escaneie para tirar foto:</strong></p>
+            <div id="qrcodeCanvas"></div>
+          </div>
+          
+          <div class="paper-config-box">
+            <label for="paperSizeSelect">Formato do Papel:</label>
+            <select id="paperSizeSelect">
+              <option value="A7">Papel A7 (7x10cm)</option>
+              <option value="A6" selected>Papel A6 (10x15cm)</option>
+            </select>
+          </div>
         </div>
 
         <section class="queue-section">
@@ -680,7 +692,7 @@
     let unsubscribeSnapshot = null;
     let fotoSelecionadaAtual = null;
     let listaFotosPendentes = [];
-    let unsubscribeRevendedor = null; // Listener em tempo real para o controle de sessão ativa
+    let unsubscribeRevendedor = null;
 
     function gerarIdCurto() {
       const caracteres = 'abcdefghijklmnopqrstuvwxyz0123456789';
@@ -693,7 +705,6 @@
 
     const sessionIdUnico = Math.random().toString(36).substring(2);
 
-    // Monitora em tempo real a sessão e o projeto ativo no Firestore para sincronizar projetos
     function iniciarMonitoramentoRevendedor(email) {
       if (unsubscribeRevendedor) unsubscribeRevendedor();
       const docRef = doc(db, "revendedores", email);
@@ -702,7 +713,6 @@
         if (!docSnap.exists()) return;
         const dados = docSnap.data();
 
-        // 1. Controle de Sessão Única Ativa (Força logout se outro aparelho assumiu)
         if (dados.sessaoAtivaId && dados.sessaoAtivaId !== sessionIdUnico) {
           alert("Esta conta foi acessada em outro dispositivo. Esta sessão será encerrada.");
           if (unsubscribeRevendedor) unsubscribeRevendedor();
@@ -711,7 +721,6 @@
           return;
         }
 
-        // 2. Sincronização do Projeto/Evento Ativo entre Aparelhos
         const servidorEventId = dados.currentEventId || "";
         const servidorNomeEvento = dados.currentEventName || "";
         const servidorTempoFim = dados.currentEventEndTime || 0;
@@ -741,7 +750,6 @@
             }
           }
         } else if (currentEventId && !servidorEventId) {
-          // Se o evento foi finalizado, limpa apenas os dados do evento e joga para a tela de setup (sem deslogar)
           currentEventId = "";
           nomeEventoExibicao = "";
           localStorage.removeItem("digiart_evento_ativo");
@@ -756,7 +764,6 @@
       });
     }
 
-    // Heartbeat periódico para manter a sessão ativa atualizada no Firestore
     setInterval(async () => {
       const emailLogado = localStorage.getItem("digiart_email_rev");
       if (emailLogado) {
@@ -806,7 +813,6 @@
       });
     }
 
-    // Funções de controle de telas limpas (sem sobreposição)
     function mostrarTela(telaElemento) {
       loginScreen.classList.remove("active");
       changePasswordScreen.classList.remove("active");
@@ -1195,7 +1201,7 @@
     btnActionPrint.addEventListener("click", () => {
       if (!fotoSelecionadaAtual) return;
       const fotoParaImprimir = fotoSelecionadaAtual;
-      const formatoEscolhido = paperSizeSelect.value; // 'A7' ou 'A6'
+      const formatoEscolhido = paperSizeSelect.value;
       
       imprimirDireto(fotoParaImprimir.fotoUrl, formatoEscolhido);
 
@@ -1244,7 +1250,6 @@
     });
 
     function imprimirDireto(url, formato) {
-      // Define as dimensões exatas baseadas na escolha do operador
       let larguraCSS = "10cm";
       let alturaCSS = "15cm";
       let tamanhoPage = "10cm 15cm";
@@ -1279,7 +1284,7 @@
               }
               body {
                 margin: 0;
-                padding: 0;
+                padding: 1.5mm; /* Respiro uniforme de segurança para impressoras com margem de hardware */
                 width: ${larguraCSS};
                 height: ${alturaCSS};
                 display: flex;
@@ -1289,8 +1294,8 @@
                 overflow: hidden;
               }
               img {
-                width: 100%;
-                height: 100%;
+                max-width: 100%;
+                max-height: 100%;
                 object-fit: contain;
               }
             </style>
