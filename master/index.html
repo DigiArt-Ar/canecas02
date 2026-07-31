@@ -357,7 +357,6 @@
           const isAtivo = agora < expiraEm;
           const dataFormatada = new Date(expiraEm).toLocaleDateString('pt-BR', { day: '2-digit', month: '2-digit', year: 'numeric', hour: '2-digit', minute: '2-digit' });
 
-          // Mensagem padrão automatizada para o e-mail
           const assuntoEmail = encodeURIComponent("Acesso ao Painel DigiArt AR");
           const corpoEmail = encodeURIComponent(
             `Olá ${nome},\n\n` +
@@ -461,7 +460,7 @@
       setTimeout(() => btnCopiarToken.innerText = "Copiar Token", 2000);
     });
 
-    // FUNÇÃO DE RENOVAÇÃO SUPORTANDO DIAS (ex: 1d) E MESES (ex: 1)
+    // FUNÇÃO DE RENOVAÇÃO
     window.renovarLicencaPrompt = async function(email) {
       const inputQtd = prompt("Quanto deseja adicionar para o revendedor " + email + "?\nDigite o número seguido de 'd' para dias ou apenas o número para meses\n(Ex: 1d para 1 dia, ou 1 para 1 mês)", "1d");
       if (!inputQtd) return;
@@ -487,15 +486,14 @@
 
       try {
         const docRef = doc(db, "revendedores", email);
-        const docSnap = import { getDoc } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-firestore.js"; // Já importado no topo
-        const snap = await getDoc(docRef);
+        const docSnap = await getDoc(docRef);
 
-        if (!snap.exists()) {
+        if (!docSnap.exists()) {
           alert("Revendedor não encontrado.");
           return;
         }
 
-        const dados = snap.data();
+        const dados = docSnap.data();
         const validadeAtual = dados.expiraEm;
         const agora = Date.now();
 
