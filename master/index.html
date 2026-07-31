@@ -357,11 +357,11 @@
           const isAtivo = agora < expiraEm;
           const dataFormatada = new Date(expiraEm).toLocaleDateString('pt-BR', { day: '2-digit', month: '2-digit', year: 'numeric', hour: '2-digit', minute: '2-digit' });
 
-          const assuntoEmail = encodeURIComponent("Acesso ao Painel DigiArt AR");
+          const assuntoEmail = encodeURIComponent("Acesso ao Painel Estação de Fotos");
           const corpoEmail = encodeURIComponent(
             `Olá ${nome},\n\n` +
-            `Seu acesso ao Painel de Controle e Gestão Master da DigiArt AR foi liberado!\n\n` +
-            `Link do Painel: https://digiart-ar.com.br/master/\n` +
+            `Seu acesso ao Painel de Controle da Estação de Fotos da DigiArt AR foi liberado!\n\n` +
+            `Link do Painel: https://digiart-ar.com.br/estacao_fotos\n` +
             `Seu Token de Acesso: ${token}\n\n` +
             `Lembre-se que ao entrar com o token, o sistema pedirá para você definir a sua senha definitiva.\n\n` +
             `Cordialmente,\n` +
