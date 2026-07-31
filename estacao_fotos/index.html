@@ -477,7 +477,7 @@
 </head>
 <body>
 
-  <!-- TELA 1: LOGIN COM TOKEN (PRIMEIRO ACESSO) -->
+  <!-- TELA 1: LOGIN COM TOKEN -->
   <div id="loginScreen" class="screen-layer">
     <div class="setup-card">
       <h1>DigiArt AR</h1>
@@ -497,7 +497,7 @@
     </div>
   </div>
 
-  <!-- TELA 1.1: CRIAÇÃO OBRIGATÓRIA DE SENHA (PRIMEIRO ACESSO COM TOKEN) -->
+  <!-- TELA 1.1: CRIAÇÃO OBRIGATÓRIA DE SENHA (PRIMEIRO ACESSO) -->
   <div id="newPasswordScreen" class="screen-layer" style="display: none;">
     <div class="setup-card">
       <h1>Primeiro Acesso</h1>
@@ -692,7 +692,7 @@
     }
 
     // CONTROLE DE DUPLICIDADE (SESSION ID ÚNICO POR ABA/DISPOSITIVO)
-    const sessionIdUnico = Math.random().toString(36.substring(2));
+    const sessionIdUnico = Math.random().toString(36).substring(2);
 
     async function verificarDuplicidadeSessao(email) {
       try {
@@ -706,7 +706,7 @@
 
           // Se houver outra sessão ativa nos últimos 30 segundos, bloqueia
           if (sessaoAtiva && sessaoAtiva !== sessionIdUnico && (agora - ultimoHeartbeat < 30000)) {
-            return false; // Conflito: já está aberto em outro lugar
+            return false;
           }
 
           // Atualiza a sessão atual
@@ -786,12 +786,9 @@
     // RESTAURAR SESSÃO AO CARREGAR A PÁGINA
     async function restaurarSessaoAtiva() {
       const emailSalvo = localStorage.getItem("digiart_email_rev");
-      const tokenSalvo = localStorage.getItem("digiart_token_rev");
-      const senhaSalva = localStorage.getItem("digiart_senha_cadastrada");
       const expiraSalvo = localStorage.getItem("digiart_expira_em");
 
       if (emailSalvo && expiraSalvo && Date.now() < parseInt(expiraSalvo)) {
-        // Verifica duplicidade
         const permitido = await verificarDuplicidadeSessao(emailSalvo);
         if (!permitido) {
           alert("Este login já está sendo utilizado em outro computador ou aba!");
@@ -806,7 +803,6 @@
         const dataInicioSalva = localStorage.getItem("digiart_data_inicio");
 
         if (eventoSalvo && nomeSalvo) {
-          // Já tem evento rodando, vai direto pro painel
           currentEventId = eventoSalvo;
           nomeEventoExibicao = nomeSalvo;
 
@@ -831,7 +827,6 @@
             iniciarCronometroComSegundos(restanteSegundos);
           }
         } else {
-          // Sem evento ativo, vai para a tela de setup (com opção de usar projeto existente)
           loginScreen.style.display = "none";
           setupScreen.style.display = "flex";
         }
@@ -879,7 +874,6 @@
           return;
         }
 
-        // Verifica duplicidade
         const permitido = await verificarDuplicidadeSessao(email);
         if (!permitido) {
           alert("Este login já está aberto em outro computador!");
@@ -888,7 +882,7 @@
           return;
         }
 
-        // Regra de Primeiro Acesso (se o usuário usa o token provisório ou primeiroAcesso == true)
+        // Se for primeiro acesso ou o usuário informou o token provisório do painel master
         if (dados.primeiroAcesso || dados.token === senhaInformada) {
           localStorage.setItem("digiart_temp_email", email);
           localStorage.setItem("digiart_expira_em", dados.expiraEm);
@@ -897,7 +891,7 @@
           return;
         }
 
-        // Login com senha definitiva já cadastrada
+        // Se informou a senha definitiva cadastrada
         if (dados.senhaDefinitiva === senhaInformada) {
           localStorage.setItem("digiart_email_rev", email);
           localStorage.setItem("digiart_expira_em", dados.expiraEm);
@@ -957,7 +951,7 @@
       }
     });
 
-    // BOTÃO: USAR PROJETO EXISTENTE (Recuperar último evento salvo no LocalStorage)
+    // BOTÃO: USAR PROJETO EXISTENTE (Caso o computador tenha dado problema e retomado na mesma sessão)
     btnUseExistingProject.addEventListener("click", () => {
       const eventoSalvo = localStorage.getItem("digiart_evento_ativo");
       const nomeSalvo = localStorage.getItem("digiart_nome_evento");
