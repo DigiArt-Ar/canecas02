@@ -727,7 +727,7 @@
       });
     }
 
-    async function restaurarSessaoAtiva() {
+    async function verificarEstadoInicial() {
       const emailSalvo = localStorage.getItem("digiart_email_rev");
       const expiraSalvo = localStorage.getItem("digiart_expira_em");
 
@@ -736,7 +736,7 @@
         if (!permitido) {
           alert("Esta sessão já está aberta em outro computador!");
           localStorage.clear();
-          loginScreen.style.display = "flex";
+          exibirTelaLogin();
           return;
         }
 
@@ -767,11 +767,15 @@
           setupScreen.style.display = "flex";
         }
       } else {
-        localStorage.clear();
-        loginScreen.style.display = "flex";
-        changePasswordScreen.style.display = "none";
-        setupScreen.style.display = "none";
+        exibirTelaLogin();
       }
+    }
+
+    function exibirTelaLogin() {
+      loginScreen.style.display = "flex";
+      changePasswordScreen.style.display = "none";
+      setupScreen.style.display = "none";
+      dashboardContainer.style.display = "none";
     }
 
     btnLoginSubmit.addEventListener("click", async () => {
@@ -1081,7 +1085,7 @@
     }
 
     window.addEventListener("DOMContentLoaded", () => {
-      restaurarSessaoAtiva();
+      verificarEstadoInicial();
     });
   </script>
 </body>
