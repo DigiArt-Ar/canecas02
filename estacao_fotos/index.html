@@ -367,7 +367,6 @@
       min-height: 0;
     }
 
-    /* Bloco superior seguro para QR Code e Seletor de Papel */
     .top-right-panel {
       background-color: #141414;
       border: 1px solid #333;
@@ -1284,7 +1283,9 @@
               }
               body {
                 margin: 0;
-                padding: 1.5mm; /* Respiro uniforme de segurança para impressoras com margem de hardware */
+                /* Ajuste proporcional exato para descer a imagem e centralizar perfeitamente na L1250/L8050 */
+                padding-top: 6mm; 
+                padding-bottom: 4mm;
                 width: ${larguraCSS};
                 height: ${alturaCSS};
                 display: flex;
