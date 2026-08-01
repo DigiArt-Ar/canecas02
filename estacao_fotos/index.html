@@ -3,7 +3,7 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>DigiArt AR - Painel do Operador</title>
+  <title>DigiArt AR - Estação de Fotos</title>
 
   <script src="https://cdnjs.cloudflare.com/ajax/libs/qrcodejs/1.0.0/qrcode.min.js"></script>
   <script src="https://cdnjs.cloudflare.com/ajax/libs/jszip/3.10.1/jszip.min.js"></script>
@@ -367,7 +367,6 @@
       min-height: 0;
     }
 
-    /* Bloco superior seguro para QR Code e Seletor de Papel */
     .top-right-panel {
       background-color: #141414;
       border: 1px solid #333;
@@ -619,8 +618,10 @@
           <div class="paper-config-box">
             <label for="paperSizeSelect">Formato do Papel:</label>
             <select id="paperSizeSelect">
-              <option value="A7">Papel A7 (7x10cm)</option>
-              <option value="A6" selected>Papel A6 (10x15cm)</option>
+              <option value="A7">Papel A7 (7x10cm - Retrato)</option>
+              <option value="A7_LANDSCAPE">Papel A7 (10x7cm - Paisagem)</option>
+              <option value="A6" selected>Papel A6 (10x15cm - Retrato)</option>
+              <option value="A6_LANDSCAPE">Papel A6 (15x10cm - Paisagem)</option>
             </select>
           </div>
         </div>
@@ -1250,14 +1251,22 @@
     });
 
     function imprimirDireto(url, formato) {
-      let larguraCSS = "10cm";
-      let alturaCSS = "15cm";
       let tamanhoPage = "10cm 15cm";
+      let larguraPapel = "10cm";
+      let alturaPapel = "15cm";
 
       if (formato === "A7") {
-        larguraCSS = "7cm";
-        alturaCSS = "10cm";
         tamanhoPage = "7cm 10cm";
+        larguraPapel = "7cm";
+        alturaPapel = "10cm";
+      } else if (formato === "A7_LANDSCAPE") {
+        tamanhoPage = "10cm 7cm";
+        larguraPapel = "10cm";
+        alturaPapel = "7cm";
+      } else if (formato === "A6_LANDSCAPE") {
+        tamanhoPage = "15cm 10cm";
+        larguraPapel = "15cm";
+        alturaPapel = "10cm";
       }
 
       let iframe = document.getElementById("printFrame");
@@ -1284,9 +1293,8 @@
               }
               body {
                 margin: 0;
-                padding: 1.5mm; /* Respiro uniforme de segurança para impressoras com margem de hardware */
-                width: ${larguraCSS};
-                height: ${alturaCSS};
+                width: ${larguraPapel};
+                height: ${alturaPapel};
                 display: flex;
                 justify-content: center;
                 align-items: center;
@@ -1296,7 +1304,11 @@
               img {
                 max-width: 100%;
                 max-height: 100%;
+                width: auto;
+                height: auto;
                 object-fit: contain;
+                display: block;
+                margin: auto;
               }
             </style>
           </head>
