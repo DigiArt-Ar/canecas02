@@ -130,6 +130,7 @@
       position: absolute;
       top: 0;
       left: 0;
+      transform-origin: center center;
     }
 
     #frameOverlay {
@@ -137,7 +138,7 @@
       z-index: 10;
     }
 
-    /* BARRA INFERIOR EM FORMATO DE TRIÂNGULO */
+    /* BARRA INFERIOR */
     .controls-bar {
       width: 100%;
       display: flex;
@@ -149,7 +150,6 @@
       padding: 10px 25px max(15px, env(safe-area-inset-bottom)) 25px;
     }
 
-    /* Linha Superior: DigiArt Ar na Esquerda / Inverter na Direita */
     .controls-top-row {
       width: 100%;
       display: flex;
@@ -167,7 +167,14 @@
       white-space: nowrap;
     }
 
-    .btn-flip {
+    /* Grupo de Botões Superiores (Flash + Inverter) */
+    .top-actions {
+      display: flex;
+      gap: 12px;
+      align-items: center;
+    }
+
+    .btn-circle-action {
       width: 48px;
       height: 48px;
       border-radius: 50%;
@@ -178,12 +185,21 @@
       justify-content: center;
       cursor: pointer;
       box-shadow: 0 0 12px rgba(0, 255, 0, 0.4);
+      outline: none;
     }
 
-    .btn-flip svg {
+    .btn-circle-action svg {
       width: 24px;
       height: 24px;
       fill: #00FF00;
+    }
+
+    /* Estado Ativo do Flash */
+    .btn-circle-action.active {
+      background-color: #00FF00;
+    }
+    .btn-circle-action.active svg {
+      fill: #000000;
     }
 
     /* Linha Inferior: Botão Grande de Tirar Foto no Centro */
@@ -272,7 +288,7 @@
 
     <div class="toast-message" id="toastMessage">✨ Foto enviada com sucesso!</div>
 
-    <div class="viewport-box">
+    <div class="viewport-box" id="viewportBox">
       <video id="videoFeed" autoplay playsinline muted></video>
       <canvas id="photoCanvas" style="display: none;"></canvas>
       <img id="frameOverlay" src="" alt="Moldura do Evento" style="display: none;">
@@ -283,11 +299,19 @@
       <div class="controls-top-row">
         <div class="brand-logo">DigiArt Ar</div>
 
-        <button class="btn-flip" id="btnFlip" title="Inverter Câmera">
-          <svg viewBox="0 0 24 24">
-            <path d="M19 8l-4 4h3c0 3.31-2.69 6-6 6-1.01 0-1.97-.25-2.8-.7l-1.46 1.46C9.01 19.54 10.43 20 12 20c4.42 0 8-3.58 8-8h3l-4-4zM6 12c0-3.31 2.69-6 6-6 1.01 0 1.97.25 2.8.7l1.46-1.46C14.99 4.46 13.57 4 12 4c-4.42 0-8 3.58-8 8H1l4 4 4-4H6z"/>
-          </svg>
-        </button>
+        <div class="top-actions">
+          <button class="btn-circle-action" id="btnFlash" title="Ligar/Desligar Flash" style="display: none;">
+            <svg viewBox="0 0 24 24">
+              <path d="M7 2v11h3v9l7-12h-4l4-8z"/>
+            </svg>
+          </button>
+
+          <button class="btn-circle-action" id="btnFlip" title="Inverter Câmera">
+            <svg viewBox="0 0 24 24">
+              <path d="M19 8l-4 4h3c0 3.31-2.69 6-6 6-1.01 0-1.97-.25-2.8-.7l-1.46 1.46C9.01 19.54 10.43 20 12 20c4.42 0 8-3.58 8-8h3l-4-4zM6 12c0-3.31 2.69-6 6-6 1.01 0 1.97.25 2.8.7l1.46-1.46C14.99 4.46 13.57 4 12 4c-4.42 0-8 3.58-8 8H1l4 4 4-4H6z"/>
+            </svg>
+          </button>
+        </div>
       </div>
 
       <div class="controls-bottom-row">
@@ -325,9 +349,11 @@
     const frameOverlay = document.getElementById("frameOverlay");
     const photoPreview = document.getElementById("photoPreview");
     const toastMessage = document.getElementById("toastMessage");
+    const viewportBox = document.getElementById("viewportBox");
 
     const btnCapture = document.getElementById("btnCapture");
     const btnFlip = document.getElementById("btnFlip");
+    const btnFlash = document.getElementById("btnFlash");
     const btnRetake = document.getElementById("btnRetake");
     const btnSend = document.getElementById("btnSend");
 
@@ -343,6 +369,14 @@
     let capturedOriginalUrl = null;
     let currentEventId = null;
     let toastTimeout = null;
+    
+    // Variáveis de Zoom e Flash
+    let currentZoom = 1;
+    let minZoom = 1;
+    let maxZoom = 1;
+    let stepZoom = 0.1;
+    let flashOn = false;
+    let initialPinchDistance = null;
 
     tutorialOverlay.addEventListener("click", () => {
       if (mainContainer.requestFullscreen) {
@@ -363,25 +397,136 @@
         currentStream.getTracks().forEach(track => track.stop());
       }
 
+      flashOn = false;
+      btnFlash.classList.remove("active");
+      currentZoom = 1;
+      atualizarZoomVisual();
+
       try {
-        currentStream = await navigator.mediaDevices.getUserMedia({
-          video: { facingMode: facingMode },
+        const constraints = {
+          video: {
+            facingMode: { ideal: facingMode },
+            width: { ideal: 1920 },
+            height: { ideal: 1080 }
+          },
           audio: false
-        });
+        };
+
+        currentStream = await navigator.mediaDevices.getUserMedia(constraints);
         videoFeed.srcObject = currentStream;
+
+        // Configurações avançadas de hardware (Zoom e Torch/Flash)
+        const track = currentStream.getVideoTracks()[0];
+        const capabilities = track.getCapabilities ? track.getCapabilities() : {};
+
+        // Configurar Flash se suportado pelo dispositivo
+        if (capabilities.torch) {
+          btnFlash.style.display = "flex";
+        } else {
+          btnFlash.style.display = "none";
+        }
+
+        // Configurar Zoom se suportado pelo hardware
+        if (capabilities.zoom) {
+          minZoom = capabilities.zoom.min || 1;
+          maxZoom = capabilities.zoom.max || 5;
+          stepZoom = capabilities.zoom.step || 0.1;
+          currentZoom = minZoom;
+        }
+
       } catch (err) {
         try {
           currentStream = await navigator.mediaDevices.getUserMedia({ video: true, audio: false });
           videoFeed.srcObject = currentStream;
+          btnFlash.style.display = "none";
         } catch (e) {
           alert("Permita o acesso à câmera no seu navegador.");
         }
       }
     }
 
+    // Alternar Câmera
     btnFlip.addEventListener("click", () => {
       facingMode = (facingMode === "environment") ? "user" : "environment";
       iniciarCamera();
+    });
+
+    // Ligar/Desligar Flash (Torch)
+    btnFlash.addEventListener("click", async () => {
+      if (!currentStream) return;
+      const track = currentStream.getVideoTracks()[0];
+      const capabilities = track.getCapabilities ? track.getCapabilities() : {};
+
+      if (capabilities.torch) {
+        flashOn = !flashOn;
+        try {
+          await track.applyConstraints({
+            advanced: [{ torch: flashOn }]
+          });
+          if (flashOn) {
+            btnFlash.classList.add("active");
+          } else {
+            btnFlash.classList.remove("active");
+          }
+        } catch (err) {
+          console.error("Erro ao alternar flash:", err);
+        }
+      }
+    });
+
+    // Controle de Zoom por Pinch (Pinça com dois dedos) ou CSS Fallback
+    function atualizarZoomVisual() {
+      videoFeed.style.transform = `scale(${currentZoom})`;
+    }
+
+    async function aplicarZoomHardware(novoZoom) {
+      if (!currentStream) return;
+      const track = currentStream.getVideoTracks()[0];
+      const capabilities = track.getCapabilities ? track.getCapabilities() : {};
+
+      if (capabilities.zoom) {
+        novoZoom = Math.max(minZoom, Math.min(maxZoom, novoZoom));
+        try {
+          await track.applyConstraints({ advanced: [{ zoom: novoZoom }] });
+          currentZoom = novoZoom;
+          return;
+        } catch (e) {
+          // Fallback para transform CSS caso falhe no hardware
+        }
+      }
+
+      // Fallback visual via CSS se o aparelho não suportar zoom nativo de lente
+      currentZoom = Math.max(1, Math.min(4, novoZoom));
+      atualizarZoomVisual();
+    }
+
+    // Eventos de toque para gesto de pinça (Zoom) na tela da câmera
+    viewportBox.addEventListener("touchstart", (e) => {
+      if (e.touches.length === 2) {
+        initialPinchDistance = Math.hypot(
+          e.touches[0].clientX - e.touches[1].clientX,
+          e.touches[0].clientY - e.touches[1].clientY
+        );
+      }
+    }, { passive: true });
+
+    viewportBox.addEventListener("touchmove", (e) => {
+      if (e.touches.length === 2 && initialPinchDistance !== null) {
+        const currentDistance = Math.hypot(
+          e.touches[0].clientX - e.touches[1].clientX,
+          e.touches[0].clientY - e.touches[1].clientY
+        );
+
+        const diff = currentDistance - initialPinchDistance;
+        const zoomDelta = diff * 0.005;
+        
+        aplicarZoomHardware(currentZoom + zoomDelta);
+        initialPinchDistance = currentDistance;
+      }
+    }, { passive: true });
+
+    viewportBox.addEventListener("touchend", () => {
+      initialPinchDistance = null;
     });
 
     async function carregarMolduraEvento() {
@@ -418,7 +563,7 @@
 
       const vWidth = videoFeed.videoWidth || width;
       const vHeight = videoFeed.videoHeight || height;
-      const scale = Math.max(width / vWidth, height / vHeight);
+      const scale = Math.max(width / vWidth, height / vHeight) * currentZoom;
       const x = (width - vWidth * scale) / 2;
       const y = (height - vHeight * scale) / 2;
 
@@ -452,7 +597,6 @@
       controlsReview.style.display = "none";
     });
 
-    // Função para exibir a mensagem flutuante sem travar a interface
     function mostrarAvisoSucesso() {
       clearTimeout(toastTimeout);
       toastMessage.classList.add("show");
@@ -467,7 +611,6 @@
       const fotoParaEnviar = capturedDataUrl;
       const fotoOriginalParaEnviar = capturedOriginalUrl;
 
-      // Restaura imediatamente a interface para a câmera tirar outra foto
       photoPreview.style.display = "none";
       videoFeed.style.display = "block";
       controlsCapture.style.display = "flex";
@@ -475,10 +618,8 @@
       capturedDataUrl = null;
       capturedOriginalUrl = null;
 
-      // Mostra o aviso visual instantaneamente
       mostrarAvisoSucesso();
 
-      // Envia os dados para o Firebase em segundo plano
       addDoc(collection(db, "eventos", currentEventId, "fotos"), {
         fotoUrl: fotoParaEnviar,
         fotoOriginalUrl: fotoOriginalParaEnviar,
