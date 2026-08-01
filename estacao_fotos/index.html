@@ -1225,16 +1225,38 @@
       try {
         const snapshot = await getDocs(query(collection(db, "eventos", currentEventId, "fotos"), orderBy("criadoEm", "asc")));
         const zip = new JSZip();
-        const pasta = zip.folder(`evento_${currentEventId}`);
+        
+        // Criar subpastas organizadas dentro do ZIP
+        const pastaComMoldura = zip.folder("com_moldura");
+        const pastaSemMoldura = zip.folder("sem_moldura");
+        
         let contador = 1;
+        
+        // Padronizar o nome do evento para usar nos arquivos
+        const nomeEventoSlug = (nomeEventoExibicao || "evento")
+          .toLowerCase()
+          .normalize("NFD")
+          .replace(/[\u0300-\u036f]/g, "")
+          .replace(/[^a-z0-9]/g, "_")
+          .replace(/_+/g, "_");
 
         snapshot.forEach((docSnap) => {
           const foto = docSnap.data();
+          const numeroFormatado = String(contador).padStart(3, '0');
+
+          // Adicionar foto com moldura (se existir)
           if (foto.fotoUrl) {
-            const base64Data = foto.fotoUrl.replace(/^data:image\/(png|jpeg|jpg);base64,/, "");
-            pasta.file(`foto_${String(contador).padStart(3, '0')}.jpg`, base64Data, { base64: true });
-            contador++;
+            const base64ComMoldura = foto.fotoUrl.replace(/^data:image\/(png|jpeg|jpg);base64,/, "");
+            pastaComMoldura.file(`${nomeEventoSlug}_com_moldura_${numeroFormatado}.jpg`, base64ComMoldura, { base64: true });
           }
+
+          // Adicionar foto original sem moldura (se existir)
+          if (foto.fotoOriginalUrl) {
+            const base64SemMoldura = foto.fotoOriginalUrl.replace(/^data:image\/(png|jpeg|jpg);base64,/, "");
+            pastaSemMoldura.file(`${nomeEventoSlug}_sem_moldura_${numeroFormatado}.jpg`, base64SemMoldura, { base64: true });
+          }
+
+          contador++;
         });
 
         const content = await zip.generateAsync({ type: "blob" });
@@ -1242,6 +1264,8 @@
         link.href = URL.createObjectURL(content);
         link.download = `Fotos_${nomeEventoExibicao}.zip`;
         link.click();
+      } catch (err) {
+        alert("Erro ao gerar arquivo ZIP.");
       } finally {
         btnDownloadZip.innerText = "📦 BAIXAR TODAS (ZIP)";
         btnDownloadZip.disabled = false;
