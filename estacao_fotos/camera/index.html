@@ -270,7 +270,6 @@
 
   <main class="camera-container" id="mainContainer">
 
-    <!-- Mensagem Flutuante de Sucesso -->
     <div class="toast-message" id="toastMessage">✨ Foto enviada com sucesso!</div>
 
     <div class="viewport-box">
@@ -341,6 +340,7 @@
     let currentStream = null;
     let facingMode = "environment"; 
     let capturedDataUrl = null;
+    let capturedOriginalUrl = null;
     let currentEventId = null;
     let toastTimeout = null;
 
@@ -426,6 +426,9 @@
 
       ctx.setTransform(1, 0, 0, 1, 0, 0);
 
+      // Salva a versão original (sem moldura)
+      capturedOriginalUrl = photoCanvas.toDataURL("image/jpeg", 0.85);
+
       if (frameOverlay.src && frameOverlay.style.display !== "none") {
         ctx.drawImage(frameOverlay, 0, 0, width, height);
       }
@@ -441,6 +444,7 @@
 
     btnRetake.addEventListener("click", () => {
       capturedDataUrl = null;
+      capturedOriginalUrl = null;
       photoPreview.style.display = "none";
       videoFeed.style.display = "block";
 
@@ -461,6 +465,7 @@
       if (!capturedDataUrl) return;
 
       const fotoParaEnviar = capturedDataUrl;
+      const fotoOriginalParaEnviar = capturedOriginalUrl;
 
       // Restaura imediatamente a interface para a câmera tirar outra foto
       photoPreview.style.display = "none";
@@ -468,6 +473,7 @@
       controlsCapture.style.display = "flex";
       controlsReview.style.display = "none";
       capturedDataUrl = null;
+      capturedOriginalUrl = null;
 
       // Mostra o aviso visual instantaneamente
       mostrarAvisoSucesso();
@@ -475,6 +481,7 @@
       // Envia os dados para o Firebase em segundo plano
       addDoc(collection(db, "eventos", currentEventId, "fotos"), {
         fotoUrl: fotoParaEnviar,
+        fotoOriginalUrl: fotoOriginalParaEnviar,
         status: "pendente",
         criadoEm: serverTimestamp()
       }).catch(err => {
