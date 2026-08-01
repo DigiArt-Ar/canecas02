@@ -3,7 +3,7 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>DigiArt AR - Estação de Fotos</title>
+  <title>DigiArt AR - Painel do Operador</title>
 
   <script src="https://cdnjs.cloudflare.com/ajax/libs/qrcodejs/1.0.0/qrcode.min.js"></script>
   <script src="https://cdnjs.cloudflare.com/ajax/libs/jszip/3.10.1/jszip.min.js"></script>
@@ -618,10 +618,8 @@
           <div class="paper-config-box">
             <label for="paperSizeSelect">Formato do Papel:</label>
             <select id="paperSizeSelect">
-              <option value="A7">Papel A7 (7x10cm - Retrato)</option>
-              <option value="A7_LANDSCAPE">Papel A7 (10x7cm - Paisagem)</option>
-              <option value="A6" selected>Papel A6 (10x15cm - Retrato)</option>
-              <option value="A6_LANDSCAPE">Papel A6 (15x10cm - Paisagem)</option>
+              <option value="A7">Papel A7 (7x10cm)</option>
+              <option value="A6" selected>Papel A6 (10x15cm)</option>
             </select>
           </div>
         </div>
@@ -1254,19 +1252,15 @@
       let tamanhoPage = "10cm 15cm";
       let larguraPapel = "10cm";
       let alturaPapel = "15cm";
+      let imgWidth = "9.3cm";
+      let imgHeight = "13.8cm";
 
       if (formato === "A7") {
         tamanhoPage = "7cm 10cm";
         larguraPapel = "7cm";
         alturaPapel = "10cm";
-      } else if (formato === "A7_LANDSCAPE") {
-        tamanhoPage = "10cm 7cm";
-        larguraPapel = "10cm";
-        alturaPapel = "7cm";
-      } else if (formato === "A6_LANDSCAPE") {
-        tamanhoPage = "15cm 10cm";
-        larguraPapel = "15cm";
-        alturaPapel = "10cm";
+        imgWidth = "6.8cm";
+        imgHeight = "10.1cm";
       }
 
       let iframe = document.getElementById("printFrame");
@@ -1302,13 +1296,9 @@
                 overflow: hidden;
               }
               img {
-                max-width: 100%;
-                max-height: 100%;
-                width: auto;
-                height: auto;
-                object-fit: contain;
-                display: block;
-                margin: auto;
+                width: ${imgWidth};
+                height: ${imgHeight};
+                object-fit: fill;
               }
             </style>
           </head>
