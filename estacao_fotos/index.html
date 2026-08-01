@@ -1066,11 +1066,11 @@
       btnStartEvent.innerText = "PROCESSANDO...";
       btnStartEvent.disabled = true;
 
-      nomeEventoExibicao = nomeInput;
-      currentEventId = gerarIdCurto();
-      const emailSalvo = localStorage.getItem("digiart_email_rev");
-
       try {
+        nomeEventoExibicao = nomeInput;
+        currentEventId = gerarIdCurto();
+        const emailSalvo = localStorage.getItem("digiart_email_rev");
+
         const molduraBase64 = await comprimirMolduraPNG(inputFrameFile.files[0], 1200);
         const tempoFimTimestamp = Date.now() + (horasInput * 3600 * 1000);
 
@@ -1078,7 +1078,7 @@
           nome: nomeEventoExibicao,
           molduraUrl: molduraBase64,
           criadoEm: new Date()
-        }, { merge: true });
+        });
 
         if (emailSalvo) {
           const docRef = doc(db, "revendedores", emailSalvo);
@@ -1099,7 +1099,8 @@
         iniciarCronometroComSegundos(horasInput * 3600);
         monitorarFotos();
       } catch (erro) {
-        alert("Erro ao iniciar evento.");
+        console.error("Erro ao iniciar evento:", erro);
+        alert("Erro ao iniciar evento. Verifique a conexão.");
       } finally {
         btnStartEvent.innerText = "INICIAR NOVO EVENTO";
         btnStartEvent.disabled = false;
@@ -1226,13 +1227,11 @@
         const snapshot = await getDocs(query(collection(db, "eventos", currentEventId, "fotos"), orderBy("criadoEm", "asc")));
         const zip = new JSZip();
         
-        // Criar subpastas organizadas dentro do ZIP
         const pastaComMoldura = zip.folder("com_moldura");
         const pastaSemMoldura = zip.folder("sem_moldura");
         
         let contador = 1;
         
-        // Padronizar o nome do evento para usar nos arquivos
         const nomeEventoSlug = (nomeEventoExibicao || "evento")
           .toLowerCase()
           .normalize("NFD")
@@ -1244,13 +1243,11 @@
           const foto = docSnap.data();
           const numeroFormatado = String(contador).padStart(3, '0');
 
-          // Adicionar foto com moldura (se existir)
           if (foto.fotoUrl) {
             const base64ComMoldura = foto.fotoUrl.replace(/^data:image\/(png|jpeg|jpg);base64,/, "");
             pastaComMoldura.file(`${nomeEventoSlug}_com_moldura_${numeroFormatado}.jpg`, base64ComMoldura, { base64: true });
           }
 
-          // Adicionar foto original sem moldura (se existir)
           if (foto.fotoOriginalUrl) {
             const base64SemMoldura = foto.fotoOriginalUrl.replace(/^data:image\/(png|jpeg|jpg);base64,/, "");
             pastaSemMoldura.file(`${nomeEventoSlug}_sem_moldura_${numeroFormatado}.jpg`, base64SemMoldura, { base64: true });
