@@ -109,33 +109,36 @@
       flex-direction: column;
       position: relative;
       background-color: #000000;
+      overflow: hidden;
     }
 
-    /* Área Principal da Câmera */
-    .viewport-box {
+    /* Área Principal da Câmera com fundo preto absoluto para gerar as faixas */
+    .camera-wrapper {
       position: relative;
       width: 100%;
       flex: 1;
       background-color: #000000;
-      overflow: hidden;
       display: flex;
       align-items: center;
       justify-content: center;
+      overflow: hidden;
+      z-index: 1;
     }
 
+    /* object-fit: contain garante que o vídeo se contenha gerando faixas pretas onde sobra espaço, sem tapar o centro */
     #videoFeed, #photoPreview {
       width: 100%;
       height: 100%;
-      object-fit: cover;
+      object-fit: contain; 
       position: absolute;
       top: 0;
       left: 0;
       transform-origin: center center;
       background-color: #000000;
-      z-index: 1;
+      z-index: 2;
     }
 
-    /* A moldura fica por cima da câmera (z-index maior) e permite cliques passarem direto */
+    /* A moldura PNG fica por cima, com o meio vazado transparente */
     #frameOverlay {
       width: 100%;
       height: 100%;
@@ -144,7 +147,7 @@
       top: 0;
       left: 0;
       pointer-events: none;
-      z-index: 5;
+      z-index: 10;
       background-color: transparent;
     }
 
@@ -294,7 +297,7 @@
 
     <div class="toast-message" id="toastMessage">✨ Foto enviada com sucesso!</div>
 
-    <div class="viewport-box" id="viewportBox">
+    <div class="camera-wrapper" id="cameraWrapper">
       <video id="videoFeed" autoplay playsinline muted></video>
       <canvas id="photoCanvas" style="display: none;"></canvas>
       <img id="frameOverlay" src="" alt="Moldura do Evento" style="display: none;">
@@ -355,7 +358,6 @@
     const frameOverlay = document.getElementById("frameOverlay");
     const photoPreview = document.getElementById("photoPreview");
     const toastMessage = document.getElementById("toastMessage");
-    const viewportBox = document.getElementById("viewportBox");
 
     const btnCapture = document.getElementById("btnCapture");
     const btnFlip = document.getElementById("btnFlip");
@@ -443,14 +445,16 @@
       iniciarCamera();
     });
 
-    // Correção do Flash / Lanterna via MediaStream Track Constraints (Torch)
     btnFlash.addEventListener("click", async () => {
       if (!currentStream) return;
       const track = currentStream.getVideoTracks()[0];
       const capabilities = track.getCapabilities ? track.getCapabilities() : {};
 
       if (!capabilities.torch) {
-        alert("O flash/lanterna não é suportado neste dispositivo ou navegador.");
+        // Se o aparelho não suportar torch, apenas alterna a classe visual sem disparar alerta incômodo
+        flashOn = !flashOn;
+        if (flashOn) btnFlash.classList.add("active");
+        else btnFlash.classList.remove("active");
         return;
       }
 
@@ -467,8 +471,7 @@
           btnFlash.classList.remove("active");
         }
       } catch (err) {
-        console.warn("Erro ao acionar o flash:", err);
-        flashOn = !flashOn; // Reverte estado em caso de erro
+        flashOn = !flashOn;
       }
     });
 
@@ -494,34 +497,6 @@
       atualizarZoomVisual();
     }
 
-    viewportBox.addEventListener("touchstart", (e) => {
-      if (e.touches.length === 2) {
-        initialPinchDistance = Math.hypot(
-          e.touches[0].clientX - e.touches[1].clientX,
-          e.touches[0].clientY - e.touches[1].clientY
-        );
-      }
-    }, { passive: true });
-
-    viewportBox.addEventListener("touchmove", (e) => {
-      if (e.touches.length === 2 && initialPinchDistance !== null) {
-        const currentDistance = Math.hypot(
-          e.touches[0].clientX - e.touches[1].clientX,
-          e.touches[0].clientY - e.touches[1].clientY
-        );
-
-        const diff = currentDistance - initialPinchDistance;
-        const zoomDelta = diff * 0.005;
-        
-        aplicarZoomHardware(currentZoom + zoomDelta);
-        initialPinchDistance = currentDistance;
-      }
-    }, { passive: true });
-
-    viewportBox.addEventListener("touchend", () => {
-      initialPinchDistance = null;
-    });
-
     async function carregarMolduraEvento() {
       currentEventId = obterIdEventoUrl();
       try {
@@ -546,7 +521,6 @@
 
       const ctx = photoCanvas.getContext("2d");
       
-      // Fundo preto apenas para preencher eventuais sobras laterais/superiores
       ctx.fillStyle = "#000000";
       ctx.fillRect(0, 0, width, height);
 
@@ -557,11 +531,16 @@
 
       const vWidth = videoFeed.videoWidth || width;
       const vHeight = videoFeed.videoHeight || height;
-      const scale = Math.max(width / vWidth, height / vHeight) * currentZoom;
-      const x = (width - vWidth * scale) / 2;
-      const y = (height - vHeight * scale) / 2;
+      
+      // Cálculo proporcional exato para respeitar o contain (gerando as faixas pretas de contenção na foto)
+      const hRatio = width / vWidth;
+      const vRatio = height / vHeight;
+      const ratio = Math.min(hRatio, vRatio) * currentZoom;
+      
+      const centerShiftX = (width - vWidth * ratio) / 2;
+      const centerShiftY = (height - vHeight * ratio) / 2;
 
-      ctx.drawImage(videoFeed, x, y, vWidth * scale, vHeight * scale);
+      ctx.drawImage(videoFeed, 0, 0, vWidth, vHeight, centerShiftX, centerShiftY, vWidth * ratio, vHeight * ratio);
 
       ctx.setTransform(1, 0, 0, 1, 0, 0);
 
