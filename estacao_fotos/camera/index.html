@@ -111,7 +111,7 @@
       background-color: #000000;
     }
 
-    /* Área Principal da Câmera com fundo preto absoluto nas bordas de sobra */
+    /* Área Principal da Câmera */
     .viewport-box {
       position: relative;
       width: 100%;
@@ -126,7 +126,7 @@
     #videoFeed, #photoPreview {
       width: 100%;
       height: 100%;
-      object-fit: cover; /* Garante preenchimento sem deixar vazamentos brancos */
+      object-fit: cover;
       position: absolute;
       top: 0;
       left: 0;
@@ -135,10 +135,11 @@
       z-index: 1;
     }
 
+    /* A moldura fica por cima da câmera (z-index maior) e permite cliques passarem direto */
     #frameOverlay {
       width: 100%;
       height: 100%;
-      object-fit: contain; /* Ajusta a moldura mantendo a proporção exata */
+      object-fit: contain;
       position: absolute;
       top: 0;
       left: 0;
@@ -176,7 +177,6 @@
       white-space: nowrap;
     }
 
-    /* Grupo de Botões Superiores (Flash + Inverter) */
     .top-actions {
       display: flex;
       gap: 12px;
@@ -203,7 +203,6 @@
       fill: #00FF00;
     }
 
-    /* Estado Ativo do Flash */
     .btn-circle-action.active {
       background-color: #00FF00;
     }
@@ -211,7 +210,6 @@
       fill: #000000;
     }
 
-    /* Linha Inferior: Botão Grande de Tirar Foto no Centro */
     .controls-bottom-row {
       width: 100%;
       display: flex;
@@ -246,7 +244,6 @@
       background-color: #FFFFFF;
     }
 
-    /* Painel de Revisão (Refazer / Enviar) */
     .controls-review {
       width: 100%;
       padding: 15px 20px max(20px, env(safe-area-inset-bottom)) 20px;
@@ -446,24 +443,32 @@
       iniciarCamera();
     });
 
+    // Correção do Flash / Lanterna via MediaStream Track Constraints (Torch)
     btnFlash.addEventListener("click", async () => {
       if (!currentStream) return;
       const track = currentStream.getVideoTracks()[0];
-      
+      const capabilities = track.getCapabilities ? track.getCapabilities() : {};
+
+      if (!capabilities.torch) {
+        alert("O flash/lanterna não é suportado neste dispositivo ou navegador.");
+        return;
+      }
+
       flashOn = !flashOn;
 
       try {
         await track.applyConstraints({
           advanced: [{ torch: flashOn }]
         });
+        
+        if (flashOn) {
+          btnFlash.classList.add("active");
+        } else {
+          btnFlash.classList.remove("active");
+        }
       } catch (err) {
-        console.warn("Dispositivo/Navegador não suporta controle de torch via constraints:", err);
-      }
-
-      if (flashOn) {
-        btnFlash.classList.add("active");
-      } else {
-        btnFlash.classList.remove("active");
+        console.warn("Erro ao acionar o flash:", err);
+        flashOn = !flashOn; // Reverte estado em caso de erro
       }
     });
 
@@ -541,6 +546,7 @@
 
       const ctx = photoCanvas.getContext("2d");
       
+      // Fundo preto apenas para preencher eventuais sobras laterais/superiores
       ctx.fillStyle = "#000000";
       ctx.fillRect(0, 0, width, height);
 
