@@ -554,7 +554,8 @@
       </div>
 
       <button class="btn-action" id="btnStartEvent">INICIAR NOVO EVENTO</button>
-      <button class="btn-action btn-secondary" id="btnUseExistingProject">📂 USAR PROJETO ANTERIOR (RECUPERAÇÃO)</button>
+      <!-- Botão ocultado conforme solicitado, mantido no código -->
+      <button class="btn-action btn-secondary" id="btnUseExistingProject" style="display: none;">📂 USAR PROJETO ANTERIOR (RECUPERAÇÃO)</button>
     </div>
   </div>
 
@@ -1108,31 +1109,56 @@
     });
 
     btnFinishEvent.addEventListener("click", async () => {
-      if (confirm("Deseja finalizar o evento atual?")) {
-        const emailSalvo = localStorage.getItem("digiart_email_rev");
-        if (emailSalvo) {
-          try {
-            const docRef = doc(db, "revendedores", emailSalvo);
-            await updateDoc(docRef, {
-              currentEventId: "",
-              currentEventName: "",
-              currentEventEndTime: 0
-            });
-          } catch (e) {}
-        }
-
-        localStorage.removeItem("digiart_evento_ativo");
-        localStorage.removeItem("digiart_nome_evento");
-        localStorage.removeItem("digiart_tempo_fim");
-        
-        currentEventId = "";
-        nomeEventoExibicao = "";
-
-        if (timerInterval) clearInterval(timerInterval);
-        if (unsubscribeSnapshot) unsubscribeSnapshot();
-
-        mostrarTela(setupScreen);
+      // 1ª Trava: Pergunta se já salvou os arquivos
+      const salvou = confirm("Você já baixou e salvou todos os arquivos (fotos) deste evento antes de prosseguir?");
+      if (!salvou) {
+        alert("Por favor, faça o download de todas as fotos antes de finalizar o evento.");
+        return;
       }
+
+      // 2ª Trava: Confirmação final para encerrar
+      const confirmarEncerramento = confirm("Tem certeza que deseja encerrar e apagar este evento do sistema?");
+      if (!confirmarEncerramento) return;
+
+      const eventoParaApagar = currentEventId;
+      const emailSalvo = localStorage.getItem("digiart_email_rev");
+
+      // Limpar os dados da nuvem (revendedor e o documento do evento)
+      if (emailSalvo) {
+        try {
+          const docRef = doc(db, "revendedores", emailSalvo);
+          await updateDoc(docRef, {
+            currentEventId: "",
+            currentEventName: "",
+            currentEventEndTime: 0
+          });
+        } catch (e) {}
+      }
+
+      if (eventoParaApagar) {
+        try {
+          // Apaga as fotos da subcoleção e o documento principal do evento
+          const fotosSnapshot = await getDocs(collection(db, "eventos", eventoParaApagar, "fotos"));
+          const deletePromises = fotosSnapshot.docs.map(fotoDoc => deleteDoc(fotoDoc.ref));
+          await Promise.all(deletePromises);
+
+          await deleteDoc(doc(db, "eventos", eventoParaApagar));
+        } catch (err) {
+          console.error("Erro ao limpar dados do Firebase:", err);
+        }
+      }
+
+      localStorage.removeItem("digiart_evento_ativo");
+      localStorage.removeItem("digiart_nome_evento");
+      localStorage.removeItem("digiart_tempo_fim");
+      
+      currentEventId = "";
+      nomeEventoExibicao = "";
+
+      if (timerInterval) clearInterval(timerInterval);
+      if (unsubscribeSnapshot) unsubscribeSnapshot();
+
+      mostrarTela(setupScreen);
     });
 
     function gerarQRCodeCliente(eventId) {
