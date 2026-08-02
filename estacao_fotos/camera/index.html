@@ -112,13 +112,16 @@
       overflow: hidden;
     }
 
-    /* Container da câmera ocupa o espaço acima dos botões com fundo totalmente preto */
+    /* O viewport-box ocupa todo o espaço livre acima da barra de controles com fundo preto absoluto */
     .viewport-box {
       position: relative;
       width: 100%;
       flex: 1;
       background-color: #000000;
       overflow: hidden;
+      display: flex;
+      justify-content: center;
+      align-items: flex-start;
     }
 
     #videoFeed, #photoPreview {
@@ -133,7 +136,7 @@
       z-index: 1;
     }
 
-    /* Moldura PNG forçada a colar no topo absoluto e cobrir o espaço proporcionalmente */
+    /* Moldura grudada no topo absoluto, sem vazar para cima, preenchendo até embaixo onde encontra a barra preta */
     #frameOverlay {
       width: 100%;
       height: 100%;
@@ -144,10 +147,10 @@
       left: 0;
       pointer-events: none;
       z-index: 5;
-      background-color: transparent;
+      background-color: #000000;
     }
 
-    /* BARRA INFERIOR */
+    /* BARRA INFERIOR INTEGRADA COM FUNDO PRETO SÓLIDO */
     .controls-bar {
       width: 100%;
       display: flex;
@@ -157,6 +160,7 @@
       z-index: 30;
       flex-shrink: 0;
       padding: 10px 25px max(15px, env(safe-area-inset-bottom)) 25px;
+      border-top: 1px solid #111;
     }
 
     .controls-top-row {
