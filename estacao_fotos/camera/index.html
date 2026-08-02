@@ -30,12 +30,12 @@
     .tutorial-overlay {
       position: fixed;
       top: 0; left: 0; right: 0; bottom: 0;
-      background-color: rgba(0, 0, 0, 0.95);
+      background-color: rgba(0, 0, 0, 0.92);
       display: flex;
       flex-direction: column;
       align-items: center;
       justify-content: center;
-      z-index: 9999;
+      z-index: 999;
       cursor: pointer;
       padding: 20px;
     }
@@ -107,50 +107,37 @@
       height: 100dvh;
       display: flex;
       flex-direction: column;
-      background-color: #000000;
       position: relative;
-      overflow: hidden;
+      background-color: #000;
     }
 
-    /* Viewport que se ajusta perfeitamente sem sobras exageradas */
+    /* Área Principal da Câmera */
     .viewport-box {
       position: relative;
       width: 100%;
       flex: 1;
-      background-color: #000000;
+      background-color: #000;
       overflow: hidden;
       display: flex;
+      align-items: center;
       justify-content: center;
-      align-items: flex-start;
     }
 
-    #videoFeed, #photoPreview {
-      width: 100%;
-      height: 100%;
-      object-fit: cover; 
-      position: absolute;
-      top: 0;
-      left: 0;
-      transform-origin: top center;
-      background-color: #000000;
-      z-index: 1;
-    }
-
-    /* Moldura preservada 100% em contain, colada no topo sem distorcer */
-    #frameOverlay {
+    #videoFeed, #photoPreview, #frameOverlay {
       width: 100%;
       height: 100%;
       object-fit: contain;
-      object-position: top center;
       position: absolute;
       top: 0;
       left: 0;
-      pointer-events: none;
-      z-index: 5;
-      background-color: transparent;
     }
 
-    /* BARRA INFERIOR MAIS PRÓXIMA DA ARTE */
+    #frameOverlay {
+      pointer-events: none;
+      z-index: 10;
+    }
+
+    /* BARRA INFERIOR EM FORMATO DE TRIÂNGULO */
     .controls-bar {
       width: 100%;
       display: flex;
@@ -159,15 +146,16 @@
       background-color: #000000;
       z-index: 30;
       flex-shrink: 0;
-      padding: 6px 25px max(10px, env(safe-area-inset-bottom)) 25px;
+      padding: 10px 25px max(15px, env(safe-area-inset-bottom)) 25px;
     }
 
+    /* Linha Superior: DigiArt Ar na Esquerda / Inverter na Direita */
     .controls-top-row {
       width: 100%;
       display: flex;
       align-items: center;
       justify-content: space-between;
-      margin-bottom: 2px;
+      margin-bottom: 5px;
     }
 
     .brand-logo {
@@ -179,15 +167,9 @@
       white-space: nowrap;
     }
 
-    .top-actions {
-      display: flex;
-      gap: 12px;
-      align-items: center;
-    }
-
-    .btn-circle-action {
-      width: 42px;
-      height: 42px;
+    .btn-flip {
+      width: 48px;
+      height: 48px;
       border-radius: 50%;
       background-color: transparent;
       border: 2px solid #00FF00;
@@ -195,36 +177,36 @@
       align-items: center;
       justify-content: center;
       cursor: pointer;
-      box-shadow: 0 0 10px rgba(0, 255, 0, 0.4);
-      outline: none;
+      box-shadow: 0 0 12px rgba(0, 255, 0, 0.4);
     }
 
-    .btn-circle-action svg {
-      width: 20px;
-      height: 20px;
+    .btn-flip svg {
+      width: 24px;
+      height: 24px;
       fill: #00FF00;
     }
 
+    /* Linha Inferior: Botão Grande de Tirar Foto no Centro */
     .controls-bottom-row {
       width: 100%;
       display: flex;
       align-items: center;
       justify-content: center;
-      margin-top: 2px;
+      margin-top: 5px;
     }
 
     .btn-capture {
-      width: 80px;
-      height: 80px;
+      width: 100px;
+      height: 100px;
       border-radius: 50%;
       background-color: transparent;
-      border: 4px solid #00FF00;
+      border: 5px solid #00FF00;
       display: flex;
       align-items: center;
       justify-content: center;
       cursor: pointer;
       outline: none;
-      box-shadow: 0 0 25px rgba(0, 255, 0, 0.6);
+      box-shadow: 0 0 30px rgba(0, 255, 0, 0.6);
       transition: transform 0.1s ease;
     }
 
@@ -233,12 +215,13 @@
     }
 
     .inner-circle {
-      width: 64px;
-      height: 64px;
+      width: 80px;
+      height: 80px;
       border-radius: 50%;
       background-color: #FFFFFF;
     }
 
+    /* Painel de Revisão (Refazer / Enviar) */
     .controls-review {
       width: 100%;
       padding: 15px 20px max(20px, env(safe-area-inset-bottom)) 20px;
@@ -289,30 +272,22 @@
 
     <div class="toast-message" id="toastMessage">✨ Foto enviada com sucesso!</div>
 
-    <div class="viewport-box" id="viewportBox">
+    <div class="viewport-box">
       <video id="videoFeed" autoplay playsinline muted></video>
       <canvas id="photoCanvas" style="display: none;"></canvas>
       <img id="frameOverlay" src="" alt="Moldura do Evento" style="display: none;">
-      <img id="photoPreview" src="" alt="Sua Foto" style="display: none; z-index: 6;">
+      <img id="photoPreview" src="" alt="Sua Foto" style="display: none;">
     </div>
 
     <div class="controls-bar" id="controlsCapture">
       <div class="controls-top-row">
         <div class="brand-logo">DigiArt Ar</div>
 
-        <div class="top-actions">
-          <button class="btn-circle-action" id="btnFlash" title="Flash Desativado" style="opacity: 0.5; pointer-events: none;">
-            <svg viewBox="0 0 24 24">
-              <path d="M7 2v11h3v9l7-12h-4l4-8z"/>
-            </svg>
-          </button>
-
-          <button class="btn-circle-action" id="btnFlip" title="Inverter Câmera">
-            <svg viewBox="0 0 24 24">
-              <path d="M19 8l-4 4h3c0 3.31-2.69 6-6 6-1.01 0-1.97-.25-2.8-.7l-1.46 1.46C9.01 19.54 10.43 20 12 20c4.42 0 8-3.58 8-8h3l-4-4zM6 12c0-3.31 2.69-6 6-6 1.01 0 1.97.25 2.8.7l1.46-1.46C14.99 4.46 13.57 4 12 4c-4.42 0-8 3.58-8 8H1l4 4 4-4H6z"/>
-            </svg>
-          </button>
-        </div>
+        <button class="btn-flip" id="btnFlip" title="Inverter Câmera">
+          <svg viewBox="0 0 24 24">
+            <path d="M19 8l-4 4h3c0 3.31-2.69 6-6 6-1.01 0-1.97-.25-2.8-.7l-1.46 1.46C9.01 19.54 10.43 20 12 20c4.42 0 8-3.58 8-8h3l-4-4zM6 12c0-3.31 2.69-6 6-6 1.01 0 1.97.25 2.8.7l1.46-1.46C14.99 4.46 13.57 4 12 4c-4.42 0-8 3.58-8 8H1l4 4 4-4H6z"/>
+          </svg>
+        </button>
       </div>
 
       <div class="controls-bottom-row">
@@ -350,7 +325,6 @@
     const frameOverlay = document.getElementById("frameOverlay");
     const photoPreview = document.getElementById("photoPreview");
     const toastMessage = document.getElementById("toastMessage");
-    const viewportBox = document.getElementById("viewportBox");
 
     const btnCapture = document.getElementById("btnCapture");
     const btnFlip = document.getElementById("btnFlip");
@@ -369,30 +343,15 @@
     let capturedOriginalUrl = null;
     let currentEventId = null;
     let toastTimeout = null;
-    
-    let currentZoom = 1;
-    let minZoom = 1;
-    let maxZoom = 5;
-    let initialPinchDistance = null;
 
-    function fecharTutorial(e) {
-      if (e) {
-        e.preventDefault();
-        e.stopPropagation();
-      }
-
+    tutorialOverlay.addEventListener("click", () => {
       if (mainContainer.requestFullscreen) {
         mainContainer.requestFullscreen().catch(() => {});
       } else if (mainContainer.webkitRequestFullscreen) {
-        mainContainer.webkitRequestFullscreen().catch(() => {});
+        mainContainer.webkitRequestFullscreen();
       }
-
       tutorialOverlay.style.display = "none";
-      tutorialOverlay.remove();
-    }
-
-    tutorialOverlay.addEventListener("click", fecharTutorial, { once: true });
-    tutorialOverlay.addEventListener("touchend", fecharTutorial, { once: true });
+    });
 
     function obterIdEventoUrl() {
       const params = new URLSearchParams(window.location.search);
@@ -404,31 +363,12 @@
         currentStream.getTracks().forEach(track => track.stop());
       }
 
-      currentZoom = 1;
-      atualizarZoomVisual();
-
       try {
-        const constraints = {
-          video: {
-            facingMode: { ideal: facingMode },
-            width: { ideal: 1920 },
-            height: { ideal: 1080 }
-          },
+        currentStream = await navigator.mediaDevices.getUserMedia({
+          video: { facingMode: facingMode },
           audio: false
-        };
-
-        currentStream = await navigator.mediaDevices.getUserMedia(constraints);
+        });
         videoFeed.srcObject = currentStream;
-
-        const track = currentStream.getVideoTracks()[0];
-        const capabilities = track.getCapabilities ? track.getCapabilities() : {};
-
-        if (capabilities.zoom) {
-          minZoom = capabilities.zoom.min || 1;
-          maxZoom = capabilities.zoom.max || 5;
-          currentZoom = minZoom;
-        }
-
       } catch (err) {
         try {
           currentStream = await navigator.mediaDevices.getUserMedia({ video: true, audio: false });
@@ -442,56 +382,6 @@
     btnFlip.addEventListener("click", () => {
       facingMode = (facingMode === "environment") ? "user" : "environment";
       iniciarCamera();
-    });
-
-    function atualizarZoomVisual() {
-      videoFeed.style.transform = `scale(${currentZoom})`;
-    }
-
-    async function aplicarZoomHardware(novoZoom) {
-      if (!currentStream) return;
-      const track = currentStream.getVideoTracks()[0];
-      const capabilities = track.getCapabilities ? track.getCapabilities() : {};
-
-      if (capabilities.zoom) {
-        novoZoom = Math.max(minZoom, Math.min(maxZoom, novoZoom));
-        try {
-          await track.applyConstraints({ advanced: [{ zoom: novoZoom }] });
-          currentZoom = novoZoom;
-          return;
-        } catch (e) {}
-      }
-
-      currentZoom = Math.max(1, Math.min(4, novoZoom));
-      atualizarZoomVisual();
-    }
-
-    viewportBox.addEventListener("touchstart", (e) => {
-      if (e.touches.length === 2) {
-        initialPinchDistance = Math.hypot(
-          e.touches[0].clientX - e.touches[1].clientX,
-          e.touches[0].clientY - e.touches[1].clientY
-        );
-      }
-    }, { passive: true });
-
-    viewportBox.addEventListener("touchmove", (e) => {
-      if (e.touches.length === 2 && initialPinchDistance !== null) {
-        const currentDistance = Math.hypot(
-          e.touches[0].clientX - e.touches[1].clientX,
-          e.touches[0].clientY - e.touches[1].clientY
-        );
-
-        const diff = currentDistance - initialPinchDistance;
-        const zoomDelta = diff * 0.005;
-        
-        aplicarZoomHardware(currentZoom + zoomDelta);
-        initialPinchDistance = currentDistance;
-      }
-    }, { passive: true });
-
-    viewportBox.addEventListener("touchend", () => {
-      initialPinchDistance = null;
     });
 
     async function carregarMolduraEvento() {
@@ -528,18 +418,15 @@
 
       const vWidth = videoFeed.videoWidth || width;
       const vHeight = videoFeed.videoHeight || height;
-      
-      const hRatio = width / vWidth;
-      const vRatio = height / vHeight;
-      const ratio = Math.max(hRatio, vRatio) * currentZoom;
-      
-      const centerShiftX = (width - vWidth * ratio) / 2;
-      const centerShiftY = (height - vHeight * ratio) / 2;
+      const scale = Math.max(width / vWidth, height / vHeight);
+      const x = (width - vWidth * scale) / 2;
+      const y = (height - vHeight * scale) / 2;
 
-      ctx.drawImage(videoFeed, 0, 0, vWidth, vHeight, centerShiftX, centerShiftY, vWidth * ratio, vHeight * ratio);
+      ctx.drawImage(videoFeed, x, y, vWidth * scale, vHeight * scale);
 
       ctx.setTransform(1, 0, 0, 1, 0, 0);
 
+      // Salva a versão original (sem moldura)
       capturedOriginalUrl = photoCanvas.toDataURL("image/jpeg", 0.85);
 
       if (frameOverlay.src && frameOverlay.style.display !== "none") {
@@ -565,6 +452,7 @@
       controlsReview.style.display = "none";
     });
 
+    // Função para exibir a mensagem flutuante sem travar a interface
     function mostrarAvisoSucesso() {
       clearTimeout(toastTimeout);
       toastMessage.classList.add("show");
@@ -576,9 +464,10 @@
     btnSend.addEventListener("click", () => {
       if (!capturedDataUrl) return;
 
-      The fotoParaEnviar = capturedDataUrl;
+      const fotoParaEnviar = capturedDataUrl;
       const fotoOriginalParaEnviar = capturedOriginalUrl;
 
+      // Restaura imediatamente a interface para a câmera tirar outra foto
       photoPreview.style.display = "none";
       videoFeed.style.display = "block";
       controlsCapture.style.display = "flex";
@@ -586,8 +475,10 @@
       capturedDataUrl = null;
       capturedOriginalUrl = null;
 
+      // Mostra o aviso visual instantaneamente
       mostrarAvisoSucesso();
 
+      // Envia os dados para o Firebase em segundo plano
       addDoc(collection(db, "eventos", currentEventId, "fotos"), {
         fotoUrl: fotoParaEnviar,
         fotoOriginalUrl: fotoOriginalParaEnviar,
