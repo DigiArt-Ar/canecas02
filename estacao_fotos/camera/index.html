@@ -112,7 +112,7 @@
       overflow: hidden;
     }
 
-    /* O viewport-box ocupa todo o espaço livre acima da barra de controles com fundo preto absoluto */
+    /* Viewport que se ajusta perfeitamente sem sobras exageradas */
     .viewport-box {
       position: relative;
       width: 100%;
@@ -136,7 +136,7 @@
       z-index: 1;
     }
 
-    /* Moldura grudada no topo absoluto, sem vazar para cima, preenchendo até embaixo onde encontra a barra preta */
+    /* Moldura preservada 100% em contain, colada no topo sem distorcer */
     #frameOverlay {
       width: 100%;
       height: 100%;
@@ -147,10 +147,10 @@
       left: 0;
       pointer-events: none;
       z-index: 5;
-      background-color: #000000;
+      background-color: transparent;
     }
 
-    /* BARRA INFERIOR INTEGRADA COM FUNDO PRETO SÓLIDO */
+    /* BARRA INFERIOR MAIS PRÓXIMA DA ARTE */
     .controls-bar {
       width: 100%;
       display: flex;
@@ -159,8 +159,7 @@
       background-color: #000000;
       z-index: 30;
       flex-shrink: 0;
-      padding: 10px 25px max(15px, env(safe-area-inset-bottom)) 25px;
-      border-top: 1px solid #111;
+      padding: 6px 25px max(10px, env(safe-area-inset-bottom)) 25px;
     }
 
     .controls-top-row {
@@ -168,7 +167,7 @@
       display: flex;
       align-items: center;
       justify-content: space-between;
-      margin-bottom: 5px;
+      margin-bottom: 2px;
     }
 
     .brand-logo {
@@ -187,8 +186,8 @@
     }
 
     .btn-circle-action {
-      width: 48px;
-      height: 48px;
+      width: 42px;
+      height: 42px;
       border-radius: 50%;
       background-color: transparent;
       border: 2px solid #00FF00;
@@ -196,13 +195,13 @@
       align-items: center;
       justify-content: center;
       cursor: pointer;
-      box-shadow: 0 0 12px rgba(0, 255, 0, 0.4);
+      box-shadow: 0 0 10px rgba(0, 255, 0, 0.4);
       outline: none;
     }
 
     .btn-circle-action svg {
-      width: 24px;
-      height: 24px;
+      width: 20px;
+      height: 20px;
       fill: #00FF00;
     }
 
@@ -211,21 +210,21 @@
       display: flex;
       align-items: center;
       justify-content: center;
-      margin-top: 5px;
+      margin-top: 2px;
     }
 
     .btn-capture {
-      width: 100px;
-      height: 100px;
+      width: 80px;
+      height: 80px;
       border-radius: 50%;
       background-color: transparent;
-      border: 5px solid #00FF00;
+      border: 4px solid #00FF00;
       display: flex;
       align-items: center;
       justify-content: center;
       cursor: pointer;
       outline: none;
-      box-shadow: 0 0 30px rgba(0, 255, 0, 0.6);
+      box-shadow: 0 0 25px rgba(0, 255, 0, 0.6);
       transition: transform 0.1s ease;
     }
 
@@ -234,8 +233,8 @@
     }
 
     .inner-circle {
-      width: 80px;
-      height: 80px;
+      width: 64px;
+      height: 64px;
       border-radius: 50%;
       background-color: #FFFFFF;
     }
@@ -577,7 +576,7 @@
     btnSend.addEventListener("click", () => {
       if (!capturedDataUrl) return;
 
-      const fotoParaEnviar = capturedDataUrl;
+      The fotoParaEnviar = capturedDataUrl;
       const fotoOriginalParaEnviar = capturedOriginalUrl;
 
       photoPreview.style.display = "none";
