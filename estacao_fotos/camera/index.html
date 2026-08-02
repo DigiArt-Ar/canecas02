@@ -132,6 +132,12 @@
       left: 0;
     }
 
+    /* Ajuste para o Zoom de Pinça no Vídeo */
+    #videoFeed {
+      transform-origin: center center;
+      will-change: transform;
+    }
+
     #frameOverlay {
       pointer-events: none;
       z-index: 10;
@@ -272,7 +278,7 @@
 
     <div class="toast-message" id="toastMessage">✨ Foto enviada com sucesso!</div>
 
-    <div class="viewport-box">
+    <div class="viewport-box" id="viewportBox">
       <video id="videoFeed" autoplay playsinline muted></video>
       <canvas id="photoCanvas" style="display: none;"></canvas>
       <img id="frameOverlay" src="" alt="Moldura do Evento" style="display: none;">
@@ -325,6 +331,7 @@
     const frameOverlay = document.getElementById("frameOverlay");
     const photoPreview = document.getElementById("photoPreview");
     const toastMessage = document.getElementById("toastMessage");
+    const viewportBox = document.getElementById("viewportBox");
 
     const btnCapture = document.getElementById("btnCapture");
     const btnFlip = document.getElementById("btnFlip");
@@ -344,6 +351,43 @@
     let currentEventId = null;
     let toastTimeout = null;
 
+    // --- Lógica de Zoom de Pinça ---
+    let initialPinchDistance = null;
+    let currentZoomScale = 1;
+    const MIN_ZOOM = 1;
+    const MAX_ZOOM = 4;
+
+    viewportBox.addEventListener("touchstart", (e) => {
+      if (e.touches.length === 2) {
+        const dx = e.touches[0].clientX - e.touches[1].clientX;
+        const dy = e.touches[0].clientY - e.touches[1].clientY;
+        initialPinchDistance = Math.sqrt(dx * dx + dy * dy);
+      }
+    });
+
+    viewportBox.addEventListener("touchmove", (e) => {
+      if (e.touches.length === 2 && initialPinchDistance) {
+        e.preventDefault();
+
+        const dx = e.touches[0].clientX - e.touches[1].clientX;
+        const dy = e.touches[0].clientY - e.touches[1].clientY;
+        const currentDistance = Math.sqrt(dx * dx + dy * dy);
+
+        const scaleChange = currentDistance / initialPinchDistance;
+        let newScale = currentZoomScale * scaleChange;
+        
+        newScale = Math.max(MIN_ZOOM, Math.min(MAX_ZOOM, newScale));
+
+        videoFeed.style.transform = `scale(${newScale})`;
+        currentZoomScale = newScale;
+      }
+    });
+
+    viewportBox.addEventListener("touchend", () => {
+      initialPinchDistance = null;
+    });
+    // --- Fim da Lógica de Zoom ---
+
     tutorialOverlay.addEventListener("click", () => {
       if (mainContainer.requestFullscreen) {
         mainContainer.requestFullscreen().catch(() => {});
@@ -362,6 +406,10 @@
       if (currentStream) {
         currentStream.getTracks().forEach(track => track.stop());
       }
+
+      // Reseta o zoom ao reiniciar/inverter a câmera
+      currentZoomScale = 1;
+      videoFeed.style.transform = `scale(1)`;
 
       try {
         currentStream = await navigator.mediaDevices.getUserMedia({
@@ -452,7 +500,6 @@
       controlsReview.style.display = "none";
     });
 
-    // Função para exibir a mensagem flutuante sem travar a interface
     function mostrarAvisoSucesso() {
       clearTimeout(toastTimeout);
       toastMessage.classList.add("show");
@@ -467,7 +514,6 @@
       const fotoParaEnviar = capturedDataUrl;
       const fotoOriginalParaEnviar = capturedOriginalUrl;
 
-      // Restaura imediatamente a interface para a câmera tirar outra foto
       photoPreview.style.display = "none";
       videoFeed.style.display = "block";
       controlsCapture.style.display = "flex";
@@ -475,10 +521,8 @@
       capturedDataUrl = null;
       capturedOriginalUrl = null;
 
-      // Mostra o aviso visual instantaneamente
       mostrarAvisoSucesso();
 
-      // Envia os dados para o Firebase em segundo plano
       addDoc(collection(db, "eventos", currentEventId, "fotos"), {
         fotoUrl: fotoParaEnviar,
         fotoOriginalUrl: fotoOriginalParaEnviar,
