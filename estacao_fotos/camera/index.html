@@ -112,20 +112,19 @@
       overflow: hidden;
     }
 
-    /* Área Principal da Câmera com fundo preto absoluto para gerar as faixas */
-    .camera-wrapper {
+    /* Viewport com fundo preto absoluto para criar as faixas de contenção nas bordas */
+    .viewport-box {
       position: relative;
       width: 100%;
       flex: 1;
       background-color: #000000;
+      overflow: hidden;
       display: flex;
       align-items: center;
       justify-content: center;
-      overflow: hidden;
-      z-index: 1;
     }
 
-    /* object-fit: contain garante que o vídeo se contenha gerando faixas pretas onde sobra espaço, sem tapar o centro */
+    /* object-fit: contain garante que o vídeo use faixas pretas nas extremidades sem invadir a moldura */
     #videoFeed, #photoPreview {
       width: 100%;
       height: 100%;
@@ -135,10 +134,10 @@
       left: 0;
       transform-origin: center center;
       background-color: #000000;
-      z-index: 2;
+      z-index: 1;
     }
 
-    /* A moldura PNG fica por cima, com o meio vazado transparente */
+    /* Moldura PNG flutuando perfeitamente por cima */
     #frameOverlay {
       width: 100%;
       height: 100%;
@@ -147,7 +146,7 @@
       top: 0;
       left: 0;
       pointer-events: none;
-      z-index: 10;
+      z-index: 5;
       background-color: transparent;
     }
 
@@ -297,7 +296,7 @@
 
     <div class="toast-message" id="toastMessage">✨ Foto enviada com sucesso!</div>
 
-    <div class="camera-wrapper" id="cameraWrapper">
+    <div class="viewport-box" id="viewportBox">
       <video id="videoFeed" autoplay playsinline muted></video>
       <canvas id="photoCanvas" style="display: none;"></canvas>
       <img id="frameOverlay" src="" alt="Moldura do Evento" style="display: none;">
@@ -358,6 +357,7 @@
     const frameOverlay = document.getElementById("frameOverlay");
     const photoPreview = document.getElementById("photoPreview");
     const toastMessage = document.getElementById("toastMessage");
+    const viewportBox = document.getElementById("viewportBox");
 
     const btnCapture = document.getElementById("btnCapture");
     const btnFlip = document.getElementById("btnFlip");
@@ -450,28 +450,22 @@
       const track = currentStream.getVideoTracks()[0];
       const capabilities = track.getCapabilities ? track.getCapabilities() : {};
 
-      if (!capabilities.torch) {
-        // Se o aparelho não suportar torch, apenas alterna a classe visual sem disparar alerta incômodo
-        flashOn = !flashOn;
-        if (flashOn) btnFlash.classList.add("active");
-        else btnFlash.classList.remove("active");
-        return;
-      }
-
       flashOn = !flashOn;
 
-      try {
-        await track.applyConstraints({
-          advanced: [{ torch: flashOn }]
-        });
-        
-        if (flashOn) {
-          btnFlash.classList.add("active");
-        } else {
-          btnFlash.classList.remove("active");
+      if (capabilities.torch) {
+        try {
+          await track.applyConstraints({
+            advanced: [{ torch: flashOn }]
+          });
+        } catch (err) {
+          console.warn("Não foi possível ligar o torch via hardware:", err);
         }
-      } catch (err) {
-        flashOn = !flashOn;
+      }
+
+      if (flashOn) {
+        btnFlash.classList.add("active");
+      } else {
+        btnFlash.classList.remove("active");
       }
     });
 
@@ -496,6 +490,34 @@
       currentZoom = Math.max(1, Math.min(4, novoZoom));
       atualizarZoomVisual();
     }
+
+    viewportBox.addEventListener("touchstart", (e) => {
+      if (e.touches.length === 2) {
+        initialPinchDistance = Math.hypot(
+          e.touches[0].clientX - e.touches[1].clientX,
+          e.touches[0].clientY - e.touches[1].clientY
+        );
+      }
+    }, { passive: true });
+
+    viewportBox.addEventListener("touchmove", (e) => {
+      if (e.touches.length === 2 && initialPinchDistance !== null) {
+        const currentDistance = Math.hypot(
+          e.touches[0].clientX - e.touches[1].clientX,
+          e.touches[0].clientY - e.touches[1].clientY
+        );
+
+        const diff = currentDistance - initialPinchDistance;
+        const zoomDelta = diff * 0.005;
+        
+        aplicarZoomHardware(currentZoom + zoomDelta);
+        initialPinchDistance = currentDistance;
+      }
+    }, { passive: true });
+
+    viewportBox.addEventListener("touchend", () => {
+      initialPinchDistance = null;
+    });
 
     async function carregarMolduraEvento() {
       currentEventId = obterIdEventoUrl();
@@ -532,7 +554,6 @@
       const vWidth = videoFeed.videoWidth || width;
       const vHeight = videoFeed.videoHeight || height;
       
-      // Cálculo proporcional exato para respeitar o contain (gerando as faixas pretas de contenção na foto)
       const hRatio = width / vWidth;
       const vRatio = height / vHeight;
       const ratio = Math.min(hRatio, vRatio) * currentZoom;
