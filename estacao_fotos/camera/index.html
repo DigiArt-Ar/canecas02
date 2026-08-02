@@ -132,7 +132,7 @@
       left: 0;
     }
 
-    /* Ajuste para o Zoom de Pinça no Vídeo */
+    /* Trava o vídeo dentro do container com overflow escondido para manter as bordas */
     #videoFeed {
       transform-origin: center center;
       will-change: transform;
@@ -351,17 +351,19 @@
     let currentEventId = null;
     let toastTimeout = null;
 
-    // --- Lógica de Zoom de Pinça ---
+    // --- Lógica de Zoom de Pinça Suavizado e Contido ---
     let initialPinchDistance = null;
+    let baseZoomScale = 1;
     let currentZoomScale = 1;
     const MIN_ZOOM = 1;
-    const MAX_ZOOM = 4;
+    const MAX_ZOOM = 3.5;
 
     viewportBox.addEventListener("touchstart", (e) => {
       if (e.touches.length === 2) {
         const dx = e.touches[0].clientX - e.touches[1].clientX;
         const dy = e.touches[0].clientY - e.touches[1].clientY;
         initialPinchDistance = Math.sqrt(dx * dx + dy * dy);
+        baseZoomScale = currentZoomScale;
       }
     });
 
@@ -373,18 +375,22 @@
         const dy = e.touches[0].clientY - e.touches[1].clientY;
         const currentDistance = Math.sqrt(dx * dx + dy * dy);
 
-        const scaleChange = currentDistance / initialPinchDistance;
-        let newScale = currentZoomScale * scaleChange;
+        // Suaviza a variação da escala dividindo a sensibilidade pela metade
+        const scaleFactor = (currentDistance / initialPinchDistance - 1) * 0.5 + 1;
+        let newScale = baseZoomScale * scaleFactor;
         
         newScale = Math.max(MIN_ZOOM, Math.min(MAX_ZOOM, newScale));
 
-        videoFeed.style.transform = `scale(${newScale})`;
         currentZoomScale = newScale;
+        // Usamos scale() combinado com object-fit dentro do viewport cortado
+        videoFeed.style.transform = `scale(${currentZoomScale})`;
       }
     });
 
-    viewportBox.addEventListener("touchend", () => {
-      initialPinchDistance = null;
+    viewportBox.addEventListener("touchend", (e) => {
+      if (e.touches.length < 2) {
+        initialPinchDistance = null;
+      }
     });
     // --- Fim da Lógica de Zoom ---
 
@@ -407,7 +413,6 @@
         currentStream.getTracks().forEach(track => track.stop());
       }
 
-      // Reseta o zoom ao reiniciar/inverter a câmera
       currentZoomScale = 1;
       videoFeed.style.transform = `scale(1)`;
 
@@ -466,7 +471,7 @@
 
       const vWidth = videoFeed.videoWidth || width;
       const vHeight = videoFeed.videoHeight || height;
-      const scale = Math.max(width / vWidth, height / vHeight);
+      const scale = Math.max(width / vWidth, height / vHeight) * currentZoomScale;
       const x = (width - vWidth * scale) / 2;
       const y = (height - vHeight * scale) / 2;
 
@@ -474,7 +479,6 @@
 
       ctx.setTransform(1, 0, 0, 1, 0, 0);
 
-      // Salva a versão original (sem moldura)
       capturedOriginalUrl = photoCanvas.toDataURL("image/jpeg", 0.85);
 
       if (frameOverlay.src && frameOverlay.style.display !== "none") {
