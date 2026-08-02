@@ -111,7 +111,7 @@
       background-color: #000000;
     }
 
-    /* Área Principal da Câmera com fundo preto garantido para evitar bordas brancas */
+    /* Área Principal da Câmera */
     .viewport-box {
       position: relative;
       width: 100%;
@@ -131,7 +131,6 @@
       top: 0;
       left: 0;
       transform-origin: center center;
-      background-color: #000000;
     }
 
     #frameOverlay {
@@ -438,21 +437,19 @@
       iniciarCamera();
     });
 
-    // Ligar/Desligar Flash com suporte a hardware nativo (Torch) e fallback
+    // Controle de Flash Corrigido
     btnFlash.addEventListener("click", async () => {
       if (!currentStream) return;
       const track = currentStream.getVideoTracks()[0];
-      const capabilities = track.getCapabilities ? track.getCapabilities() : {};
-
+      
       flashOn = !flashOn;
+
       try {
-        if (capabilities.torch) {
-          await track.applyConstraints({
-            advanced: [{ torch: flashOn }]
-          });
-        }
+        await track.applyConstraints({
+          advanced: [{ torch: flashOn }]
+        });
       } catch (err) {
-        console.log("Torch nativo indisponível, alterando apenas estado visual.");
+        console.log("Hardware torch não suportado diretamente por este navegador/dispositivo.");
       }
 
       if (flashOn) {
