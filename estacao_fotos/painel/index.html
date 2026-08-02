@@ -5,9 +5,7 @@
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>DigiArt AR - Painel do Operador</title>
 
-  <!-- LIB QR CODE -->
   <script src="https://cdnjs.cloudflare.com/ajax/libs/qrcodejs/1.0.0/qrcode.min.js"></script>
-  <!-- LIB JSZIP PARA GERAR ZIP DAS FOTOS -->
   <script src="https://cdnjs.cloudflare.com/ajax/libs/jszip/3.10.1/jszip.min.js"></script>
 
   <style>
@@ -28,16 +26,19 @@
       overflow: hidden;
     }
 
-    /* 1. TELA DE CONFIGURAÇÃO INICIAL */
-    #setupScreen {
-      position: absolute;
+    .screen-layer {
+      position: fixed;
       top: 0; left: 0;
       width: 100%; height: 100vh;
-      display: flex;
+      display: none;
       justify-content: center;
       align-items: center;
       background-color: #000000;
       z-index: 200;
+    }
+
+    .screen-layer.active {
+      display: flex;
     }
 
     .setup-card {
@@ -76,7 +77,7 @@
       font-weight: bold;
     }
 
-    .form-group input {
+    .form-group input, .form-group select {
       width: 100%;
       padding: 12px;
       border-radius: 8px;
@@ -87,11 +88,7 @@
       outline: none;
     }
 
-    .form-group input::placeholder {
-      color: #555;
-    }
-
-    .form-group input:focus {
+    .form-group input:focus, .form-group select:focus {
       border-color: #00FF00;
     }
 
@@ -102,7 +99,7 @@
       display: block;
     }
 
-    .btn-start {
+    .btn-action {
       width: 100%;
       padding: 14px;
       border-radius: 8px;
@@ -113,19 +110,38 @@
       font-weight: bold;
       cursor: pointer;
       margin-top: 10px;
+      transition: background 0.2s;
     }
 
-    .btn-start:disabled {
+    .btn-action:hover {
+      background-color: #00cc00;
+    }
+
+    .btn-action:disabled {
       background-color: #555;
       cursor: not-allowed;
     }
 
-    /* 2. PAINEL DO OPERADOR AO VIVO */
+    .btn-secondary {
+      background-color: transparent;
+      color: #00FF00;
+      border: 1px solid #00FF00;
+      margin-top: 10px;
+    }
+
+    .btn-secondary:hover {
+      background-color: #00FF0011;
+    }
+
     #dashboardContainer {
       width: 100%;
       height: 100vh;
       display: none;
       flex-direction: column;
+    }
+
+    #dashboardContainer.active {
+      display: flex;
     }
 
     header {
@@ -228,7 +244,6 @@
       font-weight: bold;
       font-size: 0.85rem;
       cursor: pointer;
-      transition: all 0.2s ease;
     }
 
     .btn-download-zip:hover {
@@ -245,7 +260,6 @@
       font-weight: bold;
       font-size: 0.85rem;
       cursor: pointer;
-      transition: all 0.2s ease;
     }
 
     .btn-finish:hover {
@@ -279,7 +293,6 @@
       align-items: center;
       justify-content: space-between;
       padding: 15px;
-      position: relative;
       height: 100%;
       min-height: 0;
     }
@@ -289,7 +302,6 @@
       font-size: 0.9rem;
       color: #00FF00;
       margin-bottom: 8px;
-      flex-shrink: 0;
     }
 
     .highlight-viewer {
@@ -307,7 +319,6 @@
       max-height: 100%;
       object-fit: contain;
       border-radius: 6px;
-      display: block;
     }
 
     .action-bar {
@@ -315,7 +326,7 @@
       gap: 15px;
       width: 100%;
       margin-top: 12px;
-      flex-shrink: 0;
+      align-items: center;
     }
 
     .btn-action-print {
@@ -328,10 +339,6 @@
       font-weight: bold;
       font-size: 1rem;
       cursor: pointer;
-      display: flex;
-      align-items: center;
-      justify-content: center;
-      gap: 8px;
     }
 
     .btn-action-delete {
@@ -344,10 +351,6 @@
       font-weight: bold;
       font-size: 0.9rem;
       cursor: pointer;
-      display: flex;
-      align-items: center;
-      justify-content: center;
-      gap: 8px;
     }
 
     .btn-action-print:disabled, .btn-action-delete:disabled {
@@ -364,27 +367,63 @@
       min-height: 0;
     }
 
-    .qrcode-box {
+    .top-right-panel {
       background-color: #141414;
       border: 1px solid #333;
       border-radius: 12px;
-      padding: 12px;
+      padding: 15px;
       display: flex;
-      align-items: center;
-      justify-content: space-around;
+      flex-direction: column;
+      gap: 12px;
       flex-shrink: 0;
     }
 
-    .qrcode-box p {
+    .qrcode-row {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+    }
+
+    .qrcode-row p {
       font-size: 0.85rem;
       color: #aaa;
-      max-width: 120px;
+      max-width: 140px;
     }
 
     #qrcodeCanvas {
       background-color: #fff;
       padding: 5px;
       border-radius: 6px;
+    }
+
+    .paper-config-box {
+      border-top: 1px solid #222;
+      padding-top: 10px;
+      display: flex;
+      flex-direction: column;
+      gap: 5px;
+    }
+
+    .paper-config-box label {
+      font-size: 0.75rem;
+      color: #00FF00;
+      font-weight: bold;
+      text-transform: uppercase;
+    }
+
+    .paper-config-box select {
+      background-color: #1c1c1c;
+      color: #fff;
+      border: 1px solid #333;
+      padding: 10px;
+      border-radius: 8px;
+      font-size: 0.9rem;
+      outline: none;
+      cursor: pointer;
+    }
+
+    .paper-config-box select:focus {
+      border-color: #00FF00;
     }
 
     .queue-section {
@@ -402,7 +441,6 @@
       margin-bottom: 12px;
       padding-bottom: 8px;
       border-bottom: 1px solid #222;
-      flex-shrink: 0;
     }
 
     .queue-header h2 {
@@ -427,7 +465,6 @@
       gap: 12px;
       align-items: center;
       cursor: pointer;
-      transition: border-color 0.2s;
     }
 
     .queue-item:hover, .queue-item.selected {
@@ -441,10 +478,6 @@
       object-fit: cover;
       border-radius: 4px;
       background-color: #000;
-    }
-
-    .queue-info {
-      flex: 1;
     }
 
     .queue-info p {
@@ -461,30 +494,52 @@
 </head>
 <body>
 
-  <!-- 1. TELA DE CONFIGURAÇÃO INICIAL -->
-  <div id="setupScreen">
+  <div id="loginScreen" class="screen-layer active">
+    <div class="setup-card">
+      <h1>DigiArt AR</h1>
+      <p>Painel do Operador - Faça login com seu Token</p>
+
+      <div class="form-group">
+        <label for="loginEmail">E-mail Cadastrado:</label>
+        <input type="email" id="loginEmail" placeholder="seu-email@dominio.com">
+      </div>
+
+      <div class="form-group">
+        <label for="loginToken">Token de Acesso (ou Senha):</label>
+        <input type="password" id="loginToken" placeholder="Cole o token recebido por e-mail">
+      </div>
+
+      <button class="btn-action" id="btnLoginSubmit">ENTRAR</button>
+    </div>
+  </div>
+
+  <div id="changePasswordScreen" class="screen-layer">
+    <div class="setup-card">
+      <h1>Alterar Senha</h1>
+      <p>Por segurança, o sistema exige que você defina uma nova senha definitiva agora.</p>
+
+      <div class="form-group">
+        <label for="newPasswordInput">Nova Senha:</label>
+        <input type="password" id="newPasswordInput" placeholder="Digite sua nova senha">
+      </div>
+
+      <div class="form-group">
+        <label for="confirmPasswordInput">Confirme a Nova Senha:</label>
+        <input type="password" id="confirmPasswordInput" placeholder="Digite a senha novamente">
+      </div>
+
+      <button class="btn-action" id="btnSavePassword">SALVAR SENHA E CONTINUAR</button>
+    </div>
+  </div>
+
+  <div id="setupScreen" class="screen-layer">
     <div class="setup-card">
       <h1>DigiArt AR</h1>
       <p>Configuração do Evento</p>
 
-      <!-- Grupo de Credenciais (Será ocultado se o token já estiver salvo) -->
-      <div id="credentialsGroup">
-        <div class="form-group">
-          <label for="inputEmailRevendedor">Seu E-mail Cadastrado:</label>
-          <input type="email" id="inputEmailRevendedor" placeholder="seu-email@dominio.com">
-        </div>
-
-        <div class="form-group">
-          <label for="inputTokenRevendedor">Token de Acesso:</label>
-          <input type="text" id="inputTokenRevendedor" placeholder="Cole seu Token aqui">
-        </div>
-
-        <hr style="border: 0; border-top: 1px solid #222; margin: 20px 0;">
-      </div>
-
       <div class="form-group">
         <label for="inputEventId">Nome do Evento:</label>
-        <input type="text" id="inputEventId" placeholder="Ex: 15 Anos de Maria Eduarda">
+        <input type="text" id="inputEventId" placeholder="Ex: Casamento Ana e Lucas">
       </div>
 
       <div class="form-group">
@@ -498,11 +553,11 @@
         <span class="frame-status" id="frameStatusText">Nenhuma imagem selecionada.</span>
       </div>
 
-      <button class="btn-start" id="btnStartEvent">INICIAR NOVO EVENTO</button>
+      <button class="btn-action" id="btnStartEvent">INICIAR NOVO EVENTO</button>
+      <button class="btn-action btn-secondary" id="btnUseExistingProject">📂 USAR PROJETO ANTERIOR (RECUPERAÇÃO)</button>
     </div>
   </div>
 
-  <!-- 2. PAINEL DO OPERADOR AO VIVO -->
   <div id="dashboardContainer">
     <header>
       <div class="logo-area">
@@ -513,14 +568,6 @@
       <div class="event-info-box">
         <span>Evento Ativo</span>
         <strong id="infoEventId">---</strong>
-        <span id="infoEventDate" style="font-size: 0.65rem; color: #aaa; margin-top: 2px;">Início: --/-- --:--</span>
-      </div>
-
-      <!-- Caixa com a Validade/Expiração do Cliente vinda do Master -->
-      <div class="event-info-box" style="border-color: #00FF0033;">
-        <span>Validade da Licença</span>
-        <strong id="infoExpiraLicenca" style="color: #ffaa00;">---</strong>
-        <span style="font-size: 0.65rem; color: #aaa; margin-top: 2px;">Acesso Master</span>
       </div>
 
       <div class="timer-box">
@@ -562,14 +609,24 @@
       </div>
 
       <div class="right-column">
-        <div class="qrcode-box">
-          <p><strong>Escaneie para tirar foto:</strong></p>
-          <div id="qrcodeCanvas"></div>
+        <div class="top-right-panel">
+          <div class="qrcode-row">
+            <p><strong>Escaneie para tirar foto:</strong></p>
+            <div id="qrcodeCanvas"></div>
+          </div>
+          
+          <div class="paper-config-box">
+            <label for="paperSizeSelect">Formato do Papel:</label>
+            <select id="paperSizeSelect">
+              <option value="A7">Papel A7 (7x10cm)</option>
+              <option value="A6" selected>Papel A6 (10x15cm)</option>
+            </select>
+          </div>
         </div>
 
         <section class="queue-section">
           <div class="queue-header">
-            <h2>Fila de Impressão (Ordem de Chegada)</h2>
+            <h2>Fila de Impressão</h2>
           </div>
           <div class="queue-list" id="queueList"></div>
         </section>
@@ -594,24 +651,29 @@
     const app = initializeApp(firebaseConfig);
     const db = getFirestore(app);
 
-    // ELEMENTOS
+    const loginScreen = document.getElementById("loginScreen");
+    const changePasswordScreen = document.getElementById("changePasswordScreen");
     const setupScreen = document.getElementById("setupScreen");
     const dashboardContainer = document.getElementById("dashboardContainer");
-    const credentialsGroup = document.getElementById("credentialsGroup");
 
-    const inputEmailRevendedor = document.getElementById("inputEmailRevendedor");
-    const inputTokenRevendedor = document.getElementById("inputTokenRevendedor");
+    const loginEmail = document.getElementById("loginEmail");
+    const loginToken = document.getElementById("loginToken");
+    const btnLoginSubmit = document.getElementById("btnLoginSubmit");
+
+    const newPasswordInput = document.getElementById("newPasswordInput");
+    const confirmPasswordInput = document.getElementById("confirmPasswordInput");
+    const btnSavePassword = document.getElementById("btnSavePassword");
+
     const inputEventId = document.getElementById("inputEventId");
     const inputEventHours = document.getElementById("inputEventHours");
     const inputFrameFile = document.getElementById("inputFrameFile");
     const frameStatusText = document.getElementById("frameStatusText");
     const btnStartEvent = document.getElementById("btnStartEvent");
+    const btnUseExistingProject = document.getElementById("btnUseExistingProject");
     const btnFinishEvent = document.getElementById("btnFinishEvent");
     const btnDownloadZip = document.getElementById("btnDownloadZip");
 
     const infoEventId = document.getElementById("infoEventId");
-    const infoEventDate = document.getElementById("infoEventDate");
-    const infoExpiraLicenca = document.getElementById("infoExpiraLicenca");
     const countdownTimer = document.getElementById("countdownTimer");
     const highlightViewer = document.getElementById("highlightViewer");
     const queueList = document.getElementById("queueList");
@@ -620,6 +682,7 @@
 
     const btnActionPrint = document.getElementById("btnActionPrint");
     const btnActionDelete = document.getElementById("btnActionDelete");
+    const paperSizeSelect = document.getElementById("paperSizeSelect");
 
     let currentEventId = "";
     let nomeEventoExibicao = "";
@@ -628,6 +691,7 @@
     let unsubscribeSnapshot = null;
     let fotoSelecionadaAtual = null;
     let listaFotosPendentes = [];
+    let unsubscribeRevendedor = null;
 
     function gerarIdCurto() {
       const caracteres = 'abcdefghijklmnopqrstuvwxyz0123456789';
@@ -638,17 +702,81 @@
       return resultado;
     }
 
+    const sessionIdUnico = Math.random().toString(36).substring(2);
+
+    function iniciarMonitoramentoRevendedor(email) {
+      if (unsubscribeRevendedor) unsubscribeRevendedor();
+      const docRef = doc(db, "revendedores", email);
+      
+      unsubscribeRevendedor = onSnapshot(docRef, (docSnap) => {
+        if (!docSnap.exists()) return;
+        const dados = docSnap.data();
+
+        if (dados.sessaoAtivaId && dados.sessaoAtivaId !== sessionIdUnico) {
+          alert("Esta conta foi acessada em outro dispositivo. Esta sessão será encerrada.");
+          if (unsubscribeRevendedor) unsubscribeRevendedor();
+          localStorage.clear();
+          mostrarTela(loginScreen);
+          return;
+        }
+
+        const servidorEventId = dados.currentEventId || "";
+        const servidorNomeEvento = dados.currentEventName || "";
+        const servidorTempoFim = dados.currentEventEndTime || 0;
+
+        if (servidorEventId && servidorNomeEvento) {
+          if (currentEventId !== servidorEventId) {
+            currentEventId = servidorEventId;
+            nomeEventoExibicao = servidorNomeEvento;
+
+            localStorage.setItem("digiart_evento_ativo", currentEventId);
+            localStorage.setItem("digiart_nome_evento", nomeEventoExibicao);
+            if (servidorTempoFim) {
+              localStorage.setItem("digiart_tempo_fim", servidorTempoFim);
+            }
+
+            if (!dashboardContainer.classList.contains("active")) {
+              mostrarTela(dashboardContainer);
+            }
+
+            infoEventId.innerText = nomeEventoExibicao;
+            gerarQRCodeCliente(currentEventId);
+            monitorarFotos();
+
+            if (servidorTempoFim) {
+              const restanteSegundos = Math.max(0, Math.floor((servidorTempoFim - Date.now()) / 1000));
+              iniciarCronometroComSegundos(restanteSegundos);
+            }
+          }
+        } else if (currentEventId && !servidorEventId) {
+          currentEventId = "";
+          nomeEventoExibicao = "";
+          localStorage.removeItem("digiart_evento_ativo");
+          localStorage.removeItem("digiart_nome_evento");
+          localStorage.removeItem("digiart_tempo_fim");
+          
+          if (timerInterval) clearInterval(timerInterval);
+          if (unsubscribeSnapshot) unsubscribeSnapshot();
+          
+          mostrarTela(setupScreen);
+        }
+      });
+    }
+
+    setInterval(async () => {
+      const emailLogado = localStorage.getItem("digiart_email_rev");
+      if (emailLogado) {
+        try {
+          const docRef = doc(db, "revendedores", emailLogado);
+          await updateDoc(docRef, { ultimoHeartbeat: Date.now() });
+        } catch (e) {}
+      }
+    }, 15000);
+
     inputFrameFile.addEventListener("change", (e) => {
       if (e.target.files.length > 0) {
-        const file = e.target.files[0];
         frameStatusText.style.color = "#00FF00";
-        frameStatusText.innerText = `⏳ Lendo arquivo: ${file.name}...`;
-        setTimeout(() => {
-          frameStatusText.innerText = `✅ Arquivo carregado: ${file.name}`;
-        }, 300);
-      } else {
-        frameStatusText.style.color = "#888";
-        frameStatusText.innerText = "Nenhuma imagem selecionada.";
+        frameStatusText.innerText = `✅ Arquivo carregado: ${e.target.files[0].name}`;
       }
     });
 
@@ -662,7 +790,6 @@
           img.onload = () => {
             let width = img.width;
             let height = img.height;
-
             if (width > maxDimension || height > maxDimension) {
               if (width > height) {
                 height = Math.round((height * maxDimension) / width);
@@ -672,14 +799,11 @@
                 height = maxDimension;
               }
             }
-
             const canvas = document.createElement("canvas");
             canvas.width = width;
             canvas.height = height;
-
             const ctx = canvas.getContext("2d");
             ctx.drawImage(img, 0, 0, width, height);
-
             resolve(canvas.toDataURL("image/png"));
           };
           img.onerror = (err) => reject(err);
@@ -688,255 +812,339 @@
       });
     }
 
-    async function validarAcessoNoBanco(email, tokenInformado) {
-      if (!email || !tokenInformado) return null;
-      try {
-        const docRef = doc(db, "revendedores", email.trim().toLowerCase());
-        const docSnap = await getDoc(docRef);
+    function mostrarTela(telaElemento) {
+      loginScreen.classList.remove("active");
+      changePasswordScreen.classList.remove("active");
+      setupScreen.classList.remove("active");
+      dashboardContainer.classList.remove("active");
 
-        if (!docSnap.exists()) return null;
+      telaElemento.classList.add("active");
+    }
 
-        const dados = docSnap.data();
-        const tokenSalvo = dados.token;
-        const expiraEm = dados.expiraEm;
-        const agora = Date.now();
+    async function verificarEstadoInicial() {
+      const emailSalvo = localStorage.getItem("digiart_email_rev");
+      const expiraSalvo = localStorage.getItem("digiart_expira_em");
 
-        if (tokenSalvo === tokenInformado.trim() && agora < expiraEm) {
-          // Retorna os dados do revendedor (incluindo a expiração) se válido
-          return dados;
+      if (emailSalvo && expiraSalvo && Date.now() < parseInt(expiraSalvo)) {
+        try {
+          const docRef = doc(db, "revendedores", emailSalvo);
+          const docSnap = await getDoc(docRef);
+
+          if (docSnap.exists()) {
+            const dados = docSnap.data();
+            
+            await updateDoc(docRef, {
+              sessaoAtivaId: sessionIdUnico,
+              ultimoHeartbeat: Date.now()
+            });
+
+            iniciarMonitoramentoRevendedor(emailSalvo);
+
+            if (dados.currentEventId && dados.currentEventName) {
+              currentEventId = dados.currentEventId;
+              nomeEventoExibicao = dados.currentEventName;
+
+              localStorage.setItem("digiart_evento_ativo", currentEventId);
+              localStorage.setItem("digiart_nome_evento", nomeEventoExibicao);
+              if (dados.currentEventEndTime) {
+                localStorage.setItem("digiart_tempo_fim", dados.currentEventEndTime);
+              }
+
+              mostrarTela(dashboardContainer);
+              infoEventId.innerText = nomeEventoExibicao;
+              gerarQRCodeCliente(currentEventId);
+              monitorarFotos();
+
+              if (dados.currentEventEndTime) {
+                const restanteSegundos = Math.max(0, Math.floor((dados.currentEventEndTime - Date.now()) / 1000));
+                iniciarCronometroComSegundos(restanteSegundos);
+              }
+              return;
+            }
+          }
+        } catch (e) {}
+
+        const eventoSalvo = localStorage.getItem("digiart_evento_ativo");
+        const nomeSalvo = localStorage.getItem("digiart_nome_evento");
+        const tempoFimSalvo = localStorage.getItem("digiart_tempo_fim");
+
+        if (eventoSalvo && nomeSalvo) {
+          currentEventId = eventoSalvo;
+          nomeEventoExibicao = nomeSalvo;
+
+          iniciarMonitoramentoRevendedor(emailSalvo);
+          mostrarTela(dashboardContainer);
+          infoEventId.innerText = nomeEventoExibicao;
+          gerarQRCodeCliente(currentEventId);
+          monitorarFotos();
+
+          if (tempoFimSalvo) {
+            const restanteSegundos = Math.max(0, Math.floor((parseInt(tempoFimSalvo) - Date.now()) / 1000));
+            iniciarCronometroComSegundos(restanteSegundos);
+          }
+        } else {
+          iniciarMonitoramentoRevendedor(emailSalvo);
+          mostrarTela(setupScreen);
         }
-        return null;
-      } catch (err) {
-        console.error("Erro ao validar token:", err);
-        return null;
+      } else {
+        mostrarTela(loginScreen);
       }
     }
 
-    window.addEventListener("beforeunload", (e) => {
-      if (currentEventId) {
-        e.preventDefault();
-        e.returnValue = "";
+    btnLoginSubmit.addEventListener("click", async () => {
+      const email = loginEmail.value.trim().toLowerCase();
+      const tokenInformado = loginToken.value.trim();
+
+      if (!email || !tokenInformado) {
+        alert("Preencha o e-mail e o token!");
+        return;
+      }
+
+      btnLoginSubmit.innerText = "VALIDANDO...";
+      btnLoginSubmit.disabled = true;
+
+      try {
+        const docRef = doc(db, "revendedores", email);
+        const docSnap = await getDoc(docRef);
+
+        if (!docSnap.exists()) {
+          alert("E-mail não encontrado.");
+          return;
+        }
+
+        const dados = docSnap.data();
+        if (Date.now() >= dados.expiraEm) {
+          alert("Licença expirada.");
+          return;
+        }
+
+        await updateDoc(docRef, {
+          sessaoAtivaId: sessionIdUnico,
+          ultimoHeartbeat: Date.now()
+        });
+
+        iniciarMonitoramentoRevendedor(email);
+
+        if (dados.senhaDefinitiva && dados.senhaDefinitiva === tokenInformado) {
+          localStorage.setItem("digiart_email_rev", email);
+          localStorage.setItem("digiart_expira_em", dados.expiraEm);
+          
+          if (dados.currentEventId && dados.currentEventName) {
+            currentEventId = dados.currentEventId;
+            nomeEventoExibicao = dados.currentEventName;
+            localStorage.setItem("digiart_evento_ativo", currentEventId);
+            localStorage.setItem("digiart_nome_evento", nomeEventoExibicao);
+            if (dados.currentEventEndTime) {
+              localStorage.setItem("digiart_tempo_fim", dados.currentEventEndTime);
+            }
+
+            mostrarTela(dashboardContainer);
+            infoEventId.innerText = nomeEventoExibicao;
+            gerarQRCodeCliente(currentEventId);
+            monitorarFotos();
+            if (dados.currentEventEndTime) {
+              iniciarCronometroComSegundos(Math.max(0, Math.floor((dados.currentEventEndTime - Date.now()) / 1000)));
+            }
+            return;
+          }
+
+          mostrarTela(setupScreen);
+          return;
+        }
+
+        if (dados.token === tokenInformado || dados.primeiroAcesso !== false) {
+          localStorage.setItem("digiart_temp_email", email);
+          localStorage.setItem("digiart_expira_em", dados.expiraEm);
+
+          mostrarTela(changePasswordScreen);
+        } else {
+          alert("Token ou senha incorretos!");
+        }
+      } catch (err) {
+        alert("Erro ao validar login.");
+      } finally {
+        btnLoginSubmit.innerText = "ENTRAR";
+        btnLoginSubmit.disabled = false;
       }
     });
 
-    async function restaurarSessaoAtiva() {
+    btnSavePassword.addEventListener("click", async () => {
+      const novaSenha = newPasswordInput.value.trim();
+      const confirma = confirmPasswordInput.value.trim();
+      const email = localStorage.getItem("digiart_temp_email");
+
+      if (!novaSenha || novaSenha.length < 6) {
+        alert("A senha precisa ter pelo menos 6 caracteres.");
+        return;
+      }
+      if (novaSenha !== confirma) {
+        alert("As senhas não coincidem!");
+        return;
+      }
+
+      btnSavePassword.innerText = "SALVANDO...";
+      btnSavePassword.disabled = true;
+
+      try {
+        const docRef = doc(db, "revendedores", email);
+        await updateDoc(docRef, {
+          senhaDefinitiva: novaSenha,
+          primeiroAcesso: false
+        });
+
+        localStorage.setItem("digiart_email_rev", email);
+        localStorage.removeItem("digiart_temp_email");
+
+        iniciarMonitoramentoRevendedor(email);
+
+        mostrarTela(setupScreen);
+      } catch (err) {
+        alert("Erro ao salvar senha.");
+      } finally {
+        btnSavePassword.innerText = "SALVAR SENHA E CONTINUAR";
+        btnSavePassword.disabled = false;
+      }
+    });
+
+    btnUseExistingProject.addEventListener("click", async () => {
       const emailSalvo = localStorage.getItem("digiart_email_rev");
-      const tokenSalvo = localStorage.getItem("digiart_token_rev");
+      let eventoSalvo = localStorage.getItem("digiart_evento_ativo");
+      let nomeSalvo = localStorage.getItem("digiart_nome_evento");
+      let tempoFimSalvo = localStorage.getItem("digiart_tempo_fim");
 
-      if (emailSalvo && tokenSalvo) {
-        // Valida silenciosamente em segundo plano se o token ainda é válido
-        const dadosRevendedor = await validarAcessoNoBanco(emailSalvo, tokenSalvo);
-        if (dadosRevendedor) {
-          // Se já tem login válido, esconde a parte de credenciais na tela inicial
-          credentialsGroup.style.display = "none";
-          inputEmailRevendedor.value = emailSalvo;
-          inputTokenRevendedor.value = tokenSalvo;
-          
-          // Salva a expiração atualizada no localStorage
-          localStorage.setItem("digiart_expira_em", dadosRevendedor.expiraEm);
-        } else {
-          // Se expirou, limpa tudo para exigir novo login
-          localStorage.clear();
-          credentialsGroup.style.display = "block";
-          return;
-        }
-      } else {
-        credentialsGroup.style.display = "block";
+      if (!eventoSalvo && emailSalvo) {
+        try {
+          const docRef = doc(db, "revendedores", emailSalvo);
+          const docSnap = await getDoc(docRef);
+          if (docSnap.exists() && docSnap.data().currentEventId) {
+            eventoSalvo = docSnap.data().currentEventId;
+            nomeSalvo = docSnap.data().currentEventName;
+            tempoFimSalvo = docSnap.data().currentEventEndTime;
+          }
+        } catch (e) {}
       }
 
-      const eventoSalvo = localStorage.getItem("digiart_evento_ativo");
-      const nomeSalvo = localStorage.getItem("digiart_nome_evento") || eventoSalvo;
-      const tempoFimSalvo = localStorage.getItem("digiart_tempo_fim");
-      const dataInicioSalva = localStorage.getItem("digiart_data_inicio");
-      const expiraEmSalvo = localStorage.getItem("digiart_expira_em");
-
-      // Se houver um evento em andamento, restaura o painel direto
-      if (eventoSalvo && emailSalvo && tokenSalvo) {
-        currentEventId = eventoSalvo;
-        nomeEventoExibicao = nomeSalvo;
-        
-        setupScreen.style.display = "none";
-        dashboardContainer.style.display = "flex";
-
-        infoEventId.innerText = nomeEventoExibicao;
-        if (dataInicioSalva) {
-          const dt = new Date(dataInicioSalva);
-          infoEventDate.innerText = `Início: ${dt.toLocaleDateString('pt-BR')} ${dt.toLocaleTimeString('pt-BR', {hour: '2-digit', minute:'2-digit'})}`;
-        }
-
-        // Exibe a data de expiração formatada no painel
-        if (expiraEmSalvo) {
-          const dtExp = new Date(parseInt(expiraEmSalvo));
-          infoExpiraLicenca.innerText = `${dtExp.toLocaleDateString('pt-BR')} ${dtExp.toLocaleTimeString('pt-BR', {hour: '2-digit', minute:'2-digit'})}`;
-        }
-
-        gerarQRCodeCliente(currentEventId);
-        monitorarFotos();
-
-        if (tempoFimSalvo) {
-          const restanteSegundos = Math.max(0, Math.floor((parseInt(tempoFimSalvo) - Date.now()) / 1000));
-          iniciarCronometroComSegundos(restanteSegundos);
-        }
+      if (!eventoSalvo || !nomeSalvo) {
+        alert("Nenhum projeto anterior salvo neste computador ou na nuvem para recuperação.");
+        return;
       }
-    }
+
+      currentEventId = eventoSalvo;
+      nomeEventoExibicao = nomeSalvo;
+
+      if (emailSalvo) {
+        try {
+          const docRef = doc(db, "revendedores", emailSalvo);
+          await updateDoc(docRef, {
+            currentEventId: currentEventId,
+            currentEventName: nomeEventoExibicao,
+            currentEventEndTime: tempoFimSalvo ? parseInt(tempoFimSalvo) : 0
+          });
+        } catch (e) {}
+      }
+
+      mostrarTela(dashboardContainer);
+      infoEventId.innerText = nomeEventoExibicao;
+      gerarQRCodeCliente(currentEventId);
+      monitorarFotos();
+
+      if (tempoFimSalvo) {
+        const restanteSegundos = Math.max(0, Math.floor((parseInt(tempoFimSalvo) - Date.now()) / 1000));
+        iniciarCronometroComSegundos(restanteSegundos);
+      }
+    });
 
     btnStartEvent.addEventListener("click", async () => {
-      let emailInput = inputEmailRevendedor.value.trim().toLowerCase();
-      let tokenInput = inputTokenRevendedor.value.trim();
       const nomeInput = inputEventId.value.trim();
       const horasInput = parseInt(inputEventHours.value);
 
-      // Se as credenciais estiverem ocultas, pega diretamente do localStorage
-      if (credentialsGroup.style.display === "none") {
-        emailInput = localStorage.getItem("digiart_email_rev") || "";
-        tokenInput = localStorage.getItem("digiart_token_rev") || "";
-      } else {
-        if (!emailInput || !emailInput.includes("@")) {
-          alert("Por favor, digite seu e-mail de acesso cadastrado!");
-          inputEmailRevendedor.focus();
-          return;
-        }
-        if (!tokenInput) {
-          alert("Por favor, digite seu token de acesso!");
-          inputTokenRevendedor.focus();
-          return;
-        }
-      }
-
-      if (!nomeInput) {
-        alert("Por favor, digite o nome do evento!");
-        inputEventId.focus();
-        return;
-      }
-      if (!horasInput || horasInput < 1) {
-        alert("Por favor, informe a duração em horas do evento!");
-        inputEventHours.focus();
-        return;
-      }
-      if (inputFrameFile.files.length === 0) {
-        alert("Por favor, selecione a imagem PNG da moldura!");
+      if (!nomeInput || !horasInput || inputFrameFile.files.length === 0) {
+        alert("Preencha todos os campos e selecione a moldura!");
         return;
       }
 
-      btnStartEvent.innerText = "VALIDANDO LICENÇA...";
+      btnStartEvent.innerText = "PROCESSANDO...";
       btnStartEvent.disabled = true;
 
-      const dadosRevendedor = await validarAcessoNoBanco(emailInput, tokenInput);
-      if (!dadosRevendedor) {
-        alert("Acesso Negado! E-mail não encontrado, token incorreto ou licença expirada.");
-        localStorage.clear();
-        credentialsGroup.style.display = "block";
-        btnStartEvent.innerText = "INICIAR NOVO EVENTO";
-        btnStartEvent.disabled = false;
-        return;
-      }
-
-      nomeEventoExibicao = nomeInput;
-      currentEventId = gerarIdCurto();
-      let molduraBase64 = "";
-
       try {
-        btnStartEvent.innerText = "OTIMIZANDO MOLDURA...";
-        frameStatusText.innerText = "⏳ Otimizando imagem para o sistema...";
-        molduraBase64 = await comprimirMolduraPNG(inputFrameFile.files[0], 1200);
+        nomeEventoExibicao = nomeInput;
+        currentEventId = gerarIdCurto();
+        const emailSalvo = localStorage.getItem("digiart_email_rev");
 
-        btnStartEvent.innerText = "SALVANDO EVENTO...";
-
-        const agora = new Date();
+        const molduraBase64 = await comprimirMolduraPNG(inputFrameFile.files[0], 1200);
         const tempoFimTimestamp = Date.now() + (horasInput * 3600 * 1000);
 
         await setDoc(doc(db, "eventos", currentEventId), {
           nome: nomeEventoExibicao,
           molduraUrl: molduraBase64,
-          criadoEm: agora
-        }, { merge: true });
+          criadoEm: new Date()
+        });
 
-        // Salva credenciais, expiração e dados do novo evento
-        localStorage.setItem("digiart_email_rev", emailInput);
-        localStorage.setItem("digiart_token_rev", tokenInput);
-        localStorage.setItem("digiart_expira_em", dadosRevendedor.expiraEm);
+        if (emailSalvo) {
+          const docRef = doc(db, "revendedores", emailSalvo);
+          await updateDoc(docRef, {
+            currentEventId: currentEventId,
+            currentEventName: nomeEventoExibicao,
+            currentEventEndTime: tempoFimTimestamp
+          });
+        }
+
         localStorage.setItem("digiart_evento_ativo", currentEventId);
         localStorage.setItem("digiart_nome_evento", nomeEventoExibicao);
         localStorage.setItem("digiart_tempo_fim", tempoFimTimestamp);
-        localStorage.setItem("digiart_data_inicio", agora.toISOString());
 
-        setupScreen.style.display = "none";
-        dashboardContainer.style.display = "flex";
-
+        mostrarTela(dashboardContainer);
         infoEventId.innerText = nomeEventoExibicao;
-        infoEventDate.innerText = `Início: ${agora.toLocaleDateString('pt-BR')} ${agora.toLocaleTimeString('pt-BR', {hour: '2-digit', minute:'2-digit'})}`;
-        
-        const dtExp = new Date(dadosRevendedor.expiraEm);
-        infoExpiraLicenca.innerText = `${dtExp.toLocaleDateString('pt-BR')} ${dtExp.toLocaleTimeString('pt-BR', {hour: '2-digit', minute:'2-digit'})}`;
-
         gerarQRCodeCliente(currentEventId);
         iniciarCronometroComSegundos(horasInput * 3600);
         monitorarFotos();
-
       } catch (erro) {
         console.error("Erro ao iniciar evento:", erro);
-        alert("Erro ao processar imagem ou salvar no banco de dados!");
+        alert("Erro ao iniciar evento. Verifique a conexão.");
       } finally {
-        if (setupScreen.style.display !== "none") {
-          btnStartEvent.innerText = "INICIAR NOVO EVENTO";
-          btnStartEvent.disabled = false;
-        }
+        btnStartEvent.innerText = "INICIAR NOVO EVENTO";
+        btnStartEvent.disabled = false;
       }
     });
 
-    btnFinishEvent.addEventListener("click", () => {
-      const confirma = confirm(`Tem certeza que deseja FINALIZAR o evento "${nomeEventoExibicao}"?`);
-      if (confirma) {
-        // Remove apenas as chaves do evento ativo. Mantém email e token salvos!
+    btnFinishEvent.addEventListener("click", async () => {
+      if (confirm("Deseja finalizar o evento atual?")) {
+        const emailSalvo = localStorage.getItem("digiart_email_rev");
+        if (emailSalvo) {
+          try {
+            const docRef = doc(db, "revendedores", emailSalvo);
+            await updateDoc(docRef, {
+              currentEventId: "",
+              currentEventName: "",
+              currentEventEndTime: 0
+            });
+          } catch (e) {}
+        }
+
         localStorage.removeItem("digiart_evento_ativo");
         localStorage.removeItem("digiart_nome_evento");
         localStorage.removeItem("digiart_tempo_fim");
-        localStorage.removeItem("digiart_data_inicio");
+        
+        currentEventId = "";
+        nomeEventoExibicao = "";
 
         if (timerInterval) clearInterval(timerInterval);
         if (unsubscribeSnapshot) unsubscribeSnapshot();
 
-        currentEventId = "";
-        nomeEventoExibicao = "";
-        totalImpressas = 0;
-        fotoSelecionadaAtual = null;
-        listaFotosPendentes = [];
-        limparDestaque();
-
-        inputEventId.value = "";
-        inputEventHours.value = "";
-        frameStatusText.style.color = "#888";
-        frameStatusText.innerText = "Nenhuma imagem selecionada.";
-        inputFrameFile.value = "";
-
-        // Mantém as credenciais ocultas e pula a tela de login na próxima vez
-        credentialsGroup.style.display = "none";
-
-        dashboardContainer.style.display = "none";
-        setupScreen.style.display = "flex";
-        btnStartEvent.innerText = "INICIAR NOVO EVENTO";
-        btnStartEvent.disabled = false;
+        mostrarTela(setupScreen);
       }
     });
 
     function gerarQRCodeCliente(eventId) {
       const urlBase = window.location.origin + window.location.pathname.replace('/painel', '');
       const linkCamera = `${urlBase}/camera/?evento=${eventId}`;
-
       const qrContainer = document.getElementById("qrcodeCanvas");
       qrContainer.innerHTML = "";
-
-      new QRCode(qrContainer, {
-        text: linkCamera,
-        width: 120,
-        height: 120,
-        correctLevel: QRCode.CorrectLevel.L
-      });
+      new QRCode(qrContainer, { text: linkCamera, width: 120, height: 120, correctLevel: QRCode.CorrectLevel.L });
     }
 
     function monitorarFotos() {
       if (unsubscribeSnapshot) unsubscribeSnapshot();
-
       const fotosRef = collection(db, "eventos", currentEventId, "fotos");
       const q = query(fotosRef, orderBy("criadoEm", "asc"));
 
@@ -947,10 +1155,7 @@
         snapshot.forEach((docSnap) => {
           const foto = docSnap.data();
           foto.id = docSnap.id;
-
-          if (foto.status === "pendente") {
-            listaFotosPendentes.push(foto);
-          }
+          if (foto.status === "pendente") listaFotosPendentes.push(foto);
         });
 
         countQueue.innerText = listaFotosPendentes.length;
@@ -965,11 +1170,7 @@
               <span>Aguardando impressão</span>
             </div>
           `;
-
-          item.addEventListener("click", () => {
-            selecionarFotoParaDestaque(foto);
-          });
-
+          item.addEventListener("click", () => selecionarFotoParaDestaque(foto));
           queueList.appendChild(item);
         });
 
@@ -988,14 +1189,6 @@
       highlightViewer.innerHTML = `<img src="${foto.fotoUrl}" alt="Foto Destaque">`;
       btnActionPrint.disabled = false;
       btnActionDelete.disabled = false;
-
-      document.querySelectorAll(".queue-item").forEach(el => {
-        if (el.innerHTML.includes(foto.fotoUrl)) {
-          el.classList.add("selected");
-        } else {
-          el.classList.remove("selected");
-        }
-      });
     }
 
     function limparDestaque() {
@@ -1007,146 +1200,131 @@
 
     btnActionPrint.addEventListener("click", () => {
       if (!fotoSelecionadaAtual) return;
-
       const fotoParaImprimir = fotoSelecionadaAtual;
-      imprimirDireto(fotoParaImprimir.fotoUrl);
+      const formatoEscolhido = paperSizeSelect.value;
+      
+      imprimirDireto(fotoParaImprimir.fotoUrl, formatoEscolhido);
 
       totalImpressas++;
       countPrinted.innerText = totalImpressas;
 
-      const fotoRef = doc(db, "eventos", currentEventId, "fotos", fotoParaImprimir.id);
-      updateDoc(fotoRef, { status: "impressa" }).catch(err => {
-        console.error("Erro ao atualizar status no Firebase:", err);
-      });
-
-      const proximaFoto = listaFotosPendentes.find(f => f.id !== fotoParaImprimir.id && f.status === "pendente");
-      if (proximaFoto) {
-        selecionarFotoParaDestaque(proximaFoto);
-      } else {
-        limparDestaque();
-      }
+      updateDoc(doc(db, "eventos", currentEventId, "fotos", fotoParaImprimir.id), { status: "impressa" });
     });
 
     btnActionDelete.addEventListener("click", async () => {
       if (!fotoSelecionadaAtual) return;
-
-      const confirma = confirm("Deseja realmente excluir esta foto da fila?");
-      if (confirma) {
-        const idParaExcluir = fotoSelecionadaAtual.id;
-        
-        try {
-          const fotoRef = doc(db, "eventos", currentEventId, "fotos", idParaExcluir);
-          await deleteDoc(fotoRef);
-
-          listaFotosPendentes = listaFotosPendentes.filter(f => f.id !== idParaExcluir);
-          countQueue.innerText = listaFotosPendentes.length;
-
-          if (listaFotosPendentes.length > 0) {
-            selecionarFotoParaDestaque(listaFotosPendentes[0]);
-          } else {
-            limparDestaque();
-          }
-        } catch (err) {
-          console.error("Erro ao excluir foto:", err);
-          alert("Erro ao excluir a foto do banco de dados.");
-        }
+      if (confirm("Excluir esta foto?")) {
+        await deleteDoc(doc(db, "eventos", currentEventId, "fotos", fotoSelecionadaAtual.id));
       }
     });
 
     btnDownloadZip.addEventListener("click", async () => {
       if (!currentEventId) return;
-
-      btnDownloadZip.innerText = "⏳ GERANDO ZIP...";
+      btnDownloadZip.innerText = "⏳ GERANDO...";
       btnDownloadZip.disabled = true;
 
       try {
-        const fotosRef = collection(db, "eventos", currentEventId, "fotos");
-        const q = query(fotosRef, orderBy("criadoEm", "asc"));
-        const snapshot = await getDocs(q);
-
-        if (snapshot.empty) {
-          alert("Nenhuma foto encontrada para este evento!");
-          btnDownloadZip.innerText = "📦 BAIXAR TODAS (ZIP)";
-          btnDownloadZip.disabled = false;
-          return;
-        }
-
+        const snapshot = await getDocs(query(collection(db, "eventos", currentEventId, "fotos"), orderBy("criadoEm", "asc")));
         const zip = new JSZip();
-        const pasta = zip.folder(`evento_${currentEventId}`);
+        
+        const pastaComMoldura = zip.folder("com_moldura");
+        const pastaSemMoldura = zip.folder("sem_moldura");
+        
         let contador = 1;
+        
+        const nomeEventoSlug = (nomeEventoExibicao || "evento")
+          .toLowerCase()
+          .normalize("NFD")
+          .replace(/[\u0300-\u036f]/g, "")
+          .replace(/[^a-z0-9]/g, "_")
+          .replace(/_+/g, "_");
 
         snapshot.forEach((docSnap) => {
           const foto = docSnap.data();
+          const numeroFormatado = String(contador).padStart(3, '0');
+
           if (foto.fotoUrl) {
-            const base64Data = foto.fotoUrl.replace(/^data:image\/(png|jpeg|jpg);base64,/, "");
-            const numPadded = String(contador).padStart(3, '0');
-            pasta.file(`foto_${numPadded}.jpg`, base64Data, { base64: true });
-            contador++;
+            const base64ComMoldura = foto.fotoUrl.replace(/^data:image\/(png|jpeg|jpg);base64,/, "");
+            pastaComMoldura.file(`${nomeEventoSlug}_com_moldura_${numeroFormatado}.jpg`, base64ComMoldura, { base64: true });
           }
+
+          if (foto.fotoOriginalUrl) {
+            const base64SemMoldura = foto.fotoOriginalUrl.replace(/^data:image\/(png|jpeg|jpg);base64,/, "");
+            pastaSemMoldura.file(`${nomeEventoSlug}_sem_moldura_${numeroFormatado}.jpg`, base64SemMoldura, { base64: true });
+          }
+
+          contador++;
         });
 
         const content = await zip.generateAsync({ type: "blob" });
-        
         const link = document.createElement("a");
         link.href = URL.createObjectURL(content);
-        link.download = `Fotos_${nomeEventoExibicao.replace(/\s+/g, '_')}.zip`;
+        link.download = `Fotos_${nomeEventoExibicao}.zip`;
         link.click();
-        URL.revokeObjectURL(link.href);
-
-      } catch (erro) {
-        console.error("Erro ao gerar arquivo ZIP:", erro);
-        alert("Ocorreu um erro ao gerar o arquivo ZIP de fotos.");
+      } catch (err) {
+        alert("Erro ao gerar arquivo ZIP.");
       } finally {
         btnDownloadZip.innerText = "📦 BAIXAR TODAS (ZIP)";
         btnDownloadZip.disabled = false;
       }
     });
 
-    function imprimirDireto(url) {
+    function imprimirDireto(url, formato) {
+      let tamanhoPage = "10cm 15cm";
+      let larguraPapel = "10cm";
+      let alturaPapel = "15cm";
+      let imgWidth = "9.3cm";
+      let imgHeight = "13.8cm";
+
+      if (formato === "A7") {
+        tamanhoPage = "7cm 10cm";
+        larguraPapel = "7cm";
+        alturaPapel = "10cm";
+        imgWidth = "6.8cm";
+        imgHeight = "10.1cm";
+      }
+
       let iframe = document.getElementById("printFrame");
       if (!iframe) {
         iframe = document.createElement("iframe");
         iframe.id = "printFrame";
-        iframe.style.position = "fixed";
-        iframe.style.right = "0";
-        iframe.style.bottom = "0";
-        iframe.style.width = "0";
-        iframe.style.height = "0";
-        iframe.style.border = "none";
+        iframe.style.display = "none";
         document.body.appendChild(iframe);
       }
-
       const docIframe = iframe.contentWindow.document;
       docIframe.open();
       docIframe.write(`
-        <!DOCTYPE html>
         <html>
           <head>
             <style>
               @page {
-                size: portrait;
-                margin: 0;
+                size: ${tamanhoPage};
+                margin: 0mm;
               }
-              html, body {
+              * {
+                box-sizing: border-box;
+                -webkit-print-color-adjust: exact;
+                print-color-adjust: exact;
+              }
+              body {
                 margin: 0;
-                padding: 0;
-                width: 100%;
-                height: 100%;
-                background-color: #ffffff;
+                width: ${larguraPapel};
+                height: ${alturaPapel};
                 display: flex;
-                align-items: center;
                 justify-content: center;
+                align-items: center;
+                background-color: #ffffff;
+                overflow: hidden;
               }
               img {
-                width: 100%;
-                height: 100%;
-                object-fit: contain;
-                display: block;
+                width: ${imgWidth};
+                height: ${imgHeight};
+                object-fit: fill;
               }
             </style>
           </head>
           <body>
-            <img src="${url}" onload="window.print();" />
+            <img src="${url}" onload="setTimeout(() => { window.print(); }, 300);"/>
           </body>
         </html>
       `);
@@ -1156,29 +1334,20 @@
     function iniciarCronometroComSegundos(segundosTotais) {
       if (timerInterval) clearInterval(timerInterval);
       let tempoRestante = segundosTotais;
-
-      const atualizarTela = () => {
+      timerInterval = setInterval(() => {
         if (tempoRestante > 0) {
           tempoRestante--;
           let h = Math.floor(tempoRestante / 3600);
           let m = Math.floor((tempoRestante % 3600) / 60);
           let s = tempoRestante % 60;
-          countdownTimer.innerText = 
-            String(h).padStart(2, '0') + ":" + 
-            String(m).padStart(2, '0') + ":" + 
-            String(s).padStart(2, '0');
-        } else {
-          countdownTimer.innerText = "00:00:00";
+          countdownTimer.innerText = `${String(h).padStart(2, '0')}:${String(m).padStart(2, '0')}:${String(s).padStart(2, '0')}`;
         }
-      };
-
-      atualizarTela();
-      timerInterval = setInterval(atualizarTela, 1000);
+      }, 1000);
     }
 
     window.addEventListener("DOMContentLoaded", () => {
-      restaurarSessaoAtiva();
+      verificarEstadoInicial();
     });
   </script>
 </body>
-</html>
+    </html>
