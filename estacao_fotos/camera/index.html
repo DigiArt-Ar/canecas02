@@ -111,7 +111,7 @@
       background-color: #000000;
     }
 
-    /* Área Principal da Câmera */
+    /* Área Principal da Câmera com fundo preto absoluto nas bordas de sobra */
     .viewport-box {
       position: relative;
       width: 100%;
@@ -123,19 +123,28 @@
       justify-content: center;
     }
 
-    #videoFeed, #photoPreview, #frameOverlay {
+    #videoFeed, #photoPreview {
       width: 100%;
       height: 100%;
-      object-fit: contain;
+      object-fit: cover; /* Garante preenchimento sem deixar vazamentos brancos */
       position: absolute;
       top: 0;
       left: 0;
       transform-origin: center center;
+      background-color: #000000;
+      z-index: 1;
     }
 
     #frameOverlay {
+      width: 100%;
+      height: 100%;
+      object-fit: contain; /* Ajusta a moldura mantendo a proporção exata */
+      position: absolute;
+      top: 0;
+      left: 0;
       pointer-events: none;
-      z-index: 10;
+      z-index: 5;
+      background-color: transparent;
     }
 
     /* BARRA INFERIOR */
@@ -292,7 +301,7 @@
       <video id="videoFeed" autoplay playsinline muted></video>
       <canvas id="photoCanvas" style="display: none;"></canvas>
       <img id="frameOverlay" src="" alt="Moldura do Evento" style="display: none;">
-      <img id="photoPreview" src="" alt="Sua Foto" style="display: none;">
+      <img id="photoPreview" src="" alt="Sua Foto" style="display: none; z-index: 6;">
     </div>
 
     <div class="controls-bar" id="controlsCapture">
@@ -437,7 +446,6 @@
       iniciarCamera();
     });
 
-    // Controle de Flash Corrigido
     btnFlash.addEventListener("click", async () => {
       if (!currentStream) return;
       const track = currentStream.getVideoTracks()[0];
@@ -449,7 +457,7 @@
           advanced: [{ torch: flashOn }]
         });
       } catch (err) {
-        console.log("Hardware torch não suportado diretamente por este navegador/dispositivo.");
+        console.warn("Dispositivo/Navegador não suporta controle de torch via constraints:", err);
       }
 
       if (flashOn) {
