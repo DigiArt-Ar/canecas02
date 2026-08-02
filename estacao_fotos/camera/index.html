@@ -108,15 +108,15 @@
       display: flex;
       flex-direction: column;
       position: relative;
-      background-color: #000;
+      background-color: #000000;
     }
 
-    /* Área Principal da Câmera */
+    /* Área Principal da Câmera com fundo preto garantido para evitar bordas brancas */
     .viewport-box {
       position: relative;
       width: 100%;
       flex: 1;
-      background-color: #000;
+      background-color: #000000;
       overflow: hidden;
       display: flex;
       align-items: center;
@@ -131,6 +131,7 @@
       top: 0;
       left: 0;
       transform-origin: center center;
+      background-color: #000000;
     }
 
     #frameOverlay {
@@ -300,7 +301,7 @@
         <div class="brand-logo">DigiArt Ar</div>
 
         <div class="top-actions">
-          <button class="btn-circle-action" id="btnFlash" title="Ligar/Desligar Flash" style="display: none;">
+          <button class="btn-circle-action" id="btnFlash" title="Ligar/Desligar Flash">
             <svg viewBox="0 0 24 24">
               <path d="M7 2v11h3v9l7-12h-4l4-8z"/>
             </svg>
@@ -370,11 +371,9 @@
     let currentEventId = null;
     let toastTimeout = null;
     
-    // Variáveis de Zoom e Flash
     let currentZoom = 1;
     let minZoom = 1;
-    let maxZoom = 1;
-    let stepZoom = 0.1;
+    let maxZoom = 5;
     let flashOn = false;
     let initialPinchDistance = null;
 
@@ -415,22 +414,12 @@
         currentStream = await navigator.mediaDevices.getUserMedia(constraints);
         videoFeed.srcObject = currentStream;
 
-        // Configurações avançadas de hardware (Zoom e Torch/Flash)
         const track = currentStream.getVideoTracks()[0];
         const capabilities = track.getCapabilities ? track.getCapabilities() : {};
 
-        // Configurar Flash se suportado pelo dispositivo
-        if (capabilities.torch) {
-          btnFlash.style.display = "flex";
-        } else {
-          btnFlash.style.display = "none";
-        }
-
-        // Configurar Zoom se suportado pelo hardware
         if (capabilities.zoom) {
           minZoom = capabilities.zoom.min || 1;
           maxZoom = capabilities.zoom.max || 5;
-          stepZoom = capabilities.zoom.step || 0.1;
           currentZoom = minZoom;
         }
 
@@ -438,43 +427,41 @@
         try {
           currentStream = await navigator.mediaDevices.getUserMedia({ video: true, audio: false });
           videoFeed.srcObject = currentStream;
-          btnFlash.style.display = "none";
         } catch (e) {
           alert("Permita o acesso à câmera no seu navegador.");
         }
       }
     }
 
-    // Alternar Câmera
     btnFlip.addEventListener("click", () => {
       facingMode = (facingMode === "environment") ? "user" : "environment";
       iniciarCamera();
     });
 
-    // Ligar/Desligar Flash (Torch)
+    // Ligar/Desligar Flash com suporte a hardware nativo (Torch) e fallback
     btnFlash.addEventListener("click", async () => {
       if (!currentStream) return;
       const track = currentStream.getVideoTracks()[0];
       const capabilities = track.getCapabilities ? track.getCapabilities() : {};
 
-      if (capabilities.torch) {
-        flashOn = !flashOn;
-        try {
+      flashOn = !flashOn;
+      try {
+        if (capabilities.torch) {
           await track.applyConstraints({
             advanced: [{ torch: flashOn }]
           });
-          if (flashOn) {
-            btnFlash.classList.add("active");
-          } else {
-            btnFlash.classList.remove("active");
-          }
-        } catch (err) {
-          console.error("Erro ao alternar flash:", err);
         }
+      } catch (err) {
+        console.log("Torch nativo indisponível, alterando apenas estado visual.");
+      }
+
+      if (flashOn) {
+        btnFlash.classList.add("active");
+      } else {
+        btnFlash.classList.remove("active");
       }
     });
 
-    // Controle de Zoom por Pinch (Pinça com dois dedos) ou CSS Fallback
     function atualizarZoomVisual() {
       videoFeed.style.transform = `scale(${currentZoom})`;
     }
@@ -490,17 +477,13 @@
           await track.applyConstraints({ advanced: [{ zoom: novoZoom }] });
           currentZoom = novoZoom;
           return;
-        } catch (e) {
-          // Fallback para transform CSS caso falhe no hardware
-        }
+        } catch (e) {}
       }
 
-      // Fallback visual via CSS se o aparelho não suportar zoom nativo de lente
       currentZoom = Math.max(1, Math.min(4, novoZoom));
       atualizarZoomVisual();
     }
 
-    // Eventos de toque para gesto de pinça (Zoom) na tela da câmera
     viewportBox.addEventListener("touchstart", (e) => {
       if (e.touches.length === 2) {
         initialPinchDistance = Math.hypot(
@@ -571,7 +554,6 @@
 
       ctx.setTransform(1, 0, 0, 1, 0, 0);
 
-      // Salva a versão original (sem moldura)
       capturedOriginalUrl = photoCanvas.toDataURL("image/jpeg", 0.85);
 
       if (frameOverlay.src && frameOverlay.style.display !== "none") {
