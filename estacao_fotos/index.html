@@ -554,6 +554,7 @@
       </div>
 
       <button class="btn-action" id="btnStartEvent">INICIAR NOVO EVENTO</button>
+      <!-- Botão ocultado conforme solicitado, mantido no código -->
       <button class="btn-action btn-secondary" id="btnUseExistingProject" style="display: none;">📂 USAR PROJETO ANTERIOR (RECUPERAÇÃO)</button>
     </div>
   </div>
@@ -704,14 +705,6 @@
 
     const sessionIdUnico = Math.random().toString(36).substring(2);
 
-    function limparFormularioSetup() {
-      inputEventId.value = "";
-      inputEventHours.value = "";
-      inputFrameFile.value = "";
-      frameStatusText.style.color = "#888";
-      frameStatusText.innerText = "Nenhuma imagem selecionada.";
-    }
-
     function iniciarMonitoramentoRevendedor(email) {
       if (unsubscribeRevendedor) unsubscribeRevendedor();
       const docRef = doc(db, "revendedores", email);
@@ -766,7 +759,6 @@
           if (timerInterval) clearInterval(timerInterval);
           if (unsubscribeSnapshot) unsubscribeSnapshot();
           
-          limparFormularioSetup();
           mostrarTela(setupScreen);
         }
       });
@@ -869,14 +861,6 @@
                 iniciarCronometroComSegundos(restanteSegundos);
               }
               return;
-            } else {
-              // Limpa qualquer cache local antigo e força tela de novo evento limpa
-              localStorage.removeItem("digiart_evento_ativo");
-              localStorage.removeItem("digiart_nome_evento");
-              localStorage.removeItem("digiart_tempo_fim");
-              limparFormularioSetup();
-              mostrarTela(setupScreen);
-              return;
             }
           }
         } catch (e) {}
@@ -901,7 +885,6 @@
           }
         } else {
           iniciarMonitoramentoRevendedor(emailSalvo);
-          limparFormularioSetup();
           mostrarTela(setupScreen);
         }
       } else {
@@ -966,11 +949,6 @@
             return;
           }
 
-          // Se não há evento ativo no servidor ao logar, limpa tudo e vai para o setup limpo
-          localStorage.removeItem("digiart_evento_ativo");
-          localStorage.removeItem("digiart_nome_evento");
-          localStorage.removeItem("digiart_tempo_fim");
-          limparFormularioSetup();
           mostrarTela(setupScreen);
           return;
         }
@@ -1020,7 +998,6 @@
 
         iniciarMonitoramentoRevendedor(email);
 
-        limparFormularioSetup();
         mostrarTela(setupScreen);
       } catch (err) {
         alert("Erro ao salvar senha.");
@@ -1181,7 +1158,6 @@
       if (timerInterval) clearInterval(timerInterval);
       if (unsubscribeSnapshot) unsubscribeSnapshot();
 
-      limparFormularioSetup();
       mostrarTela(setupScreen);
     });
 
@@ -1400,4 +1376,4 @@
     });
   </script>
 </body>
-</html>
+  </html>
