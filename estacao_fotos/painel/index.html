@@ -382,18 +382,58 @@
       display: flex;
       align-items: center;
       justify-content: space-between;
+      gap: 10px;
     }
 
     .qrcode-row p {
       font-size: 0.85rem;
       color: #aaa;
-      max-width: 140px;
+      max-width: 110px;
     }
 
     #qrcodeCanvas {
       background-color: #fff;
-      padding: 5px;
+      padding: 6px;
       border-radius: 6px;
+      display: flex;
+      justify-content: center;
+      align-items: center;
+    }
+
+    #qrcodeCanvas img {
+      display: block;
+    }
+
+    .auto-mode-control {
+      display: flex;
+      flex-direction: column;
+      gap: 4px;
+      flex: 1;
+    }
+
+    .auto-mode-control span {
+      font-size: 0.75rem;
+      color: #888;
+    }
+
+    .btn-toggle-auto {
+      background-color: #1c1c1c;
+      color: #aaa;
+      border: 1px solid #444;
+      padding: 10px 12px;
+      border-radius: 8px;
+      font-weight: bold;
+      font-size: 0.8rem;
+      cursor: pointer;
+      text-align: center;
+      transition: all 0.2s;
+    }
+
+    .btn-toggle-auto.active {
+      background-color: #00FF00;
+      color: #000;
+      border-color: #00FF00;
+      box-shadow: 0 0 10px rgba(0, 255, 0, 0.3);
     }
 
     .paper-config-box {
@@ -554,7 +594,7 @@
       </div>
 
       <button class="btn-action" id="btnStartEvent">INICIAR NOVO EVENTO</button>
-      <button class="btn-action btn-secondary" id="btnUseExistingProject">📂 USAR PROJETO ANTERIOR (RECUPERAÇÃO)</button>
+      <button class="btn-action btn-secondary" id="btnUseExistingProject" style="display: none;">📂 USAR PROJETO ANTERIOR (RECUPERAÇÃO)</button>
     </div>
   </div>
 
@@ -616,7 +656,10 @@
           </div>
           
           <div class="paper-config-box">
-            <label for="paperSizeSelect">Formato do Papel:</label>
+            <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 5px;">
+              <label for="paperSizeSelect" style="margin-bottom:0;">Formato do Papel:</label>
+              <button class="btn-toggle-auto" id="btnToggleAuto">⚡ MODO AUTOMÁTICO: DESLIGADO</button>
+            </div>
             <select id="paperSizeSelect">
               <option value="A7">Papel A7 (7x10cm)</option>
               <option value="A6" selected>Papel A6 (10x15cm)</option>
@@ -683,6 +726,7 @@
     const btnActionPrint = document.getElementById("btnActionPrint");
     const btnActionDelete = document.getElementById("btnActionDelete");
     const paperSizeSelect = document.getElementById("paperSizeSelect");
+    const btnToggleAuto = document.getElementById("btnToggleAuto");
 
     let currentEventId = "";
     let nomeEventoExibicao = "";
@@ -692,6 +736,8 @@
     let fotoSelecionadaAtual = null;
     let listaFotosPendentes = [];
     let unsubscribeRevendedor = null;
+    let modoAutomaticoAtivo = false;
+    let idsProcessadosAutomaticamente = new Set();
 
     function gerarIdCurto() {
       const caracteres = 'abcdefghijklmnopqrstuvwxyz0123456789';
@@ -703,6 +749,14 @@
     }
 
     const sessionIdUnico = Math.random().toString(36).substring(2);
+
+    function limparFormularioSetup() {
+      inputEventId.value = "";
+      inputEventHours.value = "";
+      inputFrameFile.value = "";
+      frameStatusText.style.color = "#888";
+      frameStatusText.innerText = "Nenhuma imagem selecionada.";
+    }
 
     function iniciarMonitoramentoRevendedor(email) {
       if (unsubscribeRevendedor) unsubscribeRevendedor();
@@ -758,6 +812,7 @@
           if (timerInterval) clearInterval(timerInterval);
           if (unsubscribeSnapshot) unsubscribeSnapshot();
           
+          limparFormularioSetup();
           mostrarTela(setupScreen);
         }
       });
@@ -860,6 +915,13 @@
                 iniciarCronometroComSegundos(restanteSegundos);
               }
               return;
+            } else {
+              localStorage.removeItem("digiart_evento_ativo");
+              localStorage.removeItem("digiart_nome_evento");
+              localStorage.removeItem("digiart_tempo_fim");
+              limparFormularioSetup();
+              mostrarTela(setupScreen);
+              return;
             }
           }
         } catch (e) {}
@@ -884,6 +946,7 @@
           }
         } else {
           iniciarMonitoramentoRevendedor(emailSalvo);
+          limparFormularioSetup();
           mostrarTela(setupScreen);
         }
       } else {
@@ -948,6 +1011,10 @@
             return;
           }
 
+          localStorage.removeItem("digiart_evento_ativo");
+          localStorage.removeItem("digiart_nome_evento");
+          localStorage.removeItem("digiart_tempo_fim");
+          limparFormularioSetup();
           mostrarTela(setupScreen);
           return;
         }
@@ -997,6 +1064,7 @@
 
         iniciarMonitoramentoRevendedor(email);
 
+        limparFormularioSetup();
         mostrarTela(setupScreen);
       } catch (err) {
         alert("Erro ao salvar senha.");
@@ -1108,31 +1176,56 @@
     });
 
     btnFinishEvent.addEventListener("click", async () => {
-      if (confirm("Deseja finalizar o evento atual?")) {
-        const emailSalvo = localStorage.getItem("digiart_email_rev");
-        if (emailSalvo) {
-          try {
-            const docRef = doc(db, "revendedores", emailSalvo);
-            await updateDoc(docRef, {
-              currentEventId: "",
-              currentEventName: "",
-              currentEventEndTime: 0
-            });
-          } catch (e) {}
-        }
-
-        localStorage.removeItem("digiart_evento_ativo");
-        localStorage.removeItem("digiart_nome_evento");
-        localStorage.removeItem("digiart_tempo_fim");
-        
-        currentEventId = "";
-        nomeEventoExibicao = "";
-
-        if (timerInterval) clearInterval(timerInterval);
-        if (unsubscribeSnapshot) unsubscribeSnapshot();
-
-        mostrarTela(setupScreen);
+      const salvou = confirm("Você já baixou e salvou todos os arquivos (fotos) deste evento antes de prosseguir?");
+      if (!salvou) {
+        alert("Por favor, faça o download de todas as fotos antes de finalizar o evento.");
+        return;
       }
+
+      const confirmarEncerramento = confirm("Tem certeza que deseja encerrar e apagar este evento do sistema?");
+      if (!confirmarEncerramento) return;
+
+      const eventoParaApagar = currentEventId;
+      const emailSalvo = localStorage.getItem("digiart_email_rev");
+
+      if (emailSalvo) {
+        try {
+          const docRef = doc(db, "revendedores", emailSalvo);
+          await updateDoc(docRef, {
+            currentEventId: "",
+            currentEventName: "",
+            currentEventEndTime: 0
+          });
+        } catch (e) {}
+      }
+
+      if (eventoParaApagar) {
+        try {
+          const fotosSnapshot = await getDocs(collection(db, "eventos", eventoParaApagar, "fotos"));
+          const deletePromises = fotosSnapshot.docs.map(fotoDoc => deleteDoc(fotoDoc.ref));
+          await Promise.all(deletePromises);
+
+          await deleteDoc(doc(db, "eventos", eventoParaApagar));
+        } catch (err) {
+          console.error("Erro ao limpar dados do Firebase:", err);
+        }
+      }
+
+      localStorage.removeItem("digiart_evento_ativo");
+      localStorage.removeItem("digiart_nome_evento");
+      localStorage.removeItem("digiart_tempo_fim");
+      
+      currentEventId = "";
+      nomeEventoExibicao = "";
+      modoAutomaticoAtivo = false;
+      idsProcessadosAutomaticamente.clear();
+      atualizarEstadoBotaoAutomatico();
+
+      if (timerInterval) clearInterval(timerInterval);
+      if (unsubscribeSnapshot) unsubscribeSnapshot();
+
+      limparFormularioSetup();
+      mostrarTela(setupScreen);
     });
 
     function gerarQRCodeCliente(eventId) {
@@ -1140,7 +1233,46 @@
       const linkCamera = `${urlBase}/camera/?evento=${eventId}`;
       const qrContainer = document.getElementById("qrcodeCanvas");
       qrContainer.innerHTML = "";
-      new QRCode(qrContainer, { text: linkCamera, width: 120, height: 120, correctLevel: QRCode.CorrectLevel.L });
+      new QRCode(qrContainer, { text: linkCamera, width: 140, height: 140, correctLevel: QRCode.CorrectLevel.L });
+    }
+
+    btnToggleAuto.addEventListener("click", () => {
+      modoAutomaticoAtivo = !modoAutomaticoAtivo;
+      atualizarEstadoBotaoAutomatico();
+
+      if (modoAutomaticoAtivo && listaFotosPendentes.length > 0) {
+        processarFilaAutomatica();
+      }
+    });
+
+    function atualizarEstadoBotaoAutomatico() {
+      if (modoAutomaticoAtivo) {
+        btnToggleAuto.classList.add("active");
+        btnToggleAuto.innerText = "⚡ MODO AUTOMÁTICO: LIGADO";
+        btnActionPrint.innerText = "🖨️ MODO TURBO / AUTOMÁTICO ATIVO";
+      } else {
+        btnToggleAuto.classList.remove("active");
+        btnToggleAuto.innerText = "⚡ MODO AUTOMÁTICO: DESLIGADO";
+        btnActionPrint.innerText = "🖨️ IMPRIMIR FOTO";
+      }
+    }
+
+    function processarFilaAutomatica() {
+      if (!modoAutomaticoAtivo) return;
+
+      listaFotosPendentes.forEach(foto => {
+        if (!idsProcessadosAutomaticamente.has(foto.id)) {
+          idsProcessadosAutomaticamente.add(foto.id);
+          const formatoEscolhido = paperSizeSelect.value;
+          
+          imprimirDireto(foto.fotoUrl, formatoEscolhido);
+
+          totalImpressas++;
+          countPrinted.innerText = totalImpressas;
+
+          updateDoc(doc(db, "eventos", currentEventId, "fotos", foto.id), { status: "impressa" });
+        }
+      });
     }
 
     function monitorarFotos() {
@@ -1174,6 +1306,10 @@
           queueList.appendChild(item);
         });
 
+        if (modoAutomaticoAtivo && listaFotosPendentes.length > 0) {
+          processarFilaAutomatica();
+        }
+
         if (listaFotosPendentes.length > 0) {
           if (!fotoSelecionadaAtual || !listaFotosPendentes.some(f => f.id === fotoSelecionadaAtual.id)) {
             selecionarFotoParaDestaque(listaFotosPendentes[0]);
@@ -1194,11 +1330,14 @@
     function limparDestaque() {
       fotoSelecionadaAtual = null;
       highlightViewer.innerHTML = `<p style="color:#555;">Aguardando fotos dos convidados...</p>`;
-      btnActionPrint.disabled = true;
-      btnActionDelete.disabled = true;
+      if (!modoAutomaticoAtivo) {
+        btnActionPrint.disabled = true;
+        btnActionDelete.disabled = true;
+      }
     }
 
     btnActionPrint.addEventListener("click", () => {
+      if (modoAutomaticoAtivo) return; // Proteção solicitada: botão verde não desliga nem interfere manualmente se ativado por lá
       if (!fotoSelecionadaAtual) return;
       const fotoParaImprimir = fotoSelecionadaAtual;
       const formatoEscolhido = paperSizeSelect.value;
@@ -1350,4 +1489,4 @@
     });
   </script>
 </body>
-    </html>
+</html>
