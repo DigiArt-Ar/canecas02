@@ -738,6 +738,7 @@
     let unsubscribeRevendedor = null;
     let modoAutomaticoAtivo = false;
     let idsProcessadosAutomaticamente = new Set();
+    let imprimindoAutomaticamente = false;
 
     function gerarIdCurto() {
       const caracteres = 'abcdefghijklmnopqrstuvwxyz0123456789';
@@ -1240,7 +1241,7 @@
       modoAutomaticoAtivo = !modoAutomaticoAtivo;
       atualizarEstadoBotaoAutomatico();
 
-      if (modoAutomaticoAtivo && listaFotosPendentes.length > 0) {
+      if (modoAutomaticoAtivo && listaFotosPendentes.length > 0 && !imprimindoAutomaticamente) {
         processarFilaAutomatica();
       }
     });
@@ -1257,22 +1258,33 @@
       }
     }
 
-    function processarFilaAutomatica() {
-      if (!modoAutomaticoAtivo) return;
+    async function processarFilaAutomatica() {
+      if (!modoAutomaticoAtivo || imprimindoAutomaticamente) return;
 
-      listaFotosPendentes.forEach(foto => {
-        if (!idsProcessadosAutomaticamente.has(foto.id)) {
-          idsProcessadosAutomaticamente.add(foto.id);
-          const formatoEscolhido = paperSizeSelect.value;
-          
-          imprimirDireto(foto.fotoUrl, formatoEscolhido);
+      const proximaFoto = listaFotosPendentes.find(foto => !idsProcessadosAutomaticamente.has(foto.id));
+      if (!proximaFoto) return;
 
-          totalImpressas++;
-          countPrinted.innerText = totalImpressas;
+      imprimindoAutomaticamente = true;
+      idsProcessadosAutomaticamente.add(proximaFoto.id);
+      
+      const formatoEscolhido = paperSizeSelect.value;
+      
+      try {
+        await imprimirDiretoAsync(proximaFoto.fotoUrl, formatoEscolhido);
 
-          updateDoc(doc(db, "eventos", currentEventId, "fotos", foto.id), { status: "impressa" });
+        totalImpressas++;
+        countPrinted.innerText = totalImpressas;
+
+        await updateDoc(doc(db, "eventos", currentEventId, "fotos", proximaFoto.id), { status: "impressa" });
+      } catch (e) {
+        console.error("Erro na impressão automática:", e);
+      } finally {
+        imprimindoAutomaticamente = false;
+        // Continua para a próxima se houver mais na fila
+        if (modoAutomaticoAtivo && listaFotosPendentes.length > 0) {
+          setTimeout(processarFilaAutomatica, 500);
         }
-      });
+      }
     }
 
     function monitorarFotos() {
@@ -1306,7 +1318,7 @@
           queueList.appendChild(item);
         });
 
-        if (modoAutomaticoAtivo && listaFotosPendentes.length > 0) {
+        if (modoAutomaticoAtivo && listaFotosPendentes.length > 0 && !imprimindoAutomaticamente) {
           processarFilaAutomatica();
         }
 
@@ -1336,18 +1348,22 @@
       }
     }
 
-    btnActionPrint.addEventListener("click", () => {
-      if (modoAutomaticoAtivo) return; // Proteção solicitada: botão verde não desliga nem interfere manualmente se ativado por lá
+    btnActionPrint.addEventListener("click", async () => {
+      if (modoAutomaticoAtivo) return;
       if (!fotoSelecionadaAtual) return;
       const fotoParaImprimir = fotoSelecionadaAtual;
       const formatoEscolhido = paperSizeSelect.value;
       
-      imprimirDireto(fotoParaImprimir.fotoUrl, formatoEscolhido);
+      try {
+        await imprimirDiretoAsync(fotoParaImprimir.fotoUrl, formatoEscolhido);
 
-      totalImpressas++;
-      countPrinted.innerText = totalImpressas;
+        totalImpressas++;
+        countPrinted.innerText = totalImpressas;
 
-      updateDoc(doc(db, "eventos", currentEventId, "fotos", fotoParaImprimir.id), { status: "impressa" });
+        await updateDoc(doc(db, "eventos", currentEventId, "fotos", fotoParaImprimir.id), { status: "impressa" });
+      } catch (e) {
+        console.error("Erro na impressão manual:", e);
+      }
     });
 
     btnActionDelete.addEventListener("click", async () => {
@@ -1408,66 +1424,81 @@
       }
     });
 
-    function imprimirDireto(url, formato) {
-      let tamanhoPage = "10cm 15cm";
-      let larguraPapel = "10cm";
-      let alturaPapel = "15cm";
-      let imgWidth = "9.3cm";
-      let imgHeight = "13.8cm";
+    function imprimirDiretoAsync(url, formato) {
+      return new Promise((resolve) => {
+        let tamanhoPage = "10cm 15cm";
+        let larguraPapel = "10cm";
+        let alturaPapel = "15cm";
+        let imgWidth = "9.3cm";
+        let imgHeight = "13.8cm";
 
-      if (formato === "A7") {
-        tamanhoPage = "7cm 10cm";
-        larguraPapel = "7cm";
-        alturaPapel = "10cm";
-        imgWidth = "6.8cm";
-        imgHeight = "10.1cm";
-      }
+        if (formato === "A7") {
+          tamanhoPage = "7cm 10cm";
+          larguraPapel = "7cm";
+          alturaPapel = "10cm";
+          imgWidth = "6.8cm";
+          imgHeight = "10.1cm";
+        }
 
-      let iframe = document.getElementById("printFrame");
-      if (!iframe) {
-        iframe = document.createElement("iframe");
-        iframe.id = "printFrame";
-        iframe.style.display = "none";
-        document.body.appendChild(iframe);
-      }
-      const docIframe = iframe.contentWindow.document;
-      docIframe.open();
-      docIframe.write(`
-        <html>
-          <head>
-            <style>
-              @page {
-                size: ${tamanhoPage};
-                margin: 0mm;
-              }
-              * {
-                box-sizing: border-box;
-                -webkit-print-color-adjust: exact;
-                print-color-adjust: exact;
-              }
-              body {
-                margin: 0;
-                width: ${larguraPapel};
-                height: ${alturaPapel};
-                display: flex;
-                justify-content: center;
-                align-items: center;
-                background-color: #ffffff;
-                overflow: hidden;
-              }
-              img {
-                width: ${imgWidth};
-                height: ${imgHeight};
-                object-fit: fill;
-              }
-            </style>
-          </head>
-          <body>
-            <img src="${url}" onload="setTimeout(() => { window.print(); }, 300);"/>
-          </body>
-        </html>
-      `);
-      docIframe.close();
+        let iframe = document.getElementById("printFrame");
+        if (!iframe) {
+          iframe = document.createElement("iframe");
+          iframe.id = "printFrame";
+          iframe.style.display = "none";
+          document.body.appendChild(iframe);
+        }
+
+        const docIframe = iframe.contentWindow.document;
+        docIframe.open();
+        docIframe.write(`
+          <html>
+            <head>
+              <style>
+                @page {
+                  size: ${tamanhoPage};
+                  margin: 0mm;
+                }
+                * {
+                  box-sizing: border-box;
+                  -webkit-print-color-adjust: exact;
+                  print-color-adjust: exact;
+                }
+                body {
+                  margin: 0;
+                  width: ${larguraPapel};
+                  height: ${alturaPapel};
+                  display: flex;
+                  justify-content: center;
+                  align-items: center;
+                  background-color: #ffffff;
+                  overflow: hidden;
+                }
+                img {
+                  width: ${imgWidth};
+                  height: ${imgHeight};
+                  object-fit: fill;
+                }
+              </style>
+            </head>
+            <body>
+              <img src="${url}" id="printImg"/>
+            </body>
+          </html>
+        `);
+        docIframe.close();
+
+        const imgElement = docIframe.getElementById("printImg");
+        imgElement.onload = () => {
+          setTimeout(() => {
+            iframe.contentWindow.focus();
+            iframe.contentWindow.print();
+            // Dá um tempo de respiro para fechar o ciclo de impressão sem travar a fila
+            setTimeout(() => {
+              resolve();
+            }, 600);
+          }, 300);
+        };
+      });
     }
 
     function iniciarCronometroComSegundos(segundosTotais) {
