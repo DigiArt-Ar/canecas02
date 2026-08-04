@@ -1,31 +1,36 @@
-<style>
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
+  <meta name="apple-mobile-web-app-capable" content="yes">
+  <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+  <meta name="theme-color" content="#000000">
+  <title>DigiArt AR - Câmera do Evento</title>
+  
+  <style>
     * {
       box-sizing: border-box;
       margin: 0;
       padding: 0;
       user-select: none;
       -webkit-user-select: none;
-      /* Previne seleção de texto e zoom por toque */
-      touch-action: none;
     }
 
     html, body {
       width: 100%;
       height: 100%;
-      /* Fix para navegadores móveis */
-      height: -webkit-fill-available;
+      height: 100dvh;
       background-color: #000000;
       font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
       overflow: hidden;
-      /* Garante que o corpo ocupe toda a área visível */
-      overscroll-behavior: none; 
     }
 
     /* SOBREPOSIÇÃO DO TUTORIAL */
     .tutorial-overlay {
       position: fixed;
       top: 0; left: 0; right: 0; bottom: 0;
-      background-color: rgba(0, 0, 0, 0.95);
+      background-color: rgba(0, 0, 0, 0.92);
       display: flex;
       flex-direction: column;
       align-items: center;
@@ -38,6 +43,9 @@
     .tutorial-box {
       text-align: center;
       color: #FFFFFF;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
       pointer-events: none;
     }
 
@@ -55,16 +63,17 @@
     }
 
     .tutorial-box h2 {
-      font-size: 1.4rem;
+      font-size: 1.3rem;
       font-weight: 700;
       color: #00FF00;
-      margin-bottom: 10px;
-      text-transform: uppercase;
+      margin-bottom: 8px;
+      letter-spacing: 0.5px;
     }
 
     .tutorial-box p {
-      font-size: 1.1rem;
+      font-size: 0.95rem;
       color: #CCCCCC;
+      font-weight: 400;
     }
 
     /* MENSAGEM FLUÍDA DE SUCESSO (TOAST) */
@@ -95,7 +104,7 @@
     .camera-container {
       width: 100%;
       height: 100%;
-      height: -webkit-fill-available;
+      height: 100dvh;
       display: flex;
       flex-direction: column;
       position: relative;
@@ -114,27 +123,29 @@
       justify-content: center;
     }
 
-    #videoFeed, #photoPreview, #frameOverlay {
+    #videoFeed, #photoPreview {
       width: 100%;
       height: 100%;
-      /* ESTA É A MUDANÇA CRÍTICA: Garante que a mídia seja contida proporcionalmente 
-         sem cortar o conteúdo importante, criando barras pretas se necessário */
-      object-fit: contain;
+      object-fit: cover;
       position: absolute;
-      top: 50%;
-      left: 50%;
-      transform: translate(-50%, -50%);
-      backface-visibility: hidden;
-    }
-
-    #videoFeed {
-      will-change: transform;
-      z-index: 1;
+      top: 0;
+      left: 0;
     }
 
     #frameOverlay {
+      width: 100%;
+      height: 100%;
+      object-fit: fill; /* Garante que a moldura estique proporcionalmente preenchendo a tela do app */
+      position: absolute;
+      top: 0;
+      left: 0;
       pointer-events: none;
-      z-index: 10; /* Moldura fica sobre o vídeo */
+      z-index: 10;
+    }
+
+    #videoFeed {
+      transform-origin: center center;
+      will-change: transform;
     }
 
     /* BARRA INFERIOR */
@@ -146,8 +157,7 @@
       background-color: #000000;
       z-index: 30;
       flex-shrink: 0;
-      /* Padding seguro para iPhones com notch */
-      padding: 15px 25px max(15px, env(safe-area-inset-bottom)) 25px;
+      padding: 10px 25px max(15px, env(safe-area-inset-bottom)) 25px;
     }
 
     .controls-top-row {
@@ -155,22 +165,21 @@
       display: flex;
       align-items: center;
       justify-content: space-between;
-      margin-bottom: 10px;
+      margin-bottom: 5px;
     }
 
     .brand-logo {
       color: #00FF00;
       font-weight: 700;
-      font-size: 1.2rem;
+      font-size: 1.15rem;
       letter-spacing: 0.5px;
       font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
       white-space: nowrap;
-      text-shadow: 0 0 5px rgba(0, 255, 0, 0.3);
     }
 
     .btn-flip {
-      width: 50px;
-      height: 50px;
+      width: 48px;
+      height: 48px;
       border-radius: 50%;
       background-color: transparent;
       border: 2px solid #00FF00;
@@ -179,16 +188,11 @@
       justify-content: center;
       cursor: pointer;
       box-shadow: 0 0 12px rgba(0, 255, 0, 0.4);
-      transition: background-color 0.2s;
-    }
-
-    .btn-flip:active {
-      background-color: rgba(0, 255, 0, 0.1);
     }
 
     .btn-flip svg {
-      width: 26px;
-      height: 26px;
+      width: 24px;
+      height: 24px;
       fill: #00FF00;
     }
 
@@ -197,11 +201,12 @@
       display: flex;
       align-items: center;
       justify-content: center;
+      margin-top: 5px;
     }
 
     .btn-capture {
-      width: 90px;
-      height: 90px;
+      width: 100px;
+      height: 100px;
       border-radius: 50%;
       background-color: transparent;
       border: 5px solid #00FF00;
@@ -211,53 +216,42 @@
       cursor: pointer;
       outline: none;
       box-shadow: 0 0 30px rgba(0, 255, 0, 0.6);
-      transition: transform 0.1s ease, box-shadow 0.2s;
+      transition: transform 0.1s ease;
     }
 
     .btn-capture:active {
       transform: scale(0.92);
-      box-shadow: 0 0 15px rgba(0, 255, 0, 0.8);
     }
 
     .inner-circle {
-      width: 70px;
-      height: 70px;
+      width: 80px;
+      height: 80px;
       border-radius: 50%;
       background-color: #FFFFFF;
-      transition: background-color 0.2s;
-    }
-    .btn-capture:active .inner-circle {
-      background-color: #e0e0e0;
     }
 
     /* Painel de Revisão (Refazer / Enviar) */
     .controls-review {
       width: 100%;
-      padding: 20px 25px max(20px, env(safe-area-inset-bottom)) 25px;
+      padding: 15px 20px max(20px, env(safe-area-inset-bottom)) 20px;
       display: flex;
       align-items: center;
       justify-content: space-around;
       background-color: #000000;
       z-index: 30;
       flex-shrink: 0;
-      gap: 20px;
     }
 
     .btn-action {
       flex: 1;
-      max-width: 160px;
-      padding: 16px;
-      border-radius: 30px;
+      max-width: 140px;
+      padding: 14px;
+      border-radius: 25px;
       border: none;
-      font-size: 1.1rem;
+      font-size: 1rem;
       font-weight: bold;
       cursor: pointer;
       text-align: center;
-      transition: opacity 0.2s, transform 0.1s;
-    }
-    .btn-action:active {
-      transform: scale(0.98);
-      opacity: 0.9;
     }
 
     .btn-retake {
@@ -272,3 +266,283 @@
       box-shadow: 0 0 15px rgba(0, 255, 0, 0.5);
     }
   </style>
+</head>
+<body>
+
+  <div class="tutorial-overlay" id="tutorialOverlay">
+    <div class="tutorial-box">
+      <div class="hand-icon">👆</div>
+      <h2>TOQUE NA TELA</h2>
+      <p>Para abrir a câmera em Tela Cheia</p>
+    </div>
+  </div>
+
+  <main class="camera-container" id="mainContainer">
+
+    <div class="toast-message" id="toastMessage">✨ Foto enviada com sucesso!</div>
+
+    <div class="viewport-box" id="viewportBox">
+      <video id="videoFeed" autoplay playsinline muted></video>
+      <canvas id="photoCanvas" style="display: none;"></canvas>
+      <img id="frameOverlay" src="" alt="Moldura do Evento" style="display: none;">
+      <img id="photoPreview" src="" alt="Sua Foto" style="display: none;">
+    </div>
+
+    <div class="controls-bar" id="controlsCapture">
+      <div class="controls-top-row">
+        <div class="brand-logo">DigiArt Ar</div>
+
+        <button class="btn-flip" id="btnFlip" title="Inverter Câmera">
+          <svg viewBox="0 0 24 24">
+            <path d="M19 8l-4 4h3c0 3.31-2.69 6-6 6-1.01 0-1.97-.25-2.8-.7l-1.46 1.46C9.01 19.54 10.43 20 12 20c4.42 0 8-3.58 8-8h3l-4-4zM6 12c0-3.31 2.69-6 6-6 1.01 0 1.97.25 2.8.7l1.46-1.46C14.99 4.46 13.57 4 12 4c-4.42 0-8 3.58-8 8H1l4 4 4-4H6z"/>
+          </svg>
+        </button>
+      </div>
+
+      <div class="controls-bottom-row">
+        <button class="btn-capture" id="btnCapture" title="Tirar Foto">
+          <div class="inner-circle"></div>
+        </button>
+      </div>
+    </div>
+
+    <div class="controls-review" id="controlsReview" style="display: none;">
+      <button class="btn-action btn-retake" id="btnRetake">Refazer</button>
+      <button class="btn-action btn-send" id="btnSend">Enviar Foto</button>
+    </div>
+  </main>
+
+  <script type="module">
+    import { initializeApp } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-app.js";
+    import { getFirestore, collection, addDoc, doc, getDoc, serverTimestamp } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-firestore.js";
+
+    const firebaseConfig = {
+      apiKey: "AIzaSyB9cempkBujGI2cOzpNLmMWzYEp1nrOogI",
+      authDomain: "estacao-de-fotos.firebaseapp.com",
+      projectId: "estacao-de-fotos",
+      storageBucket: "estacao-de-fotos.firebasestorage.app",
+      messagingSenderId: "227871054513",
+      appId: "1:227871054513:web:8588dfa40f8a9da6166090",
+      measurementId: "G-3CTFM7HHZQ"
+    };
+
+    const app = initializeApp(firebaseConfig);
+    const db = getFirestore(app);
+
+    const videoFeed = document.getElementById("videoFeed");
+    const photoCanvas = document.getElementById("photoCanvas");
+    const frameOverlay = document.getElementById("frameOverlay");
+    const photoPreview = document.getElementById("photoPreview");
+    const toastMessage = document.getElementById("toastMessage");
+    const viewportBox = document.getElementById("viewportBox");
+
+    const btnCapture = document.getElementById("btnCapture");
+    const btnFlip = document.getElementById("btnFlip");
+    const btnRetake = document.getElementById("btnRetake");
+    const btnSend = document.getElementById("btnSend");
+
+    const controlsCapture = document.getElementById("controlsCapture");
+    const controlsReview = document.getElementById("controlsReview");
+
+    const tutorialOverlay = document.getElementById("tutorialOverlay");
+    const mainContainer = document.getElementById("mainContainer");
+
+    let currentStream = null;
+    let facingMode = "environment"; 
+    let capturedDataUrl = null;
+    let capturedOriginalUrl = null;
+    let currentEventId = null;
+    let toastTimeout = null;
+
+    let initialPinchDistance = null;
+    let baseZoomScale = 1;
+    let currentZoomScale = 1;
+    const MIN_ZOOM = 1;
+    const MAX_ZOOM = 3.5;
+
+    viewportBox.addEventListener("touchstart", (e) => {
+      if (e.touches.length === 2) {
+        const dx = e.touches[0].clientX - e.touches[1].clientX;
+        const dy = e.touches[0].clientY - e.touches[1].clientY;
+        initialPinchDistance = Math.sqrt(dx * dx + dy * dy);
+        baseZoomScale = currentZoomScale;
+      }
+    });
+
+    viewportBox.addEventListener("touchmove", (e) => {
+      if (e.touches.length === 2 && initialPinchDistance) {
+        e.preventDefault();
+
+        const dx = e.touches[0].clientX - e.touches[1].clientX;
+        const dy = e.touches[0].clientY - e.touches[1].clientY;
+        const currentDistance = Math.sqrt(dx * dx + dy * dy);
+
+        const scaleFactor = (currentDistance / initialPinchDistance - 1) * 0.5 + 1;
+        let newScale = baseZoomScale * scaleFactor;
+        
+        newScale = Math.max(MIN_ZOOM, Math.min(MAX_ZOOM, newScale));
+
+        currentZoomScale = newScale;
+        videoFeed.style.transform = `scale(${currentZoomScale})`;
+      }
+    });
+
+    viewportBox.addEventListener("touchend", (e) => {
+      if (e.touches.length < 2) {
+        initialPinchDistance = null;
+      }
+    });
+
+    tutorialOverlay.addEventListener("click", () => {
+      if (mainContainer.requestFullscreen) {
+        mainContainer.requestFullscreen().catch(() => {});
+      } else if (mainContainer.webkitRequestFullscreen) {
+        mainContainer.webkitRequestFullscreen();
+      }
+      tutorialOverlay.style.display = "none";
+    });
+
+    function obterIdEventoUrl() {
+      const params = new URLSearchParams(window.location.search);
+      return params.get("evento") || "festa-teste";
+    }
+
+    async function iniciarCamera() {
+      if (currentStream) {
+        currentStream.getTracks().forEach(track => track.stop());
+      }
+
+      currentZoomScale = 1;
+      videoFeed.style.transform = `scale(1)`;
+
+      try {
+        currentStream = await navigator.mediaDevices.getUserMedia({
+          video: { facingMode: facingMode },
+          audio: false
+        });
+        videoFeed.srcObject = currentStream;
+      } catch (err) {
+        try {
+          currentStream = await navigator.mediaDevices.getUserMedia({ video: true, audio: false });
+          videoFeed.srcObject = currentStream;
+        } catch (e) {
+          alert("Permissão de câmera negada ou indisponível. Verifique os Ajustes do seu navegador/celular.");
+        }
+      }
+    }
+
+    btnFlip.addEventListener("click", () => {
+      facingMode = (facingMode === "environment") ? "user" : "environment";
+      iniciarCamera();
+    });
+
+    async function carregarMolduraEvento() {
+      currentEventId = obterIdEventoUrl();
+      try {
+        const eventRef = doc(db, "eventos", currentEventId);
+        const eventSnap = await getDoc(eventRef);
+
+        if (eventSnap.exists() && eventSnap.data().molduraUrl) {
+          frameOverlay.src = eventSnap.data().molduraUrl;
+          frameOverlay.style.display = "block";
+        }
+      } catch (err) {
+        console.log("Sem moldura personalizada encontrada.");
+      }
+    }
+
+    btnCapture.addEventListener("click", () => {
+      const width = frameOverlay.naturalWidth || videoFeed.videoWidth || 1080;
+      const height = frameOverlay.naturalHeight || videoFeed.videoHeight || 1920;
+
+      photoCanvas.width = width;
+      photoCanvas.height = height;
+
+      const ctx = photoCanvas.getContext("2d");
+      
+      ctx.fillStyle = "#000000";
+      ctx.fillRect(0, 0, width, height);
+
+      if (facingMode === "user") {
+        ctx.translate(width, 0);
+        ctx.scale(-1, 1);
+      }
+
+      const vWidth = videoFeed.videoWidth || width;
+      const vHeight = videoFeed.videoHeight || height;
+      const scale = Math.max(width / vWidth, height / vHeight) * currentZoomScale;
+      const x = (width - vWidth * scale) / 2;
+      const y = (height - vHeight * scale) / 2;
+
+      ctx.drawImage(videoFeed, x, y, vWidth * scale, vHeight * scale);
+
+      ctx.setTransform(1, 0, 0, 1, 0, 0);
+
+      capturedOriginalUrl = photoCanvas.toDataURL("image/jpeg", 0.85);
+
+      if (frameOverlay.src && frameOverlay.style.display !== "none") {
+        ctx.drawImage(frameOverlay, 0, 0, width, height);
+      }
+
+      capturedDataUrl = photoCanvas.toDataURL("image/jpeg", 0.85);
+      photoPreview.src = capturedDataUrl;
+      photoPreview.style.display = "block";
+      videoFeed.style.display = "none";
+      frameOverlay.style.display = "none";
+
+      controlsCapture.style.display = "none";
+      controlsReview.style.display = "flex";
+    });
+
+    btnRetake.addEventListener("click", () => {
+      capturedDataUrl = null;
+      capturedOriginalUrl = null;
+      photoPreview.style.display = "none";
+      videoFeed.style.display = "block";
+      if (frameOverlay.src) frameOverlay.style.display = "block";
+
+      controlsCapture.style.display = "flex";
+      controlsReview.style.display = "none";
+    });
+
+    function mostrarAvisoSucesso() {
+      clearTimeout(toastTimeout);
+      toastMessage.classList.add("show");
+      toastTimeout = setTimeout(() => {
+        toastMessage.classList.remove("show");
+      }, 2500);
+    }
+
+    btnSend.addEventListener("click", () => {
+      if (!capturedDataUrl) return;
+
+      const fotoParaEnviar = capturedDataUrl;
+      const fotoOriginalParaEnviar = capturedOriginalUrl;
+
+      photoPreview.style.display = "none";
+      videoFeed.style.display = "block";
+      if (frameOverlay.src) frameOverlay.style.display = "block";
+      controlsCapture.style.display = "flex";
+      controlsReview.style.display = "none";
+      capturedDataUrl = null;
+      capturedOriginalUrl = null;
+
+      mostrarAvisoSucesso();
+
+      addDoc(collection(db, "eventos", currentEventId, "fotos"), {
+        fotoUrl: fotoParaEnviar,
+        fotoOriginalUrl: fotoOriginalParaEnviar,
+        status: "pendente",
+        criadoEm: serverTimestamp()
+      }).catch(err => {
+        console.error("Erro ao enviar foto em segundo plano:", err);
+      });
+    });
+
+    window.addEventListener("DOMContentLoaded", () => {
+      iniciarCamera();
+      carregarMolduraEvento();
+    });
+  </script>
+</body>
+</html>
