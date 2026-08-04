@@ -549,7 +549,7 @@
 
       <div class="form-group">
         <label for="inputFrameFile">Moldura do Evento (Imagem PNG):</label>
-        <input type="file" id="inputFrameFile" accept="image/png">
+        <input type="file" id="inputFrameFile" accept="image/png, image/jpeg">
         <span class="frame-status" id="frameStatusText">Nenhuma imagem selecionada.</span>
       </div>
 
@@ -779,7 +779,7 @@
       if (!file) return;
 
       frameStatusText.style.color = "#00FF00";
-      frameStatusText.innerText = "⏳ Otimizando moldura automaticamente...";
+      frameStatusText.innerText = "⏳ Compactando moldura pesada...";
 
       const reader = new FileReader();
       reader.onload = function(event) {
@@ -789,8 +789,8 @@
           let width = img.width;
           let height = img.height;
 
-          // Limita dimensões máximas preservando qualidade e evitando estouro de 1MB do Firestore
-          const MAX_DIMENSION = 1200;
+          // Redimensionamento agressivo para garantir que o base64 fique abaixo do teto de 1MB do Firestore
+          const MAX_DIMENSION = 800; 
           if (width > height && width > MAX_DIMENSION) {
             height *= MAX_DIMENSION / width;
             width = MAX_DIMENSION;
@@ -805,9 +805,11 @@
           const ctx = canvas.getContext('2d');
           ctx.drawImage(img, 0, 0, width, height);
 
-          // Salva compactado em PNG otimizado sem perder qualidade visual
-          molduraBase64Otimizada = canvas.toDataURL('image/png');
-          frameStatusText.innerText = `✅ Moldura pronta e otimizada: ${file.name}`;
+          // Qualidade 82% em JPEG garante um arquivo extremamente leve para o banco de dados
+          molduraBase64Otimizada = canvas.toDataURL('image/jpeg', 0.82);
+          
+          const tamanhoKB = Math.round((molduraBase64Otimizada.length * 3) / 4 / 1024);
+          frameStatusText.innerText = `✅ Moldura pronta (${tamanhoKB} KB - Otimizada e segura!)`;
         };
         img.src = event.target.result;
       };
@@ -1101,7 +1103,7 @@
         monitorarFotos();
       } catch (erro) {
         console.error("Erro ao iniciar evento:", erro);
-        alert("Erro ao iniciar evento. Verifique a conexão.");
+        alert("Erro ao iniciar evento. Verifique se o arquivo da moldura não está muito pesado ou se a conexão está ativa.");
       } finally {
         btnStartEvent.innerText = "INICIAR NOVO EVENTO";
         btnStartEvent.disabled = false;
