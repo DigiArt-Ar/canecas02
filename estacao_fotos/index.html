@@ -618,7 +618,7 @@
           <div class="paper-config-box">
             <label for="paperSizeSelect">Formato do Papel:</label>
             <select id="paperSizeSelect">
-              <option value="A7">Papel A7 (7x10cm)</option>
+              <option value="A7">Papel A7 (7.4x10.5cm)</option>
               <option value="A6" selected>Papel A6 (10x15cm)</option>
             </select>
           </div>
@@ -789,7 +789,6 @@
           let width = img.width;
           let height = img.height;
 
-          // Redimensionamento seguro para garantir que caiba em PNG no Firebase (< 1MB)
           const MAX_DIMENSION = 900; 
           if (width > height && width > MAX_DIMENSION) {
             height *= MAX_DIMENSION / width;
@@ -803,10 +802,9 @@
           canvas.height = height;
 
           const ctx = canvas.getContext('2d');
-          ctx.clearRect(0, 0, width, height); // Garante transparência limpa
+          ctx.clearRect(0, 0, width, height);
           ctx.drawImage(img, 0, 0, width, height);
 
-          // Volta a ser PNG para manter o canal alpha (transparência perfeita na câmera)
           molduraBase64Otimizada = canvas.toDataURL('image/png');
           
           const tamanhoKB = Math.round((molduraBase64Otimizada.length * 3) / 4 / 1024);
@@ -1298,15 +1296,15 @@
       let tamanhoPage = "10cm 15cm";
       let larguraPapel = "10cm";
       let alturaPapel = "15cm";
-      let imgWidth = "9.3cm";
-      let imgHeight = "13.8cm";
+      let imgWidth = "9.4cm";  
+      let imgHeight = "14.4cm";
 
       if (formato === "A7") {
-        tamanhoPage = "7cm 10cm";
-        larguraPapel = "7cm";
-        alturaPapel = "10cm";
-        imgWidth = "6.4cm";
-        imgHeight = "9.2cm";
+        tamanhoPage = "7.4cm 10.5cm";
+        larguraPapel = "7.4cm";
+        alturaPapel = "10.5cm";
+        imgWidth = "6.8cm";  
+        imgHeight = "9.9cm"; 
       }
 
       let iframe = document.getElementById("printFrame");
@@ -1324,7 +1322,7 @@
             <style>
               @page {
                 size: ${tamanhoPage};
-                margin: 0mm;
+                margin: 0;
               }
               * {
                 box-sizing: border-box;
@@ -1333,6 +1331,7 @@
               }
               body {
                 margin: 0;
+                padding: 0;
                 width: ${larguraPapel};
                 height: ${alturaPapel};
                 display: flex;
