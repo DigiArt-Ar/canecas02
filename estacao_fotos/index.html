@@ -548,7 +548,7 @@
       </div>
 
       <div class="form-group">
-        <label for="inputFrameFile">Moldura do Evento (Imagem PNG):</label>
+        <label for="inputFrameFile">Moldura do Evento (Imagem PNG com Transparência):</label>
         <input type="file" id="inputFrameFile" accept="image/png, image/jpeg">
         <span class="frame-status" id="frameStatusText">Nenhuma imagem selecionada.</span>
       </div>
@@ -779,7 +779,7 @@
       if (!file) return;
 
       frameStatusText.style.color = "#00FF00";
-      frameStatusText.innerText = "⏳ Compactando moldura pesada...";
+      frameStatusText.innerText = "⏳ Redimensionando moldura (mantendo transparência)...";
 
       const reader = new FileReader();
       reader.onload = function(event) {
@@ -789,8 +789,8 @@
           let width = img.width;
           let height = img.height;
 
-          // Redimensionamento agressivo para garantir que o base64 fique abaixo do teto de 1MB do Firestore
-          const MAX_DIMENSION = 800; 
+          // Redimensionamento seguro para garantir que caiba em PNG no Firebase (< 1MB)
+          const MAX_DIMENSION = 900; 
           if (width > height && width > MAX_DIMENSION) {
             height *= MAX_DIMENSION / width;
             width = MAX_DIMENSION;
@@ -803,13 +803,14 @@
           canvas.height = height;
 
           const ctx = canvas.getContext('2d');
+          ctx.clearRect(0, 0, width, height); // Garante transparência limpa
           ctx.drawImage(img, 0, 0, width, height);
 
-          // Qualidade 82% em JPEG garante um arquivo extremamente leve para o banco de dados
-          molduraBase64Otimizada = canvas.toDataURL('image/jpeg', 0.82);
+          // Volta a ser PNG para manter o canal alpha (transparência perfeita na câmera)
+          molduraBase64Otimizada = canvas.toDataURL('image/png');
           
           const tamanhoKB = Math.round((molduraBase64Otimizada.length * 3) / 4 / 1024);
-          frameStatusText.innerText = `✅ Moldura pronta (${tamanhoKB} KB - Otimizada e segura!)`;
+          frameStatusText.innerText = `✅ Moldura PNG pronta (${tamanhoKB} KB - Transparência ativa!)`;
         };
         img.src = event.target.result;
       };
