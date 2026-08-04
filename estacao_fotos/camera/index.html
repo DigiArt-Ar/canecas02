@@ -123,32 +123,27 @@
       justify-content: center;
     }
 
-    #videoFeed, #photoPreview {
+    #videoFeed, #photoPreview, #frameOverlay {
       width: 100%;
       height: 100%;
-      object-fit: cover;
+      object-fit: contain;
       position: absolute;
       top: 0;
       left: 0;
     }
 
-    #frameOverlay {
-      width: 100%;
-      height: 100%;
-      object-fit: fill; /* Garante que a moldura estique proporcionalmente preenchendo a tela do app */
-      position: absolute;
-      top: 0;
-      left: 0;
-      pointer-events: none;
-      z-index: 10;
-    }
-
+    /* Trava o vídeo dentro do container com overflow escondido para manter as bordas */
     #videoFeed {
       transform-origin: center center;
       will-change: transform;
     }
 
-    /* BARRA INFERIOR */
+    #frameOverlay {
+      pointer-events: none;
+      z-index: 10;
+    }
+
+    /* BARRA INFERIOR EM FORMATO DE TRIÂNGULO */
     .controls-bar {
       width: 100%;
       display: flex;
@@ -160,6 +155,7 @@
       padding: 10px 25px max(15px, env(safe-area-inset-bottom)) 25px;
     }
 
+    /* Linha Superior: DigiArt Ar na Esquerda / Inverter na Direita */
     .controls-top-row {
       width: 100%;
       display: flex;
@@ -196,6 +192,7 @@
       fill: #00FF00;
     }
 
+    /* Linha Inferior: Botão Grande de Tirar Foto no Centro */
     .controls-bottom-row {
       width: 100%;
       display: flex;
@@ -354,6 +351,7 @@
     let currentEventId = null;
     let toastTimeout = null;
 
+    // --- Lógica de Zoom de Pinça Suavizado e Contido ---
     let initialPinchDistance = null;
     let baseZoomScale = 1;
     let currentZoomScale = 1;
@@ -377,12 +375,14 @@
         const dy = e.touches[0].clientY - e.touches[1].clientY;
         const currentDistance = Math.sqrt(dx * dx + dy * dy);
 
+        // Suaviza a variação da escala dividindo a sensibilidade pela metade
         const scaleFactor = (currentDistance / initialPinchDistance - 1) * 0.5 + 1;
         let newScale = baseZoomScale * scaleFactor;
         
         newScale = Math.max(MIN_ZOOM, Math.min(MAX_ZOOM, newScale));
 
         currentZoomScale = newScale;
+        // Usamos scale() combinado com object-fit dentro do viewport cortado
         videoFeed.style.transform = `scale(${currentZoomScale})`;
       }
     });
@@ -392,6 +392,7 @@
         initialPinchDistance = null;
       }
     });
+    // --- Fim da Lógica de Zoom ---
 
     tutorialOverlay.addEventListener("click", () => {
       if (mainContainer.requestFullscreen) {
@@ -426,7 +427,7 @@
           currentStream = await navigator.mediaDevices.getUserMedia({ video: true, audio: false });
           videoFeed.srcObject = currentStream;
         } catch (e) {
-          alert("Permissão de câmera negada ou indisponível. Verifique os Ajustes do seu navegador/celular.");
+          alert("Permita o acesso à câmera no seu navegador.");
         }
       }
     }
@@ -488,7 +489,6 @@
       photoPreview.src = capturedDataUrl;
       photoPreview.style.display = "block";
       videoFeed.style.display = "none";
-      frameOverlay.style.display = "none";
 
       controlsCapture.style.display = "none";
       controlsReview.style.display = "flex";
@@ -499,7 +499,6 @@
       capturedOriginalUrl = null;
       photoPreview.style.display = "none";
       videoFeed.style.display = "block";
-      if (frameOverlay.src) frameOverlay.style.display = "block";
 
       controlsCapture.style.display = "flex";
       controlsReview.style.display = "none";
@@ -521,7 +520,6 @@
 
       photoPreview.style.display = "none";
       videoFeed.style.display = "block";
-      if (frameOverlay.src) frameOverlay.style.display = "block";
       controlsCapture.style.display = "flex";
       controlsReview.style.display = "none";
       capturedDataUrl = null;
@@ -545,4 +543,4 @@
     });
   </script>
 </body>
-</html>
+  </html>
