@@ -1240,7 +1240,7 @@
 
       let gridCols = formato === "A4_4" ? "repeat(2, 1fr)" : "repeat(2, 1fr)";
       let gridRows = formato === "A4_4" ? "repeat(2, 1fr)" : "repeat(3, 1fr)";
-      let gapSize = formato === "A4_4" ? "8mm" : "8px";
+      let gapSize = formato === "A4_4" ? "10mm" : "8px";
 
       let htmlImgs = lote.map((f, i) => `<div style="background:#000; border:1px dashed #444; display:flex; align-items:center; justify-content:center; overflow:hidden; border-radius:4px;"><img src="${f.fotoUrl}" style="max-width:100%; max-height:100%; object-fit:contain;"></div>`).join('');
       
@@ -1430,7 +1430,7 @@
     function imprimirLoteA4(lote, formato) {
       let gridCols = "repeat(2, 1fr)";
       let gridRows = formato === "A4_4" ? "repeat(2, 1fr)" : "repeat(3, 1fr)";
-      let gapSize = formato === "A4_4" ? "8mm" : "5mm";
+      let gapSize = formato === "A4_4" ? "10mm" : "5mm";
 
       let imgTags = lote.map(f => `<div class="cell"><img src="${f.fotoUrl}"></div>`).join('');
 
