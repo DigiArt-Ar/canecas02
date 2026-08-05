@@ -620,8 +620,8 @@
             <select id="paperSizeSelect">
               <option value="A7">Papel A7 (7.4x10.5cm)</option>
               <option value="A6" selected>Papel A6 (10x15cm)</option>
-              <option value="A4_4">Folha A4 (4 fotos)</option>
-              <option value="A4_8">Folha A4 (8 fotos paisagem)</option>
+              <option value="A4_4">Folha A4 (4 fotos A6)</option>
+              <option value="A4_8">Folha A4 (8 fotos A7)</option>
             </select>
           </div>
         </div>
@@ -1242,8 +1242,7 @@
       let gridRows = formato === "A4_8" ? "repeat(4, 1fr)" : "repeat(2, 1fr)";
 
       let htmlImgs = lote.map((f, i) => {
-        let styleTransform = formato === "A4_8" ? "transform: rotate(90deg);" : "";
-        return `<div style="background:#000; border:1px dashed #444; display:flex; align-items:center; justify-content:center; overflow:hidden; border-radius:4px;"><img src="${f.fotoUrl}" style="max-width:100%; max-height:100%; object-fit:contain; ${styleTransform}"></div>`;
+        return `<div style="background:#000; border:1px dashed #444; display:flex; align-items:center; justify-content:center; overflow:hidden; border-radius:4px;"><img src="${f.fotoUrl}" style="width:100%; height:100%; object-fit:contain;"></div>`;
       }).join('');
       
       for (let i = lote.length; i < qtd; i++) {
@@ -1251,7 +1250,7 @@
       }
 
       highlightViewer.innerHTML = `
-        <div style="width:100%; height:100%; display:grid; grid-template-columns:${gridCols}; grid-template-rows:${gridRows}; gap:10mm; align-content:center; justify-content:center; padding:10px; background:#1a1a1a; border-radius:8px;">
+        <div style="width:100%; height:100%; display:grid; grid-template-columns:${gridCols}; grid-template-rows:${gridRows}; gap:4mm; align-content:center; justify-content:center; padding:10px; background:#1a1a1a; border-radius:8px;">
           ${htmlImgs}
         </div>
       `;
@@ -1371,18 +1370,12 @@
     });
 
     function imprimirDireto(url, formato) {
-      let tamanhoPage = "10cm 15cm";
       let larguraPapel = "10cm";
       let alturaPapel = "15cm";
-      let imgWidth = "9.6cm";  
-      let imgHeight = "14.6cm";
 
       if (formato === "A7") {
-        tamanhoPage = "7.4cm 10.5cm";
         larguraPapel = "7.4cm";
         alturaPapel = "10.5cm";
-        imgWidth = "6.8cm";  
-        imgHeight = "9.9cm"; 
       }
 
       let iframe = document.getElementById("printFrame");
@@ -1399,7 +1392,7 @@
           <head>
             <style>
               @page {
-                size: ${tamanhoPage};
+                size: ${larguraPapel} ${alturaPapel};
                 margin: 0;
               }
               * {
@@ -1419,9 +1412,10 @@
                 overflow: hidden;
               }
               img {
-                width: ${imgWidth};
-                height: ${imgHeight};
+                width: 100%;
+                height: 100%;
                 object-fit: contain;
+                display: block;
               }
             </style>
           </head>
@@ -1467,7 +1461,7 @@
                 display: grid;
                 grid-template-columns: repeat(2, 10cm);
                 grid-template-rows: repeat(2, 15cm);
-                gap: 10mm;
+                gap: 5mm;
                 justify-content: center;
                 align-content: center;
               }
@@ -1480,9 +1474,10 @@
                 overflow: hidden;
               }
               img {
-                max-width: 100%;
-                max-height: 100%;
+                width: 100%;
+                height: 100%;
                 object-fit: contain;
+                display: block;
               }
             </style>
           </head>
@@ -1498,7 +1493,7 @@
     }
 
     function imprimirLoteA4_8(lote) {
-      let imgTags = lote.map(f => `<div class="cell"><img src="${f.fotoUrl}" style="transform: rotate(90deg);"></div>`).join('');
+      let imgTags = lote.map(f => `<div class="cell"><img src="${f.fotoUrl}"></div>`).join('');
 
       let iframe = document.getElementById("printFrame");
       if (!iframe) {
@@ -1529,24 +1524,25 @@
                 height: 297mm;
                 background-color: #ffffff;
                 display: grid;
-                grid-template-columns: repeat(2, 10cm);
-                grid-template-rows: repeat(4, 7.5cm);
-                gap: 10mm;
+                grid-template-columns: repeat(2, 7.4cm);
+                grid-template-rows: repeat(4, 10.5cm);
+                gap: 4mm;
                 justify-content: center;
                 align-content: center;
               }
               .cell {
-                width: 10cm;
-                height: 7.5cm;
+                width: 7.4cm;
+                height: 10.5cm;
                 display: flex;
                 justify-content: center;
                 align-items: center;
                 overflow: hidden;
               }
               img {
-                max-width: 100%;
-                max-height: 100%;
+                width: 100%;
+                height: 100%;
                 object-fit: contain;
+                display: block;
               }
             </style>
           </head>
