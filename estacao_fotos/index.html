@@ -620,7 +620,7 @@
             <select id="paperSizeSelect">
               <option value="A7">Papel A7 (7.4x10.5cm)</option>
               <option value="A6" selected>Papel A6 (10x15cm)</option>
-              <option value="A4_8">Folha A4 (8 fotos A7 - Paisagem)</option>
+              <option value="A4_8">Folha A4 (4 fotos 10x15 - Retrato)</option>
             </select>
           </div>
         </div>
@@ -1227,7 +1227,7 @@
     });
 
     function atualizarVisualizacaoA4(formato) {
-      const qtd = 8;
+      const qtd = 4;
       const lote = listaFotosPendentes.slice(0, qtd);
 
       if (lote.length === 0) {
@@ -1237,17 +1237,17 @@
         return;
       }
 
-      let gridCols = "repeat(4, 1fr)";
+      let gridCols = "repeat(2, 1fr)";
       let gridRows = "repeat(2, 1fr)";
 
-      let htmlImgs = lote.map((f, i) => `<div style="background:#000; border:1px dashed #444; display:flex; align-items:center; justify-content:center; overflow:hidden; border-radius:4px;"><img src="${f.fotoUrl}" style="max-width:100%; max-height:100%; object-fit:contain; transform: rotate(90deg);"></div>`).join('');
+      let htmlImgs = lote.map((f, i) => `<div style="background:#000; border:1px dashed #444; display:flex; align-items:center; justify-content:center; overflow:hidden; border-radius:4px;"><img src="${f.fotoUrl}" style="max-width:100%; max-height:100%; object-fit:contain;"></div>`).join('');
       
       for (let i = lote.length; i < qtd; i++) {
         htmlImgs += `<div style="background:#111; border:1px dashed #333; display:flex; align-items:center; justify-content:center; color:#555; font-size:0.75rem; border-radius:4px;">Aguardando...</div>`;
       }
 
       highlightViewer.innerHTML = `
-        <div style="width:100%; height:100%; display:grid; grid-template-columns:${gridCols}; grid-template-rows:${gridRows}; gap:8px; padding:10px; background:#1a1a1a; border-radius:8px;">
+        <div style="width:100%; height:100%; display:grid; grid-template-columns:${gridCols}; grid-template-rows:${gridRows}; gap:10px; padding:10px; background:#1a1a1a; border-radius:8px;">
           ${htmlImgs}
         </div>
       `;
@@ -1282,7 +1282,7 @@
 
       if (formatoEscolhido.startsWith("A4")) {
         const lote = fotoSelecionadaAtual.fotosLote;
-        const qtd = 8;
+        const qtd = 4;
         if (lote.length < qtd) return;
 
         imprimirLoteA4(lote);
@@ -1457,9 +1457,10 @@
                 height: 277mm;
                 background-color: #ffffff;
                 display: grid;
-                grid-template-columns: repeat(4, 1fr);
+                grid-template-columns: repeat(2, 1fr);
                 grid-template-rows: repeat(2, 1fr);
-                gap: 5mm;
+                row-gap: 10mm;
+                column-gap: 5mm;
                 justify-items: center;
                 align-items: center;
               }
@@ -1475,7 +1476,6 @@
                 max-width: 100%;
                 max-height: 100%;
                 object-fit: contain;
-                transform: rotate(90deg);
               }
             </style>
           </head>
