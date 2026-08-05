@@ -1240,22 +1240,22 @@
 
       let gridCols = formato === "A4_4" ? "repeat(2, 1fr)" : "repeat(2, 1fr)";
       let gridRows = formato === "A4_4" ? "repeat(2, 1fr)" : "repeat(3, 1fr)";
+      let gapSize = formato === "A4_4" ? "8mm" : "8px";
 
       let htmlImgs = lote.map((f, i) => `<div style="background:#000; border:1px dashed #444; display:flex; align-items:center; justify-content:center; overflow:hidden; border-radius:4px;"><img src="${f.fotoUrl}" style="max-width:100%; max-height:100%; object-fit:contain;"></div>`).join('');
       
-      // Se faltarem fotos para completar o grid, preenche com espaços vazios
       for (let i = lote.length; i < qtd; i++) {
         htmlImgs += `<div style="background:#111; border:1px dashed #333; display:flex; align-items:center; justify-content:center; color:#555; font-size:0.75rem; border-radius:4px;">Aguardando foto...</div>`;
       }
 
       highlightViewer.innerHTML = `
-        <div style="width:100%; height:100%; display:grid; grid-template-columns:${gridCols}; grid-template-rows:${gridRows}; gap:8px; padding:10px; background:#1a1a1a; border-radius:8px;">
+        <div style="width:100%; height:100%; display:grid; grid-template-columns:${gridCols}; grid-template-rows:${gridRows}; gap:${gapSize}; padding:10px; background:#1a1a1a; border-radius:8px;">
           ${htmlImgs}
         </div>
       `;
 
       fotoSelecionadaAtual = { tipo: "A4", formato: formato, fotosLote: lote };
-      btnActionPrint.disabled = lote.length < qtd; // Habilita apenas se o lote estiver completo
+      btnActionPrint.disabled = lote.length < qtd;
       btnActionDelete.disabled = true;
     }
 
@@ -1430,6 +1430,7 @@
     function imprimirLoteA4(lote, formato) {
       let gridCols = "repeat(2, 1fr)";
       let gridRows = formato === "A4_4" ? "repeat(2, 1fr)" : "repeat(3, 1fr)";
+      let gapSize = formato === "A4_4" ? "8mm" : "5mm";
 
       let imgTags = lote.map(f => `<div class="cell"><img src="${f.fotoUrl}"></div>`).join('');
 
@@ -1464,7 +1465,7 @@
                 display: grid;
                 grid-template-columns: ${gridCols};
                 grid-template-rows: ${gridRows};
-                gap: 5mm;
+                gap: ${gapSize};
                 justify-items: center;
                 align-items: center;
               }
