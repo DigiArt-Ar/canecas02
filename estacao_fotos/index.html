@@ -618,10 +618,9 @@
           <div class="paper-config-box">
             <label for="paperSizeSelect">Formato do Papel:</label>
             <select id="paperSizeSelect">
-              <option value="A7">Papel A7 (10.5x7.4cm)</option>
-              <option value="A6" selected>Papel A6 (15x10cm)</option>
-              <option value="A4_4">Folha A4 (4 fotos A6)</option>
-              <option value="A4_8">Folha A4 (8 fotos A7)</option>
+              <option value="A7">Papel A7 (7.4x10.5cm)</option>
+              <option value="A6" selected>Papel A6 (10x15cm)</option>
+              <option value="A4_4">Folha A4 (4 fotos 10x15cm)</option>
             </select>
           </div>
         </div>
@@ -1113,7 +1112,7 @@
 
     btnFinishEvent.addEventListener("click", async () => {
       const salvou = confirm("Você já baixou e salvou todos os arquivos (fotos) deste evento antes de prosseguir?");
-      if (!salvul) {
+      if (!salvou) {
         alert("Por favor, faça o download de todas as fotos antes de finalizar o evento.");
         return;
       }
@@ -1228,7 +1227,7 @@
     });
 
     function atualizarVisualizacaoA4(formato) {
-      const qtd = formato === "A4_8" ? 8 : 4;
+      const qtd = 4;
       const lote = listaFotosPendentes.slice(0, qtd);
 
       if (lote.length === 0) {
@@ -1238,19 +1237,17 @@
         return;
       }
 
-      let gridCols = formato === "A4_8" ? "repeat(2, 10.5cm)" : "repeat(2, 15cm)";
-      let gridRows = formato === "A4_8" ? "repeat(4, 7.4cm)" : "repeat(2, 10cm)";
+      let gridCols = "repeat(2, 1fr)";
+      let gridRows = "repeat(2, 1fr)";
 
-      let htmlImgs = lote.map((f) => {
-        return `<div style="background:#000; border:1px dashed #444; display:flex; align-items:center; justify-content:center; overflow:hidden; border-radius:4px;"><img src="${f.fotoUrl}" style="width:100%; height:100%; object-fit:contain;"></div>`;
-      }).join('');
+      let htmlImgs = lote.map((f, i) => `<div style="background:#000; border:1px dashed #444; display:flex; align-items:center; justify-content:center; overflow:hidden; border-radius:4px;"><img src="${f.fotoUrl}" style="max-width:100%; max-height:100%; object-fit:contain;"></div>`).join('');
       
       for (let i = lote.length; i < qtd; i++) {
         htmlImgs += `<div style="background:#111; border:1px dashed #333; display:flex; align-items:center; justify-content:center; color:#555; font-size:0.75rem; border-radius:4px;">Aguardando...</div>`;
       }
 
       highlightViewer.innerHTML = `
-        <div style="width:100%; height:100%; display:grid; grid-template-columns:${gridCols}; grid-template-rows:${gridRows}; gap:0; align-content:center; justify-content:center; background:#ffffff; border-radius:4px;">
+        <div style="width:100%; height:100%; display:grid; grid-template-columns:${gridCols}; grid-template-rows:${gridRows}; gap:10mm; align-content:center; justify-content:center; padding:10px; background:#1a1a1a; border-radius:8px;">
           ${htmlImgs}
         </div>
       `;
@@ -1285,14 +1282,10 @@
 
       if (formatoEscolhido.startsWith("A4")) {
         const lote = fotoSelecionadaAtual.fotosLote;
-        const qtd = formatoEscolhido === "A4_8" ? 8 : 4;
+        const qtd = 4;
         if (lote.length < qtd) return;
 
-        if (formatoEscolhido === "A4_8") {
-          imprimirLoteA4_8(lote);
-        } else {
-          imprimirLoteA4(lote);
-        }
+        imprimirLoteA4(lote);
 
         totalImpressas += lote.length;
         countPrinted.innerText = totalImpressas;
@@ -1369,14 +1362,19 @@
       }
     });
 
-    // IMPRESSÃO INDIVIDUAL MANTIDA EXATAMENTE COMO ESTAVA ORIGINALMENTE (SEM MEXER NO A6 E A7)
     function imprimirDireto(url, formato) {
-      let larguraPapel = "15cm";
-      let alturaPapel = "10cm";
+      let tamanhoPage = "10cm 15cm";
+      let larguraPapel = "10cm";
+      let alturaPapel = "15cm";
+      let imgWidth = "9.6cm";  
+      let imgHeight = "14.6cm";
 
       if (formato === "A7") {
-        larguraPapel = "10.5cm";
-        alturaPapel = "7.4cm";
+        tamanhoPage = "7.4cm 10.5cm";
+        larguraPapel = "7.4cm";
+        alturaPapel = "10.5cm";
+        imgWidth = "6.8cm";  
+        imgHeight = "9.9cm"; 
       }
 
       let iframe = document.getElementById("printFrame");
@@ -1393,7 +1391,7 @@
           <head>
             <style>
               @page {
-                size: ${larguraPapel} ${alturaPapel};
+                size: ${tamanhoPage};
                 margin: 0;
               }
               * {
@@ -1413,10 +1411,9 @@
                 overflow: hidden;
               }
               img {
-                width: 100%;
-                height: 100%;
+                width: ${imgWidth};
+                height: ${imgHeight};
                 object-fit: contain;
-                display: block;
               }
             </style>
           </head>
@@ -1428,7 +1425,6 @@
       docIframe.close();
     }
 
-    // IMPRESSÃO LOTE A4 (4 FOTOS A6)
     function imprimirLoteA4(lote) {
       let imgTags = lote.map(f => `<div class="cell"><img src="${f.fotoUrl}"></div>`).join('');
 
@@ -1461,91 +1457,24 @@
                 height: 297mm;
                 background-color: #ffffff;
                 display: grid;
-                grid-template-columns: repeat(2, 15cm);
-                grid-template-rows: repeat(2, 10cm);
-                gap: 0;
+                grid-template-columns: repeat(2, 10cm);
+                grid-template-rows: repeat(2, 15cm);
+                gap: 10mm;
                 justify-content: center;
                 align-content: center;
               }
               .cell {
-                width: 15cm;
-                height: 10cm;
+                width: 10cm;
+                height: 15cm;
                 display: flex;
                 justify-content: center;
                 align-items: center;
                 overflow: hidden;
               }
               img {
-                width: 100%;
-                height: 100%;
+                max-width: 100%;
+                max-height: 100%;
                 object-fit: contain;
-                display: block;
-              }
-            </style>
-          </head>
-          <body>
-            ${imgTags}
-            <script>
-              setTimeout(() => { window.print(); }, 400);
-            <\/script>
-          </body>
-        </html>
-      `);
-      docIframe.close();
-    }
-
-    // IMPRESSÃO LOTE A4 (8 FOTOS A7)
-    function imprimirLoteA4_8(lote) {
-      let imgTags = lote.map(f => `<div class="cell"><img src="${f.fotoUrl}"></div>`).join('');
-
-      let iframe = document.getElementById("printFrame");
-      if (!iframe) {
-        iframe = document.createElement("iframe");
-        iframe.id = "printFrame";
-        iframe.style.display = "none";
-        document.body.appendChild(iframe);
-      }
-      const docIframe = iframe.contentWindow.document;
-      docIframe.open();
-      docIframe.write(`
-        <html>
-          <head>
-            <style>
-              @page {
-                size: 210mm 297mm portrait;
-                margin: 0;
-              }
-              * {
-                box-sizing: border-box;
-                -webkit-print-color-adjust: exact;
-                print-color-adjust: exact;
-              }
-              body {
-                margin: 0;
-                padding: 0;
-                width: 210mm;
-                height: 297mm;
-                background-color: #ffffff;
-                display: grid;
-                grid-template-columns: repeat(2, 10.5cm);
-                grid-template-rows: repeat(4, 7.4cm);
-                gap: 0;
-                justify-content: center;
-                align-content: center;
-              }
-              .cell {
-                width: 10.5cm;
-                height: 7.4cm;
-                display: flex;
-                justify-content: center;
-                align-items: center;
-                overflow: hidden;
-              }
-              img {
-                width: 100%;
-                height: 100%;
-                object-fit: contain;
-                display: block;
               }
             </style>
           </head>
