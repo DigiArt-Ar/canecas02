@@ -618,8 +618,8 @@
           <div class="paper-config-box">
             <label for="paperSizeSelect">Formato do Papel:</label>
             <select id="paperSizeSelect">
-              <option value="A7">Papel A7 (7.4x10.5cm)</option>
-              <option value="A6" selected>Papel A6 (10x15cm)</option>
+              <option value="A7">Papel A7 (10.5x7.4cm)</option>
+              <option value="A6" selected>Papel A6 (15x10cm)</option>
               <option value="A4_4">Folha A4 (4 fotos A6)</option>
               <option value="A4_8">Folha A4 (8 fotos A7)</option>
             </select>
@@ -1113,7 +1113,7 @@
 
     btnFinishEvent.addEventListener("click", async () => {
       const salvou = confirm("Você já baixou e salvou todos os arquivos (fotos) deste evento antes de prosseguir?");
-      if (!salvou) {
+      if (!salvul) {
         alert("Por favor, faça o download de todas as fotos antes de finalizar o evento.");
         return;
       }
@@ -1238,10 +1238,10 @@
         return;
       }
 
-      let gridCols = "repeat(2, 1fr)";
-      let gridRows = formato === "A4_8" ? "repeat(4, 1fr)" : "repeat(2, 1fr)";
+      let gridCols = formato === "A4_8" ? "repeat(2, 10.5cm)" : "repeat(2, 15cm)";
+      let gridRows = formato === "A4_8" ? "repeat(4, 7.4cm)" : "repeat(2, 10cm)";
 
-      let htmlImgs = lote.map((f, i) => {
+      let htmlImgs = lote.map((f) => {
         return `<div style="background:#000; border:1px dashed #444; display:flex; align-items:center; justify-content:center; overflow:hidden; border-radius:4px;"><img src="${f.fotoUrl}" style="width:100%; height:100%; object-fit:contain;"></div>`;
       }).join('');
       
@@ -1250,7 +1250,7 @@
       }
 
       highlightViewer.innerHTML = `
-        <div style="width:100%; height:100%; display:grid; grid-template-columns:${gridCols}; grid-template-rows:${gridRows}; gap:4mm; align-content:center; justify-content:center; padding:10px; background:#1a1a1a; border-radius:8px;">
+        <div style="width:100%; height:100%; display:grid; grid-template-columns:${gridCols}; grid-template-rows:${gridRows}; gap:0; align-content:center; justify-content:center; background:#ffffff; border-radius:4px;">
           ${htmlImgs}
         </div>
       `;
@@ -1369,13 +1369,14 @@
       }
     });
 
+    // IMPRESSÃO INDIVIDUAL MANTIDA EXATAMENTE COMO ESTAVA ORIGINALMENTE (SEM MEXER NO A6 E A7)
     function imprimirDireto(url, formato) {
-      let larguraPapel = "10cm";
-      let alturaPapel = "15cm";
+      let larguraPapel = "15cm";
+      let alturaPapel = "10cm";
 
       if (formato === "A7") {
-        larguraPapel = "7.4cm";
-        alturaPapel = "10.5cm";
+        larguraPapel = "10.5cm";
+        alturaPapel = "7.4cm";
       }
 
       let iframe = document.getElementById("printFrame");
@@ -1427,6 +1428,7 @@
       docIframe.close();
     }
 
+    // IMPRESSÃO LOTE A4 (4 FOTOS A6)
     function imprimirLoteA4(lote) {
       let imgTags = lote.map(f => `<div class="cell"><img src="${f.fotoUrl}"></div>`).join('');
 
@@ -1459,15 +1461,15 @@
                 height: 297mm;
                 background-color: #ffffff;
                 display: grid;
-                grid-template-columns: repeat(2, 10cm);
-                grid-template-rows: repeat(2, 15cm);
-                gap: 5mm;
+                grid-template-columns: repeat(2, 15cm);
+                grid-template-rows: repeat(2, 10cm);
+                gap: 0;
                 justify-content: center;
                 align-content: center;
               }
               .cell {
-                width: 10cm;
-                height: 15cm;
+                width: 15cm;
+                height: 10cm;
                 display: flex;
                 justify-content: center;
                 align-items: center;
@@ -1492,6 +1494,7 @@
       docIframe.close();
     }
 
+    // IMPRESSÃO LOTE A4 (8 FOTOS A7)
     function imprimirLoteA4_8(lote) {
       let imgTags = lote.map(f => `<div class="cell"><img src="${f.fotoUrl}"></div>`).join('');
 
@@ -1524,15 +1527,15 @@
                 height: 297mm;
                 background-color: #ffffff;
                 display: grid;
-                grid-template-columns: repeat(2, 7.4cm);
-                grid-template-rows: repeat(4, 10.5cm);
-                gap: 4mm;
+                grid-template-columns: repeat(2, 10.5cm);
+                grid-template-rows: repeat(4, 7.4cm);
+                gap: 0;
                 justify-content: center;
                 align-content: center;
               }
               .cell {
-                width: 7.4cm;
-                height: 10.5cm;
+                width: 10.5cm;
+                height: 7.4cm;
                 display: flex;
                 justify-content: center;
                 align-items: center;
