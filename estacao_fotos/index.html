@@ -620,8 +620,7 @@
             <select id="paperSizeSelect">
               <option value="A7">Papel A7 (7.4x10.5cm)</option>
               <option value="A6" selected>Papel A6 (10x15cm)</option>
-              <option value="A4_4">Folha A4 (4 fotos - Grid 2x2)</option>
-              <option value="A4_6">Folha A4 (6 fotos - Grid 2x3)</option>
+              <option value="A4_8">Folha A4 (8 fotos A7 - Paisagem)</option>
             </select>
           </div>
         </div>
@@ -1228,7 +1227,7 @@
     });
 
     function atualizarVisualizacaoA4(formato) {
-      const qtd = formato === "A4_4" ? 4 : 6;
+      const qtd = 8;
       const lote = listaFotosPendentes.slice(0, qtd);
 
       if (lote.length === 0) {
@@ -1238,14 +1237,13 @@
         return;
       }
 
-      let gridCols = formato === "A4_4" ? "repeat(2, 1fr)" : "repeat(2, 1fr)";
-      let gridRows = formato === "A4_4" ? "repeat(2, 1fr)" : "repeat(3, 1fr)";
+      let gridCols = "repeat(4, 1fr)";
+      let gridRows = "repeat(2, 1fr)";
 
-      let htmlImgs = lote.map((f, i) => `<div style="background:#000; border:1px dashed #444; display:flex; align-items:center; justify-content:center; overflow:hidden; border-radius:4px;"><img src="${f.fotoUrl}" style="max-width:100%; max-height:100%; object-fit:contain;"></div>`).join('');
+      let htmlImgs = lote.map((f, i) => `<div style="background:#000; border:1px dashed #444; display:flex; align-items:center; justify-content:center; overflow:hidden; border-radius:4px;"><img src="${f.fotoUrl}" style="max-width:100%; max-height:100%; object-fit:contain; transform: rotate(90deg);"></div>`).join('');
       
-      // Se faltarem fotos para completar o grid, preenche com espaços vazios
       for (let i = lote.length; i < qtd; i++) {
-        htmlImgs += `<div style="background:#111; border:1px dashed #333; display:flex; align-items:center; justify-content:center; color:#555; font-size:0.75rem; border-radius:4px;">Aguardando foto...</div>`;
+        htmlImgs += `<div style="background:#111; border:1px dashed #333; display:flex; align-items:center; justify-content:center; color:#555; font-size:0.75rem; border-radius:4px;">Aguardando...</div>`;
       }
 
       highlightViewer.innerHTML = `
@@ -1255,7 +1253,7 @@
       `;
 
       fotoSelecionadaAtual = { tipo: "A4", formato: formato, fotosLote: lote };
-      btnActionPrint.disabled = lote.length < qtd; // Habilita apenas se o lote estiver completo
+      btnActionPrint.disabled = lote.length < qtd;
       btnActionDelete.disabled = true;
     }
 
@@ -1284,10 +1282,10 @@
 
       if (formatoEscolhido.startsWith("A4")) {
         const lote = fotoSelecionadaAtual.fotosLote;
-        const qtd = formatoEscolhido === "A4_4" ? 4 : 6;
+        const qtd = 8;
         if (lote.length < qtd) return;
 
-        imprimirLoteA4(lote, formatoEscolhido);
+        imprimirLoteA4(lote);
 
         totalImpressas += lote.length;
         countPrinted.innerText = totalImpressas;
@@ -1427,10 +1425,7 @@
       docIframe.close();
     }
 
-    function imprimirLoteA4(lote, formato) {
-      let gridCols = "repeat(2, 1fr)";
-      let gridRows = formato === "A4_4" ? "repeat(2, 1fr)" : "repeat(3, 1fr)";
-
+    function imprimirLoteA4(lote) {
       let imgTags = lote.map(f => `<div class="cell"><img src="${f.fotoUrl}"></div>`).join('');
 
       let iframe = document.getElementById("printFrame");
@@ -1447,7 +1442,7 @@
           <head>
             <style>
               @page {
-                size: 210mm 297mm;
+                size: 210mm 297mm portrait;
                 margin: 10mm;
               }
               * {
@@ -1462,8 +1457,8 @@
                 height: 277mm;
                 background-color: #ffffff;
                 display: grid;
-                grid-template-columns: ${gridCols};
-                grid-template-rows: ${gridRows};
+                grid-template-columns: repeat(4, 1fr);
+                grid-template-rows: repeat(2, 1fr);
                 gap: 5mm;
                 justify-items: center;
                 align-items: center;
@@ -1480,6 +1475,7 @@
                 max-width: 100%;
                 max-height: 100%;
                 object-fit: contain;
+                transform: rotate(90deg);
               }
             </style>
           </head>
