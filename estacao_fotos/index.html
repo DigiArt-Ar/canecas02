@@ -620,6 +620,8 @@
             <select id="paperSizeSelect">
               <option value="A7">Papel A7 (7.4x10.5cm)</option>
               <option value="A6" selected>Papel A6 (10x15cm)</option>
+              <option value="A4_4">Folha A4 (4 fotos - Grid 2x2)</option>
+              <option value="A4_6">Folha A4 (6 fotos - Grid 2x3)</option>
             </select>
           </div>
         </div>
@@ -1076,14 +1078,12 @@
 
         const tempoFimTimestamp = Date.now() + (horasInput * 3600 * 1000);
 
-        // 1. Cria o documento do evento no Firestore e aguarda confirmar
         await setDoc(doc(db, "eventos", currentEventId), {
           nome: nomeEventoExibicao,
           molduraUrl: molduraBase64Otimizada,
           criadoEm: new Date()
         });
 
-        // 2. Atualiza o revendedor na nuvem com o evento ativo
         if (emailSalvo) {
           const docRef = doc(db, "revendedores", emailSalvo);
           await updateDoc(docRef, {
@@ -1093,12 +1093,10 @@
           });
         }
 
-        // 3. Salva localmente
         localStorage.setItem("digiart_evento_ativo", currentEventId);
         localStorage.setItem("digiart_nome_evento", nomeEventoExibicao);
         localStorage.setItem("digiart_tempo_fim", tempoFimTimestamp);
 
-        // 4. Só muda de tela após tudo salvo com sucesso na nuvem
         mostrarTela(dashboardContainer);
         infoEventId.innerText = nomeEventoExibicao;
         gerarQRCodeCliente(currentEventId);
@@ -1201,17 +1199,68 @@
           queueList.appendChild(item);
         });
 
-        if (listaFotosPendentes.length > 0) {
-          if (!fotoSelecionadaAtual || !listaFotosPendentes.some(f => f.id === fotoSelecionadaAtual.id)) {
-            selecionarFotoParaDestaque(listaFotosPendentes[0]);
-          }
+        const formatoAtual = paperSizeSelect.value;
+        if (formatoAtual.startsWith("A4")) {
+          atualizarVisualizacaoA4(formatoAtual);
         } else {
-          limparDestaque();
+          if (listaFotosPendentes.length > 0) {
+            if (!fotoSelecionadaAtual || !listaFotosPendentes.some(f => f.id === fotoSelecionadaAtual.id)) {
+              selecionarFotoParaDestaque(listaFotosPendentes[0]);
+            }
+          } else {
+            limparDestaque();
+          }
         }
       });
     }
 
+    paperSizeSelect.addEventListener("change", () => {
+      const formato = paperSizeSelect.value;
+      if (formato.startsWith("A4")) {
+        atualizarVisualizacaoA4(formato);
+      } else {
+        if (listaFotosPendentes.length > 0) {
+          selecionarFotoParaDestaque(listaFotosPendentes[0]);
+        } else {
+          limparDestaque();
+        }
+      }
+    });
+
+    function atualizarVisualizacaoA4(formato) {
+      const qtd = formato === "A4_4" ? 4 : 6;
+      const lote = listaFotosPendentes.slice(0, qtd);
+
+      if (lote.length === 0) {
+        highlightViewer.innerHTML = `<p style="color:#555;">Fila vazia para montar folha A4...</p>`;
+        btnActionPrint.disabled = true;
+        btnActionDelete.disabled = true;
+        return;
+      }
+
+      let gridCols = formato === "A4_4" ? "repeat(2, 1fr)" : "repeat(2, 1fr)";
+      let gridRows = formato === "A4_4" ? "repeat(2, 1fr)" : "repeat(3, 1fr)";
+
+      let htmlImgs = lote.map((f, i) => `<div style="background:#000; border:1px dashed #444; display:flex; align-items:center; justify-content:center; overflow:hidden; border-radius:4px;"><img src="${f.fotoUrl}" style="max-width:100%; max-height:100%; object-fit:contain;"></div>`).join('');
+      
+      // Se faltarem fotos para completar o grid, preenche com espaços vazios
+      for (let i = lote.length; i < qtd; i++) {
+        htmlImgs += `<div style="background:#111; border:1px dashed #333; display:flex; align-items:center; justify-content:center; color:#555; font-size:0.75rem; border-radius:4px;">Aguardando foto...</div>`;
+      }
+
+      highlightViewer.innerHTML = `
+        <div style="width:100%; height:100%; display:grid; grid-template-columns:${gridCols}; grid-template-rows:${gridRows}; gap:8px; padding:10px; background:#1a1a1a; border-radius:8px;">
+          ${htmlImgs}
+        </div>
+      `;
+
+      fotoSelecionadaAtual = { tipo: "A4", formato: formato, fotosLote: lote };
+      btnActionPrint.disabled = lote.length < qtd; // Habilita apenas se o lote estiver completo
+      btnActionDelete.disabled = true;
+    }
+
     function selecionarFotoParaDestaque(foto) {
+      if (paperSizeSelect.value.startsWith("A4")) return;
       fotoSelecionadaAtual = foto;
       highlightViewer.innerHTML = `<img src="${foto.fotoUrl}" alt="Foto Destaque">`;
       btnActionPrint.disabled = false;
@@ -1219,27 +1268,46 @@
     }
 
     function limparDestaque() {
+      if (paperSizeSelect.value.startsWith("A4")) {
+        atualizarVisualizacaoA4(paperSizeSelect.value);
+        return;
+      }
       fotoSelecionadaAtual = null;
       highlightViewer.innerHTML = `<p style="color:#555;">Aguardando fotos dos convidados...</p>`;
       btnActionPrint.disabled = true;
       btnActionDelete.disabled = true;
     }
 
-    btnActionPrint.addEventListener("click", () => {
+    btnActionPrint.addEventListener("click", async () => {
       if (!fotoSelecionadaAtual) return;
-      const fotoParaImprimir = fotoSelecionadaAtual;
       const formatoEscolhido = paperSizeSelect.value;
-      
-      imprimirDireto(fotoParaImprimir.fotoUrl, formatoEscolhido);
 
-      totalImpressas++;
-      countPrinted.innerText = totalImpressas;
+      if (formatoEscolhido.startsWith("A4")) {
+        const lote = fotoSelecionadaAtual.fotosLote;
+        const qtd = formatoEscolhido === "A4_4" ? 4 : 6;
+        if (lote.length < qtd) return;
 
-      updateDoc(doc(db, "eventos", currentEventId, "fotos", fotoParaImprimir.id), { status: "impressa" });
+        imprimirLoteA4(lote, formatoEscolhido);
+
+        totalImpressas += lote.length;
+        countPrinted.innerText = totalImpressas;
+
+        for (const foto of lote) {
+          await updateDoc(doc(db, "eventos", currentEventId, "fotos", foto.id), { status: "impressa" });
+        }
+      } else {
+        const fotoParaImprimir = fotoSelecionadaAtual;
+        imprimirDireto(fotoParaImprimir.fotoUrl, formatoEscolhido);
+
+        totalImpressas++;
+        countPrinted.innerText = totalImpressas;
+
+        await updateDoc(doc(db, "eventos", currentEventId, "fotos", fotoParaImprimir.id), { status: "impressa" });
+      }
     });
 
     btnActionDelete.addEventListener("click", async () => {
-      if (!fotoSelecionadaAtual) return;
+      if (!fotoSelecionadaAtual || paperSizeSelect.value.startsWith("A4")) return;
       if (confirm("Excluir esta foto?")) {
         await deleteDoc(doc(db, "eventos", currentEventId, "fotos", fotoSelecionadaAtual.id));
       }
@@ -1353,6 +1421,73 @@
           </head>
           <body>
             <img src="${url}" onload="setTimeout(() => { window.print(); }, 300);"/>
+          </body>
+        </html>
+      `);
+      docIframe.close();
+    }
+
+    function imprimirLoteA4(lote, formato) {
+      let gridCols = "repeat(2, 1fr)";
+      let gridRows = formato === "A4_4" ? "repeat(2, 1fr)" : "repeat(3, 1fr)";
+
+      let imgTags = lote.map(f => `<div class="cell"><img src="${f.fotoUrl}"></div>`).join('');
+
+      let iframe = document.getElementById("printFrame");
+      if (!iframe) {
+        iframe = document.createElement("iframe");
+        iframe.id = "printFrame";
+        iframe.style.display = "none";
+        document.body.appendChild(iframe);
+      }
+      const docIframe = iframe.contentWindow.document;
+      docIframe.open();
+      docIframe.write(`
+        <html>
+          <head>
+            <style>
+              @page {
+                size: 210mm 297mm;
+                margin: 10mm;
+              }
+              * {
+                box-sizing: border-box;
+                -webkit-print-color-adjust: exact;
+                print-color-adjust: exact;
+              }
+              body {
+                margin: 0;
+                padding: 0;
+                width: 190mm;
+                height: 277mm;
+                background-color: #ffffff;
+                display: grid;
+                grid-template-columns: ${gridCols};
+                grid-template-rows: ${gridRows};
+                gap: 5mm;
+                justify-items: center;
+                align-items: center;
+              }
+              .cell {
+                width: 100%;
+                height: 100%;
+                display: flex;
+                justify-content: center;
+                align-items: center;
+                overflow: hidden;
+              }
+              img {
+                max-width: 100%;
+                max-height: 100%;
+                object-fit: contain;
+              }
+            </style>
+          </head>
+          <body>
+            ${imgTags}
+            <script>
+              setTimeout(() => { window.print(); }, 400);
+            <\/script>
           </body>
         </html>
       `);
