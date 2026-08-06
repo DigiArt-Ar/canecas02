@@ -1242,14 +1242,14 @@
       let gapSize = "8px";
 
       let htmlImgs = lote.map((f, i) => `
-        <div style="position:relative; background:#000; display:flex; align-items:center; justify-content:center; overflow:hidden; border-radius:6px; width:100%; height:100%;">
-          <img src="${f.fotoUrl}" style="width:100%; height:100%; object-fit:contain;">
-          <button class="btn-delete-single" data-id="${f.id}" title="Excluir esta foto" style="position:absolute; top:6px; right:6px; background:rgba(255,0,0,0.8); color:#fff; border:none; border-radius:4px; width:28px; height:28px; font-weight:bold; cursor:pointer; display:flex; align-items:center; justify-content:center; font-size:0.9rem;">✕</button>
+        <div style="position:relative; width:100%; height:100%; background:#000; border-radius:6px; overflow:hidden; display:flex; align-items:center; justify-content:center;">
+          <img src="${f.fotoUrl}" style="width:100%; height:100%; object-fit:cover;">
+          <button class="btn-delete-single" data-id="${f.id}" title="Excluir esta foto" style="position:absolute; top:6px; right:6px; background:rgba(255,0,0,0.85); color:#fff; border:none; border-radius:4px; width:28px; height:28px; font-weight:bold; cursor:pointer; display:flex; align-items:center; justify-content:center; font-size:0.9rem;">✕</button>
         </div>
       `).join('');
       
       for (let i = lote.length; i < qtd; i++) {
-        htmlImgs += `<div style="background:#111; border:1px dashed #333; display:flex; align-items:center; justify-content:center; color:#555; font-size:0.75rem; border-radius:6px;">Aguardando foto...</div>`;
+        htmlImgs += `<div style="background:#111; border:1px dashed #333; display:flex; align-items:center; justify-content:center; color:#555; font-size:0.75rem; border-radius:6px; width:100%; height:100%;">Aguardando foto...</div>`;
       }
 
       highlightViewer.innerHTML = `
@@ -1258,7 +1258,6 @@
         </div>
       `;
 
-      // Adicionar evento de clique nos botões individuais de exclusão
       highlightViewer.querySelectorAll('.btn-delete-single').forEach(btn => {
         btn.addEventListener("click", async (e) => {
           e.stopPropagation();
@@ -1271,7 +1270,7 @@
 
       fotoSelecionadaAtual = { tipo: "A4", formato: formato, fotosLote: lote };
       btnActionPrint.disabled = lote.length < qtd;
-      btnActionDelete.disabled = true; // Desativa o botão geral de exclusão no modo A4
+      btnActionDelete.disabled = true;
     }
 
     function selecionarFotoParaDestaque(foto) {
@@ -1493,9 +1492,9 @@
                 overflow: hidden;
               }
               img {
-                max-width: 100%;
-                max-height: 100%;
-                object-fit: contain;
+                width: 100%;
+                height: 100%;
+                object-fit: cover;
               }
             </style>
           </head>
