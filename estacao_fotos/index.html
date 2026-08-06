@@ -1444,7 +1444,6 @@
     function imprimirLoteA4(lote, formato) {
       let gridCols = "repeat(2, 1fr)";
       let gridRows = "repeat(2, 1fr)";
-      // Divisória alterada de 10mm para 20mm conforme solicitado
       let gapSize = "20mm";
 
       let imgTags = lote.map(f => `<div class="cell"><img src="${f.fotoUrl}"></div>`).join('');
@@ -1493,8 +1492,8 @@
                 overflow: hidden;
               }
               img {
-                width: 100%;
-                height: 100%;
+                width: 95mm;
+                height: 135mm;
                 object-fit: cover;
               }
             </style>
