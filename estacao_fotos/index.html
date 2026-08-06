@@ -621,7 +621,6 @@
               <option value="A7">Papel A7 (7.4x10.5cm)</option>
               <option value="A6" selected>Papel A6 (10x15cm)</option>
               <option value="A4_4">Folha A4 (4 fotos - Grid 2x2)</option>
-              <option value="A4_6">Folha A4 (6 fotos - Grid 2x3)</option>
             </select>
           </div>
         </div>
@@ -1228,7 +1227,7 @@
     });
 
     function atualizarVisualizacaoA4(formato) {
-      const qtd = formato === "A4_4" ? 4 : 6;
+      const qtd = 4;
       const lote = listaFotosPendentes.slice(0, qtd);
 
       if (lote.length === 0) {
@@ -1239,8 +1238,8 @@
       }
 
       let gridCols = "repeat(2, 1fr)";
-      let gridRows = formato === "A4_4" ? "repeat(2, 1fr)" : "repeat(3, 1fr)";
-      let gapSize = formato === "A4_4" ? "10mm" : "8px";
+      let gridRows = "repeat(2, 1fr)";
+      let gapSize = "10mm";
 
       let htmlImgs = lote.map((f, i) => `<div style="background:#000; border:1px dashed #444; display:flex; align-items:center; justify-content:center; overflow:hidden; border-radius:4px;"><img src="${f.fotoUrl}" style="max-width:100%; max-height:100%; object-fit:contain;"></div>`).join('');
       
@@ -1284,7 +1283,7 @@
 
       if (formatoEscolhido.startsWith("A4")) {
         const lote = fotoSelecionadaAtual.fotosLote;
-        const qtd = formatoEscolhido === "A4_4" ? 4 : 6;
+        const qtd = 4;
         if (lote.length < qtd) return;
 
         imprimirLoteA4(lote, formatoEscolhido);
@@ -1429,8 +1428,8 @@
 
     function imprimirLoteA4(lote, formato) {
       let gridCols = "repeat(2, 1fr)";
-      let gridRows = formato === "A4_4" ? "repeat(2, 1fr)" : "repeat(3, 1fr)";
-      let gapSize = formato === "A4_4" ? "10mm" : "5mm";
+      let gridRows = "repeat(2, 1fr)";
+      let gapSize = "10mm";
 
       let imgTags = lote.map(f => `<div class="cell"><img src="${f.fotoUrl}"></div>`).join('');
 
