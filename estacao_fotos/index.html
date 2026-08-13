@@ -1394,8 +1394,8 @@
       let tamanhoPage = "10cm 15cm";
       let larguraPapel = "10cm";
       let alturaPapel = "15cm";
-      let imgWidth = "9.6cm";  
-      let imgHeight = "14.6cm";
+      let imgWidth = "10cm";  
+      let imgHeight = "7.5cm";
 
       if (formato === "A7") {
         tamanhoPage = "7.4cm 10.5cm";
@@ -1543,7 +1543,7 @@
             <style>
               @page {
                 size: 210mm 297mm;
-                margin: 10mm;
+                margin: 5mm;
               }
               * {
                 box-sizing: border-box;
@@ -1553,29 +1553,28 @@
               body {
                 margin: 0;
                 padding: 0;
-                width: 190mm;
-                height: 277mm;
+                width: 200mm;
+                height: 287mm;
                 background-color: #ffffff;
                 display: grid;
-                grid-template-columns: repeat(2, 1fr);
-                grid-template-rows: repeat(3, 1fr);
-                gap: 5mm;
-                justify-items: center;
-                align-items: center;
+                grid-template-columns: repeat(2, 10cm);
+                grid-template-rows: repeat(3, 7.5cm);
+                gap: 0mm;
+                justify-content: center;
+                align-content: center;
               }
               .cell {
-                width: 100mm;
-                height: 75mm;
+                width: 10cm;
+                height: 7.5cm;
                 display: flex;
                 justify-content: center;
                 align-items: center;
                 overflow: hidden;
               }
               img {
-                width: 75mm;
-                height: 100mm;
-                object-fit: contain;
-                transform: rotate(90deg);
+                width: 10cm;
+                height: 7.5cm;
+                object-fit: fill;
               }
             </style>
           </head>
