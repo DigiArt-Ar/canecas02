@@ -621,6 +621,7 @@
               <option value="A7">Papel A7 (7.4x10.5cm)</option>
               <option value="A6" selected>Papel A6 (10x15cm)</option>
               <option value="A4_4">Folha A4 (4 fotos - Grid 2x2)</option>
+              <option value="A4_6">Folha A4 (6 fotos - Paisagem 2x3)</option>
             </select>
           </div>
         </div>
@@ -1227,7 +1228,7 @@
     });
 
     function atualizarVisualizacaoA4(formato) {
-      const qtd = 4;
+      const qtd = formato === "A4_6" ? 6 : 4;
       const lote = listaFotosPendentes.slice(0, qtd);
 
       if (lote.length === 0) {
@@ -1237,13 +1238,20 @@
         return;
       }
 
-      let gridCols = "repeat(2, 1fr)";
-      let gridRows = "repeat(2, 1fr)";
-      let gapSize = "10mm";
+      let gridCols, gridRows, gapSize;
+      if (formato === "A4_6") {
+        gridCols = "repeat(2, 1fr)";
+        gridRows = "repeat(3, 1fr)";
+        gapSize = "2.5mm";
+      } else {
+        gridCols = "repeat(2, 1fr)";
+        gridRows = "repeat(2, 1fr)";
+        gapSize = "10mm";
+      }
 
       let htmlImgs = lote.map((f, i) => `
         <div style="position:relative; width:100%; height:100%; background:#000; border-radius:6px; overflow:hidden; display:flex; align-items:center; justify-content:center;">
-          <img src="${f.fotoUrl}" style="width:100%; height:100%; object-fit:cover;">
+          <img src="${f.fotoUrl}" style="width:100%; height:100%; object-fit:${formato === "A4_6" ? 'cover' : 'cover'};">
           <button class="btn-delete-single" data-id="${f.id}" title="Excluir esta foto" style="position:absolute; top:6px; right:6px; background:rgba(255,0,0,0.85); color:#fff; border:none; border-radius:4px; width:28px; height:28px; font-weight:bold; cursor:pointer; display:flex; align-items:center; justify-content:center; font-size:0.9rem;">✕</button>
         </div>
       `).join('');
@@ -1298,10 +1306,14 @@
 
       if (formatoEscolhido.startsWith("A4")) {
         const lote = fotoSelecionadaAtual.fotosLote;
-        const qtd = 4;
+        const qtd = formatoEscolhido === "A4_6" ? 6 : 4;
         if (lote.length < qtd) return;
 
-        imprimirLoteA4(lote, formatoEscolhido);
+        if (formatoEscolhido === "A4_6") {
+          imprimirLoteA4_6(lote);
+        } else {
+          imprimirLoteA4(lote, formatoEscolhido);
+        }
 
         totalImpressas += lote.length;
         countPrinted.innerText = totalImpressas;
@@ -1494,6 +1506,70 @@
               img {
                 width: 95mm;
                 height: 135mm;
+                object-fit: cover;
+              }
+            </style>
+          </head>
+          <body>
+            ${imgTags}
+            <script>
+              setTimeout(() => { window.print(); }, 400);
+            <\/script>
+          </body>
+        </html>
+      `);
+      docIframe.close();
+    }
+
+    function imprimirLoteA4_6(lote) {
+      let imgTags = lote.map(f => `<div class="cell"><img src="${f.fotoUrl}"></div>`).join('');
+
+      let iframe = document.getElementById("printFrame");
+      if (!iframe) {
+        iframe = document.createElement("iframe");
+        iframe.id = "printFrame";
+        iframe.style.display = "none";
+        document.body.appendChild(iframe);
+      }
+      const docIframe = iframe.contentWindow.document;
+      docIframe.open();
+      docIframe.write(`
+        <html>
+          <head>
+            <style>
+              @page {
+                size: 210mm 297mm;
+                margin: 10mm;
+              }
+              * {
+                box-sizing: border-box;
+                -webkit-print-color-adjust: exact;
+                print-color-adjust: exact;
+              }
+              body {
+                margin: 0;
+                padding: 0;
+                width: 190mm;
+                height: 277mm;
+                background-color: #ffffff;
+                display: grid;
+                grid-template-columns: repeat(2, 1fr);
+                grid-template-rows: repeat(3, 1fr);
+                gap: 2.5mm;
+                justify-items: center;
+                align-items: center;
+              }
+              .cell {
+                width: 100%;
+                height: 100%;
+                display: flex;
+                justify-content: center;
+                align-items: center;
+                overflow: hidden;
+              }
+              img {
+                width: 10cm;
+                height: 7.5cm;
                 object-fit: cover;
               }
             </style>
