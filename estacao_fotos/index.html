@@ -1240,9 +1240,9 @@
 
       let gridCols, gridRows, gapSize;
       if (formato === "A4_6") {
-        gridCols = "repeat(2, 1fr)";
-        gridRows = "repeat(3, 1fr)";
-        gapSize = "3mm";
+        gridCols = "repeat(2, 99mm)";
+        gridRows = "repeat(3, 75mm)";
+        gapSize = "1mm 1mm";
       } else {
         gridCols = "repeat(2, 1fr)";
         gridRows = "repeat(2, 1fr)";
@@ -1261,7 +1261,7 @@
       }
 
       highlightViewer.innerHTML = `
-        <div style="width:100%; height:100%; display:grid; grid-template-columns:${gridCols}; grid-template-rows:${gridRows}; gap:${gapSize}; background:#141414; padding: 5px;">
+        <div style="width:100%; height:100%; display:grid; grid-template-columns:${gridCols}; grid-template-rows:${gridRows}; gap:${gapSize}; background:#141414; padding: 5px; justify-content: center; align-content: center;">
           ${htmlImgs}
         </div>
       `;
@@ -1552,35 +1552,44 @@
               }
               body {
                 margin: 0;
-                padding: 11mm 5mm;
+                padding: 0;
                 width: 210mm;
                 height: 297mm;
                 background-color: #ffffff;
+                display: flex;
+                justify-content: center;
+                align-items: center;
+              }
+              .page-sheet {
+                width: 199mm;
+                height: 227mm;
                 display: grid;
-                grid-template-columns: repeat(2, 10cm);
-                grid-template-rows: repeat(3, 7.5cm);
-                gap: 3mm 4mm;
+                grid-template-columns: repeat(2, 99mm);
+                grid-template-rows: repeat(3, 75mm);
+                gap: 1mm 1mm;
                 justify-content: center;
                 align-content: center;
               }
               .cell {
-                width: 10cm;
-                height: 7.5cm;
+                width: 99mm;
+                height: 75mm;
                 display: flex;
                 justify-content: center;
                 align-items: center;
                 overflow: hidden;
               }
               img {
-                width: 7.5cm;
-                height: 10cm;
+                width: 99mm;
+                height: 75mm;
                 object-fit: contain;
                 transform: rotate(90deg);
               }
             </style>
           </head>
           <body>
-            ${imgTags}
+            <div class="page-sheet">
+              ${imgTags}
+            </div>
             <script>
               setTimeout(() => { window.print(); }, 400);
             <\/script>
