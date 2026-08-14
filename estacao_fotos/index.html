@@ -1277,7 +1277,7 @@
       });
 
       fotoSelecionadaAtual = { tipo: "A4", formato: formato, fotosLote: lote };
-      btnActionPrint.disabled = lote.length < qtd;
+      btnActionPrint.disabled = lote.length === 0;
       btnActionDelete.disabled = true;
     }
 
@@ -1306,8 +1306,7 @@
 
       if (formatoEscolhido.startsWith("A4")) {
         const lote = fotoSelecionadaAtual.fotosLote;
-        const qtd = formatoEscolhido === "A4_6" ? 6 : 4;
-        if (lote.length < qtd) return;
+        if (lote.length === 0) return;
 
         if (formatoEscolhido === "A4_6") {
           imprimirLoteA4_6(lote);
