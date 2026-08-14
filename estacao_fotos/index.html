@@ -1240,18 +1240,18 @@
 
       let gridCols, gridRows, gapSize;
       if (formato === "A4_6") {
-        gridCols = "repeat(2, 99mm)";
-        gridRows = "repeat(3, 75mm)";
-        gapSize = "1mm 1mm";
+        gridCols = "repeat(2, 1fr)";
+        gridRows = "repeat(3, 1fr)";
+        gapSize = "10px";
       } else {
         gridCols = "repeat(2, 1fr)";
         gridRows = "repeat(2, 1fr)";
-        gapSize = "10mm";
+        gapSize = "15px";
       }
 
       let htmlImgs = lote.map((f, i) => `
         <div style="position:relative; width:100%; height:100%; background:#000; border-radius:6px; overflow:hidden; display:flex; align-items:center; justify-content:center;">
-          <img src="${f.fotoUrl}" style="width:100%; height:100%; object-fit:contain; transform: rotate(90deg);">
+          <img src="${f.fotoUrl}" style="max-width:100%; max-height:100%; object-fit:contain;">
           <button class="btn-delete-single" data-id="${f.id}" title="Excluir esta foto" style="position:absolute; top:6px; right:6px; background:rgba(255,0,0,0.85); color:#fff; border:none; border-radius:4px; width:28px; height:28px; font-weight:bold; cursor:pointer; display:flex; align-items:center; justify-content:center; font-size:0.9rem;">✕</button>
         </div>
       `).join('');
@@ -1261,7 +1261,7 @@
       }
 
       highlightViewer.innerHTML = `
-        <div style="width:100%; height:100%; display:grid; grid-template-columns:${gridCols}; grid-template-rows:${gridRows}; gap:${gapSize}; background:#141414; padding: 5px; justify-content: center; align-content: center;">
+        <div style="width:100%; height:100%; display:grid; grid-template-columns:${gridCols}; grid-template-rows:${gridRows}; gap:${gapSize}; background:#141414; padding: 10px; justify-content:center; align-content:center;">
           ${htmlImgs}
         </div>
       `;
@@ -1552,44 +1552,35 @@
               }
               body {
                 margin: 0;
-                padding: 0;
+                padding: 11mm 5mm;
                 width: 210mm;
                 height: 297mm;
                 background-color: #ffffff;
-                display: flex;
-                justify-content: center;
-                align-items: center;
-              }
-              .page-sheet {
-                width: 199mm;
-                height: 227mm;
                 display: grid;
-                grid-template-columns: repeat(2, 99mm);
-                grid-template-rows: repeat(3, 75mm);
-                gap: 1mm 1mm;
+                grid-template-columns: repeat(2, 10cm);
+                grid-template-rows: repeat(3, 7.5cm);
+                gap: 3mm 4mm;
                 justify-content: center;
                 align-content: center;
               }
               .cell {
-                width: 99mm;
-                height: 75mm;
+                width: 10cm;
+                height: 7.5cm;
                 display: flex;
                 justify-content: center;
                 align-items: center;
                 overflow: hidden;
               }
               img {
-                width: 99mm;
-                height: 75mm;
+                width: 7.5cm;
+                height: 10cm;
                 object-fit: contain;
                 transform: rotate(90deg);
               }
             </style>
           </head>
           <body>
-            <div class="page-sheet">
-              ${imgTags}
-            </div>
+            ${imgTags}
             <script>
               setTimeout(() => { window.print(); }, 400);
             <\/script>
