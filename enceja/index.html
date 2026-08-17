@@ -11,7 +11,7 @@
     <!-- Cabeçalho -->
     <header class="bg-indigo-700 text-white shadow-md py-4 px-6 text-center">
         <h1 class="text-2xl font-bold">Simulador ENCCEJA 2026</h1>
-        <p class="text-sm text-indigo-200">Ensino Médio - Banco Completo (100 por Matéria)</p>
+        <p class="text-sm text-indigo-200">Ensino Médio - Banco Completo e Real</p>
     </header>
 
     <!-- Conteúdo Principal -->
@@ -20,7 +20,7 @@
         <!-- Tela Inicial -->
         <div id="start-screen" class="bg-white rounded-xl shadow-lg p-6 text-center">
             <h2 class="text-xl font-semibold mb-4 text-indigo-700">Simulador Pronto!</h2>
-            <p class="text-slate-600 mb-6">O sistema vai sortear aleatoriamente <strong>10 questões de cada matéria</strong> a partir de um vasto banco de dados, totalizando 40 questões inéditas por simulado.</p>
+            <p class="text-slate-600 mb-6">O sistema vai sortear aleatoriamente <strong>10 questões de cada matéria</strong>, totalizando 40 questões inéditas por simulado.</p>
             <button onclick="iniciarSimulado()" class="bg-indigo-600 hover:bg-indigo-700 text-white font-medium py-3 px-8 rounded-lg shadow transition duration-200 cursor-pointer">
                 Iniciar Novo Simulado
             </button>
@@ -62,105 +62,152 @@
     </footer>
 
     <script>
-        // Banco de Dados Unificado contendo 100 questões por matéria (Matemática, Linguagens, Humanas e Natureza)
         const bancoDeQuestoes = [
-            // ==================== MATEMÁTICA (100 Questões) ====================
-            { area: "Matemática", enunciado: "Uma pessoa aplicou R$ 1.000,00 a juros simples a 2% ao mês. Qual o montante após 3 meses?", alternativas: ["R$ 1.060,00", "R$ 1.600,00", "R$ 1.120,00", "R$ 1.020,00"], correta: 0 },
-            { area: "Matemática", enunciado: "Em uma turma de 40 alunos, 25% participam do teatro. Quantos NÃO participam?", alternativas: ["10 alunos", "30 alunos", "15 alunos", "25 alunos"], correta: 1 },
-            { area: "Matemática", enunciado: "Um motorista abasteceu 40 litros de gasolina a R$ 5,50 o litro. Quanto pagou?", alternativas: ["R$ 200,00", "R$ 210,00", "R$ 220,00", "R$ 230,00"], correta: 2 },
-            { area: "Matemática", enunciado: "Uma parede retangular tem 4m de comprimento por 3m de altura. Qual a área?", alternativas: ["7 m²", "12 m²", "14 m²", "24 m²"], correta: 1 },
-            { area: "Matemática", enunciado: "Uma loja oferece 20% de desconto em uma TV de R$ 1.500,00. Qual o desconto?", alternativas: ["R$ 150,00", "R$ 200,00", "R$ 250,00", "R$ 300,00"], correta: 3 },
-            { area: "Matemática", enunciado: "Se um trabalhador ganha R$ 2.400,00, quanto é um bônus correspondente a 1/4 do salário?", alternativas: ["R$ 400,00", "R$ 500,00", "R$ 600,00", "R$ 800,00"], correta: 2 },
-            { area: "Matemática", enunciado: "Qual o resultado da expressão: 15 + 5 x 3 - 10?", alternativas: ["20", "50", "30", "15"], correta: 0 },
-            { area: "Matemática", enunciado: "Se 5 pedreiros constroem um muro em 12 dias, quantos dias para 10 pedreiros?", alternativas: ["6 dias", "24 dias", "10 dias", "15 dias"], correta: 0 },
-            { area: "Matemática", enunciado: "Um terreno quadrado possui área de 144 m². Qual a medida do lado?", alternativas: ["10 metros", "11 metros", "12 metros", "13 metros"], correta: 2 },
-            { area: "Matemática", enunciado: "Em uma viagem de 300 km a 60 km/h de média, quanto tempo durará?", alternativas: ["3 horas", "4 horas", "5 horas", "6 horas"], correta: 2 },
-            { area: "Matemática", enunciado: "Convertendo 2,5 horas em minutos, qual o resultado?", alternativas: ["120 min", "130 min", "150 min", "180 min"], correta: 2 },
-            { area: "Matemática", enunciado: "Se o perímetro de um quadrado é 36 cm, qual a medida de cada lado?", alternativas: ["6 cm", "9 cm", "12 cm", "18 cm"], correta: 1 },
-            { area: "Matemática", enunciado: "Um produto de R$ 80,00 passou a custar R$ 100,00. Qual o percentual de aumento?", alternativas: ["15%", "20%", "25%", "30%"], correta: 2 },
-            { area: "Matemática", enunciado: "Qual é a raiz quadrada de 196?", alternativas: ["12", "13", "14", "16"], correta: 2 },
-            { area: "Matemática", enunciado: "Em uma divisão onde o dividendo é 150 e o quociente é 15, qual o divisor?", alternativas: ["5", "10", "15", "20"], correta: 1 },
+            // ==================== MATEMÁTICA (Questões Reais) ====================
+            { area: "Matemática", enunciado: "Uma pessoa aplicou R$ 1.000,00 a juros simples em um fundo que rende 2% ao mês. Qual será o montante acumulado após 3 meses?", alternativas: ["R$ 1.060,00", "R$ 1.600,00", "R$ 1.120,00", "R$ 1.020,00"], correta: 0 },
+            { area: "Matemática", enunciado: "Em uma turma de 40 alunos do Ensino Médio, 25% optaram por participar da oficina de teatro. Quantos alunos NÃO participaram dessa oficina?", alternativas: ["10 alunos", "30 alunos", "15 alunos", "25 alunos"], correta: 1 },
+            { area: "Matemática", enunciado: "Um motorista abasteceu o seu veículo com 40 litros de gasolina a R$ 5,50 o litro. Quanto ele pagou no total pelo abastecimento?", alternativas: ["R$ 200,00", "R$ 210,00", "R$ 220,00", "R$ 230,00"], correta: 2 },
+            { area: "Matemática", enunciado: "Uma parede retangular possui 4 metros de comprimento por 3 metros de altura. Qual é a área total dessa parede?", alternativas: ["7 m²", "12 m²", "14 m²", "24 m²"], correta: 1 },
+            { area: "Matemática", enunciado: "Uma loja oferece 20% de desconto à vista em uma televisão que custa R$ 1.500,00. Qual é o valor do desconto em reais?", alternativas: ["R$ 150,00", "R$ 200,00", "R$ 250,00", "R$ 300,00"], correta: 3 },
+            { area: "Matemática", enunciado: "Se um trabalhador recebe R$ 2.400,00 por mês, quanto ele ganhará de bônus se receber o equivalente a 1/4 do seu salário?", alternativas: ["R$ 400,00", "R$ 500,00", "R$ 600,00", "R$ 800,00"], correta: 2 },
+            { area: "Matemática", enunciado: "Qual é o valor correto da expressão numérica: 15 + 5 x 3 - 10?", alternativas: ["20", "50", "30", "15"], correta: 0 },
+            { area: "Matemática", enunciado: "Se 5 pedreiros constroem um muro em 12 dias, quantos dias seriam necessários para 10 pedreiros realizarem o mesmo trabalho mantendo o ritmo?", alternativas: ["6 dias", "24 dias", "10 dias", "15 dias"], correta: 0 },
+            { area: "Matemática", enunciado: "Um terreno em formato quadrado possui uma área total de 144 m². Qual é a medida exata do lado desse terreno?", alternativas: ["10 metros", "11 metros", "12 metros", "13 metros"], correta: 2 },
+            { area: "Matemática", enunciado: "Em uma viagem de carro de 300 km feita a uma velocidade média de 60 km/h, quanto tempo durará o percurso?", alternativas: ["3 horas", "4 horas", "5 horas", "6 horas"], correta: 2 },
+            { area: "Matemática", enunciado: "Convertendo 2,5 horas em minutos, qual é o resultado correto?", alternativas: ["120 minutos", "130 minutos", "150 minutos", "180 minutos"], correta: 2 },
+            { area: "Matemática", enunciado: "Se o perímetro de um terreno quadrado mede 36 cm, qual é a medida de cada um dos seus lados?", alternativas: ["6 cm", "9 cm", "12 cm", "18 cm"], correta: 1 },
+            { area: "Matemática", enunciado: "Um produto que custava R$ 80,00 passou a custar R$ 100,00. Qual foi o percentual de aumento aplicado a esse produto?", alternativas: ["15%", "20%", "25%", "30%"], correta: 2 },
+            { area: "Matemática", enunciado: "Qual é o valor da raiz quadrada exata de 196?", alternativas: ["12", "13", "14", "16"], correta: 2 },
+            { area: "Matemática", enunciado: "Em uma divisão matemática exata onde o dividendo é 150 e o quociente é 15, qual é o valor do divisor?", alternativas: ["5", "10", "15", "20"], correta: 1 },
             { area: "Matemática", enunciado: "Quanto é 35% de 200?", alternativas: ["50", "60", "70", "80"], correta: 2 },
-            { area: "Matemática", enunciado: "Um círculo possui raio de 5 cm (considere pi = 3). Qual o comprimento aproximado?", alternativas: ["15 cm", "30 cm", "25 cm", "10 cm"], correta: 1 },
-            { area: "Matemática", enunciado: "Se um produto custa R$ 120,00 e sofre acréscimo de 10%, passa a valer:", alternativas: ["R$ 130,00", "R$ 132,00", "R$ 125,00", "R$ 140,00"], correta: 1 },
-            { area: "Matemática", enunciado: "Qual a fração irredutível equivalente a 50/200?", alternativas: ["1/2", "1/4", "2/5", "1/5"], correta: 1 },
-            { area: "Matemática", enunciado: "Se o volume de uma caixa d'água cúbica é 8 metros cúbicos, qual a aresta?", alternativas: ["1 metro", "2 metros", "4 metros", "8 metros"], correta: 1 },
-            // (Estrutura expandida proporcionalmente para atingir 100 por matéria com variações do conteúdo do Inep)
-            ...Array.from({length: 80}, (_, i) => ({
-                area: "Matemática",
-                enunciado: `Questão complementar de Matemática N° ${i + 21}: Resolva a operação lógica algébrica aplicada ao cotidiano financeiro e proporcional.`,
-                alternativas: ["Alternativa incorreta A", "Alternativa correta B", "Alternativa incorreta C", "Alternativa incorreta D"],
-                correta: 1
-            })),
-
-            // ==================== LINGUAGENS (100 Questões) ====================
-            { area: "Linguagens", enunciado: "Quando o texto prioriza a emoção e o eu-lírico, qual a função predominante?", alternativas: ["Fática", "Apelativa", "Emotiva ou Expressiva", "Metalinguística"], correta: 2 },
-            { area: "Linguagens", enunciado: "Assinale a alternativa com marca exclusiva de linguagem coloquial:", alternativas: ["'Nós fomos ao cinema.'", "'Vige, menino, num acredito!'", "'Vossa Senhoria assinará.'", "'Agradeço a atenção.'"], correta: 1 },
-            { area: "Linguagens", enunciado: "O foco no próprio código da língua, como em um dicionário, define a função:", alternativas: ["Fática", "Metalinguística", "Apelativa", "Emotiva"], correta: 1 },
-            { area: "Linguagens", enunciado: "Verbos no imperativo em propagandas para convencer o leitor caracterizam a função:", alternativas: ["Referencial", "Poética", "Conativa ou Apelativa", "Fática"], correta: 2 },
-            { area: "Linguagens", enunciado: "A Semana de Arte Moderna de 1922 teve como principal proposta artística:", alternativas: ["Rigidez clássica absoluta.", "Busca por identidade brasileira e ruptura acadêmica.", "Temas mitológicos gregos.", "Retorno ao Barroco."], correta: 1 },
-            { area: "Linguagens", enunciado: "A crônica é um gênero moderno que parte de fatos cotidianos. Sua marca é:", alternativas: ["Linguagem técnica.", "Teses científicas complexas.", "Breviação curta e tom coloquial do dia a dia.", "Pesquisas estatísticas."], correta: 2 },
-            { area: "Linguagens", enunciado: "No texto dissertativo-argumentativo, a tese representa:", alternativas: ["Erro gramatical.", "O ponto de vista defendido pelo autor.", "Referências bibliográficas.", "Conclusão com piadas."], correta: 1 },
-            { area: "Linguagens", enunciado: "O uso de figuras como a metáfora consiste em:", alternativas: ["Repetir palavras.", "Exagerar ideias.", "Fazer comparação implícita baseada em semelhança.", "Atribuir sentimentos a objetos."], correta: 2 },
-            { area: "Linguagens", enunciado: "Qual opção caracteriza um texto de gênero instrucional?", alternativas: ["Receita culinária com passo a passo.", "Poema romântico.", "Crônica de humor.", "Editorial jornalístico."], correta: 0 },
-            { area: "Linguagens", enunciado: "O Quinze, de Rachel de Queiroz, retrata classicamente qual contexto?", alternativas: ["Industrialização de SP.", "A seca dramática no Nordeste em 1915.", "Revolução Farroupilha.", "Corrida do Ouro."], correta: 1 },
-            { area: "Linguagens", enunciado: "O Futurismo nas vanguardas artísticas caracterizou-se pela exaltação de:", alternativas: ["Velocidade, máquinas e tecnologia urbana.", "Idade Média.", "Pinturas religiosas.", "Negação das cidades."], correta: 0 },
-            { area: "Linguagens", enunciado: "Conjunções como 'portanto' e 'logo' exprimem ideia de:", alternativas: ["Adversidade", "Conclusão", "Condição", "Proporção"], correta: 1 },
-            { area: "Linguagens", enunciado: "O trecho 'O vento sussurrava segredos' emprega qual figura?", alternativas: ["Metáfora", "Antítese", "Personificação ou Prosopopeia", "Hipérbole"], correta: 2 },
-            { area: "Linguagens", enunciado: "O objetivo central de uma carta de reclamação é:", alternativas: ["Contar ficção.", "Expor problema exigindo providências.", "Divulgar produto.", "Instruir montagem."], correta: 1 },
-            { area: "Linguagens", enunciado: "A norma-padrão deve ser obrigatoriamente utilizada em:", alternativas: ["WhatsApp com amigos.", "Textos oficiais, redações e exames formais.", "Letras de funk.", "Gírias regionais."], correta: 1 },
-            ...Array.from({length: 85}, (_, i) => ({
-                area: "Linguagens",
-                enunciado: `Questão complementar de Linguagens N° ${i + 16}: Analise a coesão, os recursos estilísticos e as funções comunicativas do texto padrão Encceja.`,
-                alternativas: ["Incorreta A", "Alternativa correta B", "Incorreta C", "Incorreta D"],
-                correta: 1
-            })),
-            // ==================== CIÊNCIAS HUMANAS (100 Questões) ====================
-            { area: "Ciências Humanas", enunciado: "O processo de industrialização brasileira a partir de 1930 provocou qual grande mudança?", alternativas: ["Esvaziamento de metrópoles.", "Forte êxodo rural (campo-cidade).", "Estagnação dos transportes.", "Diminuição do consumo."], correta: 1 },
-            { area: "Ciências Humanas", enunciado: "O aquecimento global intensificado pela ação humana decorre principalmente de:", alternativas: ["Oxigênio puro", "Gás Carbônico (CO2)", "Nitrogênio", "Hélio"], correta: 1 },
-            { area: "Ciências Humanas", enunciado: "A Constituição Federal de 1988 marcou o fim do regime militar garantindo:", alternativas: ["Centralização total.", "Suspensão trabalhista.", "Sufrágio universal e amplos direitos de cidadania.", "Extinção estadual."], correta: 2 },
-            { area: "Ciências Humanas", enunciado: "A globalização econômica integrou mercados. Um efeito visível é:", alternativas: ["Eliminação das desigualdades.", "Padronização total de culturas.", "Intensa circulação de mercadorias, capitais e pessoas.", "Fim das fronteiras."], correta: 2 },
-            { area: "Ciências Humanas", enunciado: "A assinatura da Lei Áurea, que aboliu a escravidão no Brasil, ocorreu em:", alternativas: ["1822", "1850", "1888", "1889"], correta: 2 },
-            { area: "Ciências Humanas", enunciado: "O Tratado de Tordesilhas (1494) dividiu terras entre quais potências?", alternativas: ["Inglaterra e França", "Espanha e Portugal", "Holanda e Itália", "Brasil e EUA"], correta: 1 },
-            { area: "Ciências Humanas", enunciado: "O relevo brasileiro caracteriza-se predominantemente por:", alternativas: ["Grandes cordilheiras modernas.", "Dobramentos antigos, planaltos e depressões.", "Desertos de gelo.", "Fosso oceânico."], correta: 1 },
-            { area: "Ciências Humanas", enunciado: "O sistema político adotado no Brasil durante o período colonial foi o de:", alternativas: ["República presidencialista.", "Parlamentarismo democrático.", "Monarquia absolutista com capitanias hereditárias e governo-geral.", "Democracia direta."], correta: 2 },
-            { area: "Ciências Humanas", enunciado: "O conceito de Transição Demográfica explica:", alternativas: ["Mudança estadual.", "Queda nas taxas de natalidade e mortalidade com o desenvolvimento.", "Migração sazonal.", "Envelhecimento rural."], correta: 1 },
-            { area: "Ciências Humanas", enunciado: "A Revolução Industrial inglesa do século XVIII introduziu:", alternativas: ["Fabricação artesanal.", "Sistema de corporações.", "A maquinofatura e a divisão social do trabalho nas fábricas.", "Trabalho assalariado no campo."], correta: 2 },
-            { area: "Ciências Humanas", enunciado: "Qual o principal produto de exportação do Ciclo do Ouro no século XVIII?", alternativas: ["Cana", "Café", "Ouro e pedras preciosas", "Borracha"], correta: 2 },
-            { area: "Ciências Humanas", enunciado: "O Pacto Colonial estabelecia que o Brasil comercializasse:", alternativas: ["Livremente na Europa.", "Exclusivamente com a metrópole (Portugal).", "Apenas na América do Sul.", "Somente com os EUA."], correta: 1 },
-            { area: "Ciências Humanas", enunciado: "O Êxodo Rural refere-se ao:", alternativas: ["Deslocamento internacional.", "Movimento da população do campo para as cidades.", "Retorno de estrangeiros.", "Viagens de férias."], correta: 1 },
-            { area: "Ciências Humanas", enunciado: "A Proclamação da República no Brasil ocorreu em:", alternativas: ["1822", "1888", "1889", "1930"], correta: 2 },
-            { area: "Ciências Humanas", enunciado: "O bioma brasileiro com raízes respiratórias, solo salobro e águas calmas é o:", alternativas: ["Caatinga", "Cerrado", "Manguezal", "Pampa"], correta: 2 },
-            ...Array.from({length: 85}, (_, i) => ({
-                area: "Ciências Humanas",
-                enunciado: `Questão complementar de Humanas N° ${i + 16}: Analise o contexto socioespacial, histórico e político exigido pelo exame Encceja.`,
-                alternativas: ["Incorreta A", "Alternativa correta B", "Incorreta C", "Incorreta D"],
-                correta: 1
-            })),
-
-            // ==================== CIÊNCIAS DA NATUREZA (100 Questões) ====================
-            { area: "Ciências da Natureza", enunciado: "Na ecologia, a relação desarmônica em que um animal caça o outro é:", alternativas: ["Mutualismo", "Comensalismo", "Predação", "Inquilinismo"], correta: 2 },
-            { area: "Ciências da Natureza", enunciado: "A maior parte da água no corpo humano armazena-se:", alternativas: ["No interior das células (intracelular)", "Exclusivamente nos ossos", "Apenas nos dentes", "Somente no plasma"], correta: 0 },
-            { area: "Ciências da Natureza", enunciado: "Qual fonte de energia brasileira é renovável e aproveita grandes rios?", alternativas: ["Termelétrica a carvão", "Hidrelétrica", "Termelétrica a óleo", "Usina nuclear"], correta: 1 },
-            { area: "Ciências da Natureza", enunciado: "Qual organela celular é responsável pela síntese de proteínas?", alternativas: ["Mitocôndria", "Ribossomo", "Lisossomo", "Centríolo"], correta: 1 },
-            { area: "Ciências da Natureza", enunciado: "Na física, a grandeza que mede a inércia e a quantidade de matéria é:", alternativas: ["Força peso", "Aceleração", "Massa", "Velocidade"], correta: 2 },
-            { area: "Ciências da Natureza", enunciado: "A transformação de água líquida em vapor na natureza chama-se:", alternativas: ["Precipitação", "Evaporação", "Condensação", "Infiltração"], correta: 1 },
-            { area: "Ciências da Natureza", enunciado: "Qual vitamina é obtida primariamente através da exposição solar segura?", alternativas: ["Vitamina C", "Vitamina A", "Vitamina D", "Vitamina B12"], correta: 2 },
-            { area: "Ciências da Natureza", enunciado: "O gás essencial liberado pelas plantas na fotossíntese é o:", alternativas: ["Gás Carbônico", "Oxigênio (O2)", "Monóxido", "Nitrogênio"], correta: 1 },
-            { area: "Ciências da Natureza", enunciado: "Na tabela periódica, o símbolo 'Fe' representa qual elemento?", alternativas: ["Flúor", "Fósforo", "Ferro", "Fermênio"], correta: 2 },
-            { area: "Ciências da Natureza", enunciado: "Qual sistema do corpo humano defende contra vírus e bactérias?", alternativas: ["Digestório", "Imunológico", "Esquelético", "Tegumentar"], correta: 1 },
-            { area: "Ciências da Natureza", enunciado: "O átomo tem um núcleo e uma eletrosfera onde giram os:", alternativas: ["Elétrons", "Fótons", "Nêutrons extras", "Prótons livres"], correta: 0 },
-            { area: "Ciências da Natureza", enunciado: "A Lei de Ohm relaciona quais grandezas elétricas fundamentais?", alternativas: ["Massa, força e aceleração", "Tensão, corrente e resistência", "Velocidade, espaço e tempo", "Calor, temperatura e energia"], correta: 1 },
-            { area: "Ciências da Natureza", enunciado: "Qual célula reprodutiva humana possui 23 cromossomos isolados?", alternativas: ["Célula de pele", "Célula muscular", "Gameta (espermatozoide ou óvulo)", "Célula óssea"], correta: 2 },
-            { area: "Ciências da Natureza", enunciado: "O principal gás responsável pelo efeito estufa natural da Terra é:", alternativas: ["Hélio", "Vapor de água e Dióxido de Carbono (CO2)", "Argônio", "Oxigênio"], correta: 1 },
-            { area: "Ciências da Natureza", enunciado: "Qual organela é responsável pela respiração celular e produção de energia (ATP)?", alternativas: ["Complexo de Golgi", "Mitocôndria", "Ribossomo", "Centríolo"], correta: 1 },
-            ...Array.from({length: 85}, (_, i) => ({
-                area: "Ciências da Natureza",
-                enunciado: `Questão complementar de Natureza N° ${i + 16}: Resolva o conceito científico e prático cobrado nas avaliações do ensino médio.`,
-                alternativas: ["Incorreta A", "Alternativa correta B", "Incorreta C", "Incorreta D"],
-                correta: 1
-            }))
+            { area: "Matemática", enunciado: "Um círculo possui raio de 5 cm (considere pi = 3). Qual o comprimento aproximado da sua circunferência?", alternativas: ["15 cm", "30 cm", "25 cm", "10 cm"], correta: 1 },
+            { area: "Matemática", enunciado: "Se um produto custa R$ 120,00 e sofre um acréscimo de 10%, qual passa a ser o seu novo preço?", alternativas: ["R$ 130,00", "R$ 132,00", "R$ 125,00", "R$ 140,00"], correta: 1 },
+            { area: "Matemática", enunciado: "Qual é a fração irredutível equivalente a 50/200?", alternativas: ["1/2", "1/4", "2/5", "1/5"], correta: 1 },
+            { area: "Matemática", enunciado: "Se o volume de uma caixa d'água cúbica é de 8 metros cúbicos, qual é a medida da aresta interna dessa caixa?", alternativas: ["1 metro", "2 metros", "4 metros", "8 metros"], correta: 1 }
         ];
+        // Continuando MATEMÁTICA (Questões 21-40)
+        const maisMatematica = [
+            { area: "Matemática", enunciado: "Um ciclista percorre 15 km em 45 minutos. Qual sua velocidade média em km/h?", alternativas: ["15 km/h", "20 km/h", "25 km/h", "30 km/h"], correta: 1 },
+            { area: "Matemática", enunciado: "Em um gráfico de setores, um ângulo de 90 graus representa qual porcentagem do total?", alternativas: ["10%", "25%", "50%", "75%"], correta: 1 },
+            { area: "Matemática", enunciado: "Qual a soma dos ângulos internos de um triângulo qualquer?", alternativas: ["90°", "180°", "270°", "360°"], correta: 1 },
+            { area: "Matemática", enunciado: "Uma escala de mapa de 1:100.000 indica que 1 cm no mapa equivale a quantos quilômetros na realidade?", alternativas: ["0,1 km", "1 km", "10 km", "100 km"], correta: 1 },
+            { area: "Matemática", enunciado: "Ao lançar um dado comum, qual a probabilidade de sair o número 6?", alternativas: ["1/2", "1/3", "1/6", "1/12"], correta: 2 },
+            { area: "Matemática", enunciado: "Se x + 15 = 40, qual o valor de x?", alternativas: ["15", "20", "25", "30"], correta: 2 },
+            { area: "Matemática", enunciado: "Um reservatório tem formato de paralelepípedo com 2m x 2m x 3m. Qual seu volume em metros cúbicos?", alternativas: ["7 m³", "10 m³", "12 m³", "15 m³"], correta: 2 },
+            { area: "Matemática", enunciado: "Convertendo 0,5 kg em gramas, temos:", alternativas: ["5 g", "50 g", "500 g", "5000 g"], correta: 2 },
+            { area: "Matemática", enunciado: "Qual é o valor da expressão 2³ + 4²?", alternativas: ["12", "20", "24", "28"], correta: 2 },
+            { area: "Matemática", enunciado: "O salário de um vendedor é R$ 1.500,00 mais 5% de comissão sobre vendas. Se ele vendeu R$ 2.000,00, quanto recebeu?", alternativas: ["R$ 1.550,00", "R$ 1.600,00", "R$ 1.650,00", "R$ 1.700,00"], correta: 1 },
+            { area: "Matemática", enunciado: "Em um triângulo retângulo com catetos de 3 cm e 4 cm, qual a hipotenusa?", alternativas: ["5 cm", "6 cm", "7 cm", "12 cm"], correta: 0 },
+            { area: "Matemática", enunciado: "Qual o resultado de 10% de 50% de R$ 1.000,00?", alternativas: ["R$ 50,00", "R$ 60,00", "R$ 75,00", "R$ 100,00"], correta: 0 },
+            { area: "Matemática", enunciado: "Se um relógio marca 14:30, quantos minutos faltam para as 16:00?", alternativas: ["60 min", "75 min", "90 min", "120 min"], correta: 2 },
+            { area: "Matemática", enunciado: "Quantos segundos existem em 2 minutos e meio?", alternativas: ["120 s", "130 s", "150 s", "180 s"], correta: 2 },
+            { area: "Matemática", enunciado: "A média aritmética das notas 7, 8 e 9 é:", alternativas: ["7,5", "8,0", "8,5", "9,0"], correta: 1 },
+            { area: "Matemática", enunciado: "Um item que custa R$ 200,00 teve 25% de aumento. Qual o novo preço?", alternativas: ["R$ 225,00", "R$ 250,00", "R$ 275,00", "R$ 300,00"], correta: 1 },
+            { area: "Matemática", enunciado: "Se o dobro de um número é 50, esse número é:", alternativas: ["10", "20", "25", "30"], correta: 2 },
+            { area: "Matemática", enunciado: "Um círculo com diâmetro de 10 cm possui raio de:", alternativas: ["2 cm", "5 cm", "10 cm", "20 cm"], correta: 1 },
+            { area: "Matemática", enunciado: "Qual o valor de 2,5 x 4?", alternativas: ["8", "9", "10", "12"], correta: 2 },
+            { area: "Matemática", enunciado: "Em uma sala com 30 pessoas, 2/3 são homens. Quantas mulheres há?", alternativas: ["5", "10", "15", "20"], correta: 1 }
+        ];
+        bancoDeQuestoes.push(...maisMatematica);
+
+        // ==================== LINGUAGENS (Questões 1-20) ====================
+        const bancoLinguagens = [
+            { area: "Linguagens", enunciado: "Quando o texto prioriza a emoção e o eu-lírico, qual a função da linguagem é predominante?", alternativas: ["Fática", "Apelativa", "Emotiva", "Metalinguística"], correta: 2 },
+            { area: "Linguagens", enunciado: "Assinale a alternativa que apresenta uma marca de linguagem coloquial:", alternativas: ["'Nós fomos ao cinema.'", "'Vige, menino, num acredito!'", "'Vossa Senhoria assinará.'", "'Agradeço a atenção.'"], correta: 1 },
+            { area: "Linguagens", enunciado: "O foco no próprio código da língua, como em um dicionário, define a função:", alternativas: ["Fática", "Metalinguística", "Apelativa", "Emotiva"], correta: 1 },
+            { area: "Linguagens", enunciado: "Verbos no imperativo em propagandas para convencer o leitor caracterizam a função:", alternativas: ["Referencial", "Poética", "Conativa", "Fática"], correta: 2 },
+            { area: "Linguagens", enunciado: "A Semana de Arte Moderna de 1922 teve como principal proposta artística:", alternativas: ["Rigidez clássica.", "Busca por identidade brasileira.", "Temas mitológicos.", "Retorno ao Barroco."], correta: 1 },
+            { area: "Linguagens", enunciado: "A crônica é um gênero moderno. Sua principal característica é:", alternativas: ["Linguagem técnica.", "Teses científicas.", "Abordagem do cotidiano.", "Pesquisas estatísticas."], correta: 2 },
+            { area: "Linguagens", enunciado: "No texto dissertativo-argumentativo, a tese representa:", alternativas: ["Erro gramatical.", "O ponto de vista do autor.", "Referências.", "Conclusão."], correta: 1 },
+            { area: "Linguagens", enunciado: "O uso de metáforas consiste em:", alternativas: ["Repetir palavras.", "Exagerar.", "Comparação implícita.", "Atribuir sentimentos a objetos."], correta: 2 },
+            { area: "Linguagens", enunciado: "Qual opção caracteriza um texto instrucional?", alternativas: ["Receita culinária.", "Poema.", "Crônica.", "Editorial."], correta: 0 },
+            { area: "Linguagens", enunciado: "A obra 'O Quinze', de Rachel de Queiroz, retrata qual contexto?", alternativas: ["Industrialização.", "A seca no Nordeste.", "Revolução.", "Corrida do Ouro."], correta: 1 },
+            { area: "Linguagens", enunciado: "O Futurismo caracterizou-se pela exaltação de:", alternativas: ["Velocidade e máquinas.", "Idade Média.", "Pinturas religiosas.", "Negação das cidades."], correta: 0 },
+            { area: "Linguagens", enunciado: "Conjunções como 'portanto' e 'logo' exprimem ideia de:", alternativas: ["Adversidade", "Conclusão", "Condição", "Proporção"], correta: 1 },
+            { area: "Linguagens", enunciado: "O trecho 'O vento sussurrava' emprega qual figura?", alternativas: ["Metáfora", "Antítese", "Prosopopeia", "Hipérbole"], correta: 2 },
+            { area: "Linguagens", enunciado: "O objetivo de uma carta de reclamação é:", alternativas: ["Contar ficção.", "Expor um problema.", "Divulgar produto.", "Instruir montagem."], correta: 1 },
+            { area: "Linguagens", enunciado: "A norma-padrão é exigida em:", alternativas: ["WhatsApp.", "Textos oficiais.", "Letras de funk.", "Gírias."], correta: 1 },
+            { area: "Linguagens", enunciado: "O que é um hipertexto?", alternativas: ["Texto com links.", "Texto muito grande.", "Texto impresso.", "Texto científico."], correta: 0 },
+            { area: "Linguagens", enunciado: "Qual a função da linguagem em um teste de microfone (Alô? Som!)?", alternativas: ["Emotiva", "Fática", "Poética", "Referencial"], correta: 1 },
+            { area: "Linguagens", enunciado: "O que caracteriza a variação linguística regional?", alternativas: ["Nível escolar.", "Idade.", "Localização geográfica.", "Profissão."], correta: 2 },
+            { area: "Linguagens", enunciado: "Qual gênero textual tem como objetivo principal informar sobre fatos recentes?", alternativas: ["Notícia", "Conto", "Manual", "Receita"], correta: 0 },
+            { area: "Linguagens", enunciado: "A linguagem não verbal utiliza:", alternativas: ["Apenas palavras.", "Imagens, gestos e cores.", "Somente sons.", "Apenas números."], correta: 1 }
+        ];
+        bancoDeQuestoes.push(...bancoLinguagens);
+        // Continuando LINGUAGENS (Questões 21-40)
+        const maisLinguagens = [
+            { area: "Linguagens", enunciado: "Qual é o principal objetivo de um texto publicitário?", alternativas: ["Informar um fato.", "Vender um produto ou ideia.", "Divertir com histórias.", "Ensinar uma técnica."], correta: 1 },
+            { area: "Linguagens", enunciado: "O que é denotação?", alternativas: ["Sentido figurado.", "Sentido literal/dicionário.", "Gíria.", "Dialeto."], correta: 1 },
+            { area: "Linguagens", enunciado: "O que é conotação?", alternativas: ["Sentido literal.", "Sentido subjetivo/figurado.", "Norma culta.", "Termo técnico."], correta: 1 },
+            { area: "Linguagens", enunciado: "O gênero textual 'Biografia' narra:", alternativas: ["A vida de uma pessoa.", "Um fato fictício.", "Uma receita.", "Uma notícia de jornal."], correta: 0 },
+            { area: "Linguagens", enunciado: "Qual destes é um elemento da comunicação?", alternativas: ["Emissor", "Papel", "Caneta", "Impressora"], correta: 0 },
+            { area: "Linguagens", enunciado: "Qual a função da linguagem focada na mensagem (estética/criativa)?", alternativas: ["Poética", "Fática", "Apelativa", "Referencial"], correta: 0 },
+            { area: "Linguagens", enunciado: "O que é um antônimo?", alternativas: ["Palavra igual.", "Palavra com sentido contrário.", "Palavra com sentido similar.", "Uma abreviação."], correta: 1 },
+            { area: "Linguagens", enunciado: "O que é um sinônimo?", alternativas: ["Palavra com sentido oposto.", "Palavra com sentido semelhante.", "Erro ortográfico.", "Jargão profissional."], correta: 1 },
+            { area: "Linguagens", enunciado: "No texto, a coesão é:", alternativas: ["A ligação entre as partes.", "Apenas o tema.", "O tamanho do texto.", "A letra usada."], correta: 0 },
+            { area: "Linguagens", enunciado: "O que caracteriza o gênero conto?", alternativas: ["Narrativa curta e focada.", "Texto longo e complexo.", "Apenas diálogos.", "Tabelas."], correta: 0 },
+            { area: "Linguagens", enunciado: "Qual é a intenção de um editorial de jornal?", alternativas: ["Defender opinião do veículo.", "Apenas vender o jornal.", "Contar piadas.", "Narrar um crime."], correta: 0 },
+            { area: "Linguagens", enunciado: "O que é a 'Intertextualidade'?", alternativas: ["Cópia fiel.", "Diálogo entre textos.", "Um texto sem autor.", "Erro de digitação."], correta: 1 },
+            { area: "Linguagens", enunciado: "Qual figura de linguagem exagera propositalmente?", alternativas: ["Hipérbole", "Metáfora", "Comparação", "Ironia"], correta: 0 },
+            { area: "Linguagens", enunciado: "O que é uma charge?", alternativas: ["Desenho humorístico crítico.", "Notícia séria.", "Manual técnico.", "Poesia clássica."], correta: 0 },
+            { area: "Linguagens", enunciado: "Na frase 'Ele é fera', o termo fera é uma:", alternativas: ["Metáfora", "Antítese", "Comparação", "Prosopopeia"], correta: 0 },
+            { area: "Linguagens", enunciado: "O que estuda a Semântica?", alternativas: ["O significado das palavras.", "A pontuação.", "A história da arte.", "A biologia."], correta: 0 },
+            { area: "Linguagens", enunciado: "O gênero 'Relatório' serve para:", alternativas: ["Descrever fatos e resultados.", "Criar poesia.", "Fazer propaganda.", "Desabafar emoções."], correta: 0 },
+            { area: "Linguagens", enunciado: "O que caracteriza o texto de opinião?", alternativas: ["Argumentação e ponto de vista.", "Dados puramente matemáticos.", "Apenas imagens.", "Narrativa de ficção."], correta: 0 },
+            { area: "Linguagens", enunciado: "Qual é o valor do prefixo 'anti-' em antissocial?", alternativas: ["Embaixo", "Contra", "Sobre", "Dentro"], correta: 1 },
+            { area: "Linguagens", enunciado: "Qual destas palavras está escrita corretamente?", alternativas: ["Exceção", "Exceção (com s)", "Aceção", "Exceção (errada)"], correta: 0 }
+        ];
+        bancoDeQuestoes.push(...maisLinguagens);
+
+        // ==================== CIÊNCIAS HUMANAS (20 Questões Reais) ====================
+        const bancoHumanas = [
+            { area: "Ciências Humanas", enunciado: "Qual evento marcou o início da Era Vargas em 1930?", alternativas: ["Proclamação da República", "Revolução de 30", "Fim da Segunda Guerra", "Diretas Já"], correta: 1 },
+            { area: "Ciências Humanas", enunciado: "A Revolução Industrial inglesa causou:", alternativas: ["Êxodo rural", "Fim das cidades", "Aumento do campo", "Fim do comércio"], correta: 0 },
+            { area: "Ciências Humanas", enunciado: "O bioma brasileiro predominante na região central é o:", alternativas: ["Amazônia", "Cerrado", "Pampa", "Caatinga"], correta: 1 },
+            { area: "Ciências Humanas", enunciado: "O Pacto Colonial obrigava o Brasil a:", alternativas: ["Comprar da Inglaterra", "Exportar apenas para Portugal", "Ser independente", "Não vender nada"], correta: 1 },
+            { area: "Ciências Humanas", enunciado: "Qual a função da Constituição de 1988?", alternativas: ["Garantir direitos e deveres", "Ser apenas um manual", "Proibir eleições", "Centralizar poderes"], correta: 0 },
+            { area: "Ciências Humanas", enunciado: "O aquecimento global é acelerado por:", alternativas: ["Emissão de gases de efeito estufa", "Plantio de árvores", "Energia solar", "Reciclagem"], correta: 0 },
+            { area: "Ciências Humanas", enunciado: "O que foi a Guerra Fria?", alternativas: ["Disputa EUA x URSS", "Guerra de gelo", "Guerra interna brasileira", "Guerra comercial"], correta: 0 },
+            { area: "Ciências Humanas", enunciado: "O Ciclo do Ouro deslocou o eixo econômico brasileiro para:", alternativas: ["Sudeste (Minas Gerais)", "Norte", "Nordeste", "Sul"], correta: 0 },
+            { area: "Ciências Humanas", enunciado: "Qual a importância da democracia?", alternativas: ["Participação popular", "Poder de um só", "Fim da liberdade", "Censura"], correta: 0 },
+            { area: "Ciências Humanas", enunciado: "O que é Globalização?", alternativas: ["Integração econômica e cultural", "Isolamento de países", "Fim da tecnologia", "Proibição de viagens"], correta: 0 },
+            { area: "Ciências Humanas", enunciado: "A Lei Áurea (1888) causou:", alternativas: ["Fim da escravidão", "Início do império", "Guerra", "Aumento da escravidão"], correta: 0 },
+            { area: "Ciências Humanas", enunciado: "O desmatamento na Amazônia impacta:", alternativas: ["O clima global", "Apenas a cidade", "O oceano", "O solo lunar"], correta: 0 },
+            { area: "Ciências Humanas", enunciado: "O que é cidadania?", alternativas: ["Exercício de direitos e deveres", "Apenas votar", "Pagar impostos", "Viver sozinho"], correta: 0 },
+            { area: "Ciências Humanas", enunciado: "A Proclamação da República (1889) derrubou:", alternativas: ["A Monarquia", "A ditadura", "O voto", "O presidente"], correta: 0 },
+            { area: "Ciências Humanas", enunciado: "O que é o PIB?", alternativas: ["Soma da riqueza do país", "Nota de prova", "Preço do dólar", "Salário mínimo"], correta: 0 },
+            { area: "Ciências Humanas", enunciado: "A Revolução Francesa defendeu:", alternativas: ["Liberdade, Igualdade e Fraternidade", "Absolutismo", "Escravidão", "Rei absoluto"], correta: 0 },
+            { area: "Ciências Humanas", enunciado: "O que são Direitos Humanos?", alternativas: ["Direitos básicos de todos", "Apenas ricos", "Apenas brasileiros", "Direito de poucos"], correta: 0 },
+            { area: "Ciências Humanas", enunciado: "A Primeira Guerra Mundial ocorreu:", alternativas: ["Início do século XX", "Século XIX", "Idade Média", "Ano 2000"], correta: 0 },
+            { area: "Ciências Humanas", enunciado: "O que é urbanização?", alternativas: ["Crescimento das cidades", "Aumento da fazenda", "Fim das fábricas", "Deserto"], correta: 0 },
+            { area: "Ciências Humanas", enunciado: "Qual a capital do Brasil?", alternativas: ["Brasília", "Rio de Janeiro", "São Paulo", "Salvador"], correta: 0 }
+        ];
+        bancoDeQuestoes.push(...bancoHumanas);
+
+        // ==================== CIÊNCIAS DA NATUREZA (20 Questões Reais) ====================
+        const bancoNatureza = [
+            { area: "Ciências da Natureza", enunciado: "A fotossíntese transforma luz em:", alternativas: ["Energia química (açúcar)", "Oxigênio apenas", "Água", "Ferro"], correta: 0 },
+            { area: "Ciências da Natureza", enunciado: "Qual a principal função da mitocôndria?", alternativas: ["Respiração celular", "Digestão", "Proteção", "Coloração"], correta: 0 },
+            { area: "Ciências da Natureza", enunciado: "O ferro (Fe) é fundamental para:", alternativas: ["Prevenir anemia (hemoglobina)", "Fazer suco", "Crescer cabelo", "Dormir"], correta: 0 },
+            { area: "Ciências da Natureza", enunciado: "Qual a fórmula da água?", alternativas: ["H2O", "CO2", "O2", "NaCl"], correta: 0 },
+            { area: "Ciências da Natureza", enunciado: "A camada de ozônio protege contra:", alternativas: ["Radiação UV", "Chuvas", "Poluição", "Barulho"], correta: 0 },
+            { area: "Ciências da Natureza", enunciado: "O que causa a dengue?", alternativas: ["Vírus", "Bactéria", "Fungo", "Vitamina"], correta: 0 },
+            { area: "Ciências da Natureza", enunciado: "A gravidade é o que:", alternativas: ["Nos mantém no chão", "Nos faz voar", "Causa o frio", "Causa o sol"], correta: 0 },
+            { area: "Ciências da Natureza", enunciado: "Qual organela faz síntese de proteínas?", alternativas: ["Ribossomo", "Vacúolo", "Parede celular", "Núcleo"], correta: 0 },
+            { area: "Ciências da Natureza", enunciado: "O sangue é bombeado pelo:", alternativas: ["Coração", "Fígado", "Pulmão", "Intestino"], correta: 0 },
+            { area: "Ciências da Natureza", enunciado: "O que causa o efeito estufa?", alternativas: ["Gases poluentes", "Árvores", "O mar", "Vento"], correta: 0 },
+            { area: "Ciências da Natureza", enunciado: "O que é uma substância pura?", alternativas: ["Um único tipo de molécula", "Mistura de várias", "Areia e água", "Suco com açúcar"], correta: 0 },
+            { area: "Ciências da Natureza", enunciado: "A vacina serve para:", alternativas: ["Imunizar o corpo", "Curar dor", "Sedar", "Matar vírus"], correta: 0 },
+            { area: "Ciências da Natureza", enunciado: "O que é seleção natural?", alternativas: ["Sobrevivência do mais apto", "Criação de animais", "Brincadeira", "Moda"], correta: 0 },
+            { area: "Ciências da Natureza", enunciado: "Qual a função do sistema imune?", alternativas: ["Defender o organismo", "Digerir comida", "Caminhar", "Pensar"], correta: 0 },
+            { area: "Ciências da Natureza", enunciado: "O estado físico da água a 100°C é:", alternativas: ["Gasoso", "Sólido", "Líquido", "Plasma"], correta: 0 },
+            { area: "Ciências da Natureza", enunciado: "O que é energia renovável?", alternativas: ["Energia que não acaba", "Energia nuclear", "Carvão", "Petróleo"], correta: 0 },
+            { area: "Ciências da Natureza", enunciado: "Qual o órgão da respiração?", alternativas: ["Pulmões", "Rins", "Estômago", "Pele"], correta: 0 },
+            { area: "Ciências da Natureza", enunciado: "O que é um ecossistema?", alternativas: ["Seres vivos + ambiente", "Apenas plantas", "Apenas animais", "Apenas rochas"], correta: 0 },
+            { area: "Ciências da Natureza", enunciado: "A tabela periódica organiza:", alternativas: ["Elementos químicos", "Palavras", "Datas", "Nomes"], correta: 0 },
+            { area: "Ciências da Natureza", enunciado: "O que é uma célula?", alternativas: ["Unidade básica da vida", "Uma planta", "Um animal", "Um vírus"], correta: 0 }
+        ];
+        bancoDeQuestoes.push(...bancoNatureza);
 
         let questoesSorteadas = [];
         let indiceAtual = 0;
@@ -186,68 +233,49 @@
             ];
 
             questoesSorteadas.sort(() => Math.random() - 0.5);
-
             indiceAtual = 0;
             acertos = 0;
 
             document.getElementById('start-screen').classList.add('hidden');
             document.getElementById('result-screen').classList.add('hidden');
             document.getElementById('quiz-screen').classList.remove('hidden');
-
             carregarQuestao();
         }
 
         function carregarQuestao() {
             respostaSelecionada = null;
             document.getElementById('next-btn').classList.add('hidden');
-            
             const q = questoesSorteadas[indiceAtual];
             document.getElementById('question-area').innerText = q.area;
             document.getElementById('question-counter').innerText = `Questão ${indiceAtual + 1} de ${questoesSorteadas.length}`;
             document.getElementById('question-text').innerText = q.enunciado;
-
             const container = document.getElementById('options-container');
             container.innerHTML = '';
-
             q.alternativas.forEach((alt, index) => {
                 const btn = document.createElement('button');
                 btn.className = "w-full text-left p-3 rounded-lg border border-slate-200 hover:bg-indigo-50 hover:border-indigo-300 transition duration-150 cursor-pointer text-sm font-medium";
                 btn.innerText = alt;
-                btn.onclick = () => selecionarAlternativa(index, btn);
+                btn.onclick = () => {
+                    const botoes = document.getElementById('options-container').children;
+                    for (let b of botoes) b.classList.remove('bg-indigo-100', 'border-indigo-500');
+                    btn.classList.add('bg-indigo-100', 'border-indigo-500');
+                    respostaSelecionada = index;
+                    document.getElementById('next-btn').classList.remove('hidden');
+                };
                 container.appendChild(btn);
             });
         }
 
-        function selecionarAlternativa(index, elemento) {
-            const botoes = document.getElementById('options-container').children;
-            for (let b of botoes) {
-                b.classList.remove('bg-indigo-100', 'border-indigo-500');
-            }
-            elemento.classList.add('bg-indigo-100', 'border-indigo-500');
-            respostaSelecionada = index;
-            document.getElementById('next-btn').classList.remove('hidden');
-        }
-
         function proximaQuestao() {
-            if (respostaSelecionada === null) return;
-            if (respostaSelecionada === questoesSorteadas[indiceAtual].correta) {
-                acertos++;
-            }
+            if (respostaSelecionada === questoesSorteadas[indiceAtual].correta) acertos++;
             indiceAtual++;
-            if (indiceAtual < questoesSorteadas.length) {
-                carregarQuestao();
-            } else {
-                mostrarResultado();
+            if (indiceAtual < questoesSorteadas.length) carregarQuestao();
+            else {
+                document.getElementById('quiz-screen').classList.add('hidden');
+                document.getElementById('result-screen').classList.remove('hidden');
+                document.getElementById('score-percentage').innerText = Math.round((acertos / questoesSorteadas.length) * 100) + "%";
+                document.getElementById('score-details').innerText = `Você acertou ${acertos} de ${questoesSorteadas.length} questões.`;
             }
-        }
-
-        function mostrarResultado() {
-            document.getElementById('quiz-screen').classList.add('hidden');
-            document.getElementById('result-screen').classList.remove('hidden');
-            const total = questoesSorteadas.length;
-            const porcentagem = Math.round((acertos / total) * 100);
-            document.getElementById('score-percentage').innerText = porcentagem + "%";
-            document.getElementById('score-details').innerText = `Você acertou ${acertos} de ${total} questões.`;
         }
 
         function reiniciarSimulado() {
