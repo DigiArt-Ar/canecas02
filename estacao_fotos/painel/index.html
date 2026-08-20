@@ -1403,14 +1403,14 @@
       }
 
       let htmlImgs = lote.map((f, i) => `
-        <div style="position:relative; background:#000; display:flex; align-items:center; justify-content:center; overflow:hidden; border-radius:4px; width:9.3cm; height:7.2cm; max-width:100%; max-height:48%;">
-          <img src="${f.fotoUrl}" style="width:100%; height:100%; object-fit:contain; transform: rotate(90deg);">
+        <div style="position:relative; background:#000; display:flex; align-items:center; justify-content:center; overflow:hidden; border-radius:4px; width:9.3cm; height:7.2cm;">
+          <img src="${f.fotoUrl}" style="width:100%; height:100%; object-fit:contain;">
           <button class="btn-delete-single" data-id="${f.id}" title="Excluir esta foto" style="position:absolute; top:4px; right:4px; background:rgba(255,0,0,0.8); color:#fff; border:none; border-radius:4px; width:24px; height:24px; font-weight:bold; cursor:pointer; display:flex; align-items:center; justify-content:center; font-size:0.8rem;">✕</button>
         </div>
       `).join('');
 
       for (let i = lote.length; i < qtd; i++) {
-        htmlImgs += `<div style="background:#111; border:1px dashed #333; display:flex; align-items:center; justify-content:center; color:#555; font-size:0.75rem; border-radius:4px; width:9.3cm; height:7.2cm; max-width:100%; max-height:48%;">Aguardando foto...</div>`;
+        htmlImgs += `<div style="background:#111; border:1px dashed #333; display:flex; align-items:center; justify-content:center; color:#555; font-size:0.75rem; border-radius:4px; width:9.3cm; height:7.2cm;">Aguardando foto...</div>`;
       }
 
       highlightViewer.innerHTML = `
@@ -1766,7 +1766,6 @@
                 width: 9.3cm;
                 height: 7.2cm;
                 object-fit: contain;
-                transform: rotate(90deg);
               }
             </style>
           </head>
