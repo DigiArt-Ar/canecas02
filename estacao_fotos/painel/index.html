@@ -152,7 +152,7 @@
       justify-content: space-between;
       align-items: center;
       padding: 0 25px;
-      gap: 12px;
+      gap: 15px;
       flex-shrink: 0;
     }
 
@@ -620,6 +620,7 @@
             <select id="paperSizeSelect">
               <option value="A7">Papel A7 (7.4x10.5cm)</option>
               <option value="A6" selected>Papel A6 (10x15cm)</option>
+              <option value="A6_2">Papel A6 (2 fotos A7 horizontais empilhadas)</option>
               <option value="A4_4">Folha A4 (4 fotos - Grid 2x2)</option>
               <option value="A4_6">Folha A4 (6 fotos - Paisagem 2x3)</option>
             </select>
@@ -695,6 +696,7 @@
     let listaFotosPendentes = [];
     let unsubscribeRevendedor = null;
     let molduraBase64Otimizada = null;
+    const sessionIdUnico = Math.random().toString(36).substring(2);
 
     function gerarIdCurto() {
       const caracteres = 'abcdefghijklmnopqrstuvwxyz0123456789';
@@ -703,60 +705,6 @@
         resultado += caracteres.charAt(Math.floor(Math.random() * caracteres.length));
       }
       return resultado;
-    }
-
-    const sessionIdUnico = Math.random().toString(36).substring(2);
-
-    // SISTEMA DE SINCRONIZAÇÃO OFFLINE (FILA DE REDUNDÂNCIA)
-    async function sincronizarFilaOffline() {
-      if (!navigator.onLine || !currentEventId) return;
-      const chaveOffline = `digiart_offline_prints_${currentEventId}`;
-      let pendentesLocal = [];
-      try {
-        pendentesLocal = JSON.parse(localStorage.getItem(chaveOffline) || "[]");
-      } catch (e) {
-        pendentesLocal = [];
-      }
-
-      if (pendentesLocal.length === 0) return;
-
-      const idsProcessados = [];
-      for (const idFoto of pendentesLocal) {
-        try {
-          await updateDoc(doc(db, "eventos", currentEventId, "fotos", idFoto), { status: "impressa" });
-          idsProcessados.push(idFoto);
-        } catch (err) {
-          // Se falhar de novo, mantém para tentar na próxima vez
-        }
-      }
-
-      if (idsProcessados.length > 0) {
-        const restantes = pendentesLocal.filter(id => !idsProcessados.includes(id));
-        localStorage.setItem(chaveOffline, JSON.stringify(restantes));
-      }
-    }
-
-    window.addEventListener('online', sincronizarFilaOffline);
-
-    function registrarImpressaoOffline(idsArray) {
-      if (!currentEventId) return;
-      const chaveOffline = `digiart_offline_prints_${currentEventId}`;
-      let pendentesLocal = [];
-      try {
-        pendentesLocal = JSON.parse(localStorage.getItem(chaveOffline) || "[]");
-      } catch (e) {
-        pendentesLocal = [];
-      }
-
-      for (const id of idsArray) {
-        if (!pendentesLocal.includes(id)) {
-          pendentesLocal.push(id);
-        }
-      }
-      localStorage.setItem(chaveOffline, JSON.stringify(pendentesLocal));
-      
-      // Tenta sincronizar imediatamente caso a internet esteja ativa
-      sincronizarFilaOffline();
     }
 
     function iniciarMonitoramentoRevendedor(email) {
@@ -824,7 +772,6 @@
         try {
           const docRef = doc(db, "revendedores", emailLogado);
           await updateDoc(docRef, { ultimoHeartbeat: Date.now() });
-          sincronizarFilaOffline();
         } catch (e) {}
       }
     }, 15000);
@@ -1105,7 +1052,6 @@
       infoEventId.innerText = nomeEventoExibicao;
       gerarQRCodeCliente(currentEventId);
       monitorarFotos();
-      sincronizarFilaOffline();
 
       if (tempoFimSalvo) {
         const restanteSegundos = Math.max(0, Math.floor((parseInt(tempoFimSalvo) - Date.now()) / 1000));
@@ -1204,7 +1150,6 @@
       localStorage.removeItem("digiart_evento_ativo");
       localStorage.removeItem("digiart_nome_evento");
       localStorage.removeItem("digiart_tempo_fim");
-      localStorage.removeItem(`digiart_offline_prints_${eventoParaApagar}`);
       
       currentEventId = "";
       nomeEventoExibicao = "";
@@ -1255,8 +1200,8 @@
         });
 
         const formatoAtual = paperSizeSelect.value;
-        if (formatoAtual.startsWith("A4")) {
-          atualizarVisualizacaoA4(formatoAtual);
+        if (formatoAtual.startsWith("A4") || formatoAtual === "A6_2") {
+          atualizarVisualizacaoLoteEspecial(formatoAtual);
         } else {
           if (listaFotosPendentes.length > 0) {
             if (!fotoSelecionadaAtual || !listaFotosPendentes.some(f => f.id === fotoSelecionadaAtual.id)) {
@@ -1271,8 +1216,8 @@
 
     paperSizeSelect.addEventListener("change", () => {
       const formato = paperSizeSelect.value;
-      if (formato.startsWith("A4")) {
-        atualizarVisualizacaoA4(formato);
+      if (formato.startsWith("A4") || formato === "A6_2") {
+        atualizarVisualizacaoLoteEspecial(formato);
       } else {
         if (listaFotosPendentes.length > 0) {
           selecionarFotoParaDestaque(listaFotosPendentes[0]);
@@ -1282,12 +1227,15 @@
       }
     });
 
-    function atualizarVisualizacaoA4(formato) {
-      const qtd = formato === "A4_6" ? 6 : 4;
+    function atualizarVisualizacaoLoteEspecial(formato) {
+      let qtd = 4;
+      if (formato === "A4_6") qtd = 6;
+      if (formato === "A6_2") qtd = 2;
+
       const lote = listaFotosPendentes.slice(0, qtd);
 
       if (lote.length === 0) {
-        highlightViewer.innerHTML = `<p style="color:#555;">Fila vazia para montar folha A4...</p>`;
+        highlightViewer.innerHTML = `<p style="color:#555;">Fila vazia para montar folha ${formato}...</p>`;
         btnActionPrint.disabled = true;
         btnActionDelete.disabled = true;
         return;
@@ -1297,6 +1245,10 @@
       if (formato === "A4_6") {
         gridCols = "repeat(2, 1fr)";
         gridRows = "repeat(3, 1fr)";
+        gapSize = "10px";
+      } else if (formato === "A6_2") {
+        gridCols = "1fr";
+        gridRows = "repeat(2, 1fr)";
         gapSize = "10px";
       } else {
         gridCols = "repeat(2, 1fr)";
@@ -1331,13 +1283,13 @@
         });
       });
 
-      fotoSelecionadaAtual = { tipo: "A4", formato: formato, fotosLote: lote };
+      fotoSelecionadaAtual = { tipo: "LOTE", formato: formato, fotosLote: lote };
       btnActionPrint.disabled = lote.length === 0;
       btnActionDelete.disabled = true;
     }
 
     function selecionarFotoParaDestaque(foto) {
-      if (paperSizeSelect.value.startsWith("A4")) return;
+      if (paperSizeSelect.value.startsWith("A4") || paperSizeSelect.value === "A6_2") return;
       fotoSelecionadaAtual = foto;
       highlightViewer.innerHTML = `<img src="${foto.fotoUrl}" alt="Foto Destaque">`;
       btnActionPrint.disabled = false;
@@ -1345,8 +1297,8 @@
     }
 
     function limparDestaque() {
-      if (paperSizeSelect.value.startsWith("A4")) {
-        atualizarVisualizacaoA4(paperSizeSelect.value);
+      if (paperSizeSelect.value.startsWith("A4") || paperSizeSelect.value === "A6_2") {
+        atualizarVisualizacaoLoteEspecial(paperSizeSelect.value);
         return;
       }
       fotoSelecionadaAtual = null;
@@ -1359,21 +1311,20 @@
       if (!fotoSelecionadaAtual) return;
       const formatoEscolhido = paperSizeSelect.value;
 
-      if (formatoEscolhido.startsWith("A4")) {
+      if (formatoEscolhido.startsWith("A4") || formatoEscolhido === "A6_2") {
         const lote = fotoSelecionadaAtual.fotosLote;
         if (lote.length === 0) return;
 
         if (formatoEscolhido === "A4_6") {
           imprimirLoteA4_6(lote);
+        } else if (formatoEscolhido === "A6_2") {
+          imprimirLoteA6_2(lote);
         } else {
           imprimirLoteA4(lote, formatoEscolhido);
         }
 
         totalImpressas += lote.length;
         countPrinted.innerText = totalImpressas;
-
-        const idsLote = lote.map(f => f.id);
-        registrarImpressaoOffline(idsLote);
 
         for (const foto of lote) {
           try {
@@ -1387,7 +1338,6 @@
         totalImpressas++;
         countPrinted.innerText = totalImpressas;
 
-        registrarImpressaoOffline([fotoParaImprimir.id]);
         try {
           await updateDoc(doc(db, "eventos", currentEventId, "fotos", fotoParaImprimir.id), { status: "impressa" });
         } catch (e) {}
@@ -1395,7 +1345,7 @@
     });
 
     btnActionDelete.addEventListener("click", async () => {
-      if (!fotoSelecionadaAtual || paperSizeSelect.value.startsWith("A4")) return;
+      if (!fotoSelecionadaAtual || paperSizeSelect.value.startsWith("A4") || paperSizeSelect.value === "A6_2") return;
       if (confirm("Excluir esta foto?")) {
         await deleteDoc(doc(db, "eventos", currentEventId, "fotos", fotoSelecionadaAtual.id));
       }
@@ -1509,6 +1459,73 @@
           </head>
           <body>
             <img src="${url}" onload="setTimeout(() => { window.print(); }, 300);"/>
+          </body>
+        </html>
+      `);
+      docIframe.close();
+    }
+
+    // ACRSÉCIMO SOLICITADO: Impressão de 2 fotos A7 horizontais empilhadas em folha A6 vertical (10x15cm)
+    function imprimirLoteA6_2(lote) {
+      let imgTags = lote.map(f => `
+        <div class="cell">
+          <img src="${f.fotoUrl}">
+        </div>
+      `).join('');
+
+      let iframe = document.getElementById("printFrame");
+      if (!iframe) {
+        iframe = document.createElement("iframe");
+        iframe.id = "printFrame";
+        iframe.style.display = "none";
+        document.body.appendChild(iframe);
+      }
+      const docIframe = iframe.contentWindow.document;
+      docIframe.open();
+      docIframe.write(`
+        <html>
+          <head>
+            <style>
+              @page {
+                size: 10cm 15cm;
+                margin: 0;
+              }
+              * {
+                box-sizing: border-box;
+                -webkit-print-color-adjust: exact;
+                print-color-adjust: exact;
+              }
+              body {
+                margin: 0;
+                padding: 0;
+                width: 10cm;
+                height: 15cm;
+                background-color: #ffffff;
+                display: flex;
+                flex-direction: column;
+                justify-content: space-around;
+                align-items: center;
+              }
+              .cell {
+                width: 10cm;
+                height: 7.5cm;
+                display: flex;
+                justify-content: center;
+                align-items: center;
+                overflow: hidden;
+              }
+              img {
+                width: 9.8cm;
+                height: 7.3cm;
+                object-fit: contain;
+              }
+            </style>
+          </head>
+          <body>
+            ${imgTags}
+            <script>
+              setTimeout(() => { window.print(); }, 400);
+            <\/script>
           </body>
         </html>
       `);
