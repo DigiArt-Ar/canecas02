@@ -768,7 +768,6 @@
     function registrarAcaoOffline(fotoId, novoStatus) {
       if (!currentEventId) return;
       let acoes = JSON.parse(localStorage.getItem(`digiart_acoes_offline_${currentEventId}`) || "[]");
-      // Evita duplicatas na fila offline
       acoes = acoes.filter(a => a.id !== fotoId);
       acoes.push({ id: fotoId, status: novoStatus, timestamp: Date.now() });
       localStorage.setItem(`digiart_acoes_offline_${currentEventId}`, JSON.stringify(acoes));
@@ -870,7 +869,8 @@
           let width = img.width;
           let height = img.height;
 
-          const MAX_DIMENSION = 900; 
+          // CORREÇÃO: Reduzido para 600px para garantir envio rápido e evitar estouro do limite do Firestore
+          const MAX_DIMENSION = 600; 
           if (width > height && width > MAX_DIMENSION) {
             height *= MAX_DIMENSION / width;
             width = MAX_DIMENSION;
@@ -1188,7 +1188,7 @@
         monitorarFotos();
       } catch (erro) {
         console.error("Erro ao iniciar evento:", erro);
-        alert("Houve um pequeno atraso na resposta do Firebase. Por favor, clique em iniciar novamente.");
+        alert("Houve um pequeno atraso na resposta do Firebase. Por favor, verifique sua conexão e clique em iniciar novamente.");
       } finally {
         btnStartEvent.innerText = "INICIAR NOVO EVENTO";
         btnStartEvent.disabled = false;
@@ -1221,6 +1221,7 @@
 
       if (eventoParaApagar && navigator.onLine) {
         try {
+          // CORREÇÃO: Limpeza rigorosa e garantida de todas as fotos e documento do evento no Firestore
           const fotosSnapshot = await getDocs(collection(db, "eventos", eventoParaApagar, "fotos"));
           const deletePromises = fotosSnapshot.docs.map(fotoDoc => deleteDoc(fotoDoc.ref));
           await Promise.all(deletePromises);
@@ -1228,6 +1229,7 @@
           await deleteDoc(doc(db, "eventos", eventoParaApagar));
         } catch (err) {
           console.error("Erro ao limpar dados do Firebase:", err);
+          alert("Aviso: Houve um problema ao limpar o banco de dados online. Verifique sua conexão.");
         }
       }
 
@@ -1273,11 +1275,9 @@
           dadosCache.push(foto);
         });
 
-        // Salva cache local para uso offline futuro
         localStorage.setItem(`digiart_queue_cache_${currentEventId}`, JSON.stringify(dadosCache));
         processarListaFotos(dadosCache);
       }, (error) => {
-        // Se cair a conexão durante o monitoramento, recorre ao cache local
         carregarFotosDoCacheLocal();
       });
     }
@@ -1385,7 +1385,6 @@
       });
 
       fotoSelecionadaAtual = { tipo: "A4", formato: formato, fotosLote: lote };
-      // ALTERAÇÃO REALIZADA: Botão liberado se houver pelo menos 1 foto
       btnActionPrint.disabled = lote.length === 0;
       btnActionDelete.disabled = true;
     }
@@ -1415,7 +1414,6 @@
 
       if (formatoEscolhido.startsWith("A4")) {
         const lote = fotoSelecionadaAtual.fotosLote;
-        // ALTERAÇÃO REALIZADA: Removida a obrigatoriedade de 4 fotos
         if (lote.length === 0) return;
 
         imprimirLoteA4(lote, formatoEscolhido);
@@ -1428,7 +1426,6 @@
             await updateDoc(doc(db, "eventos", currentEventId, "fotos", foto.id), { status: "impressa" });
           } else {
             registrarAcaoOffline(foto.id, "impressa");
-            // Atualiza localmente o status no cache para sumir da fila pendente imediatamente
             atualizarStatusCacheLocal(foto.id, "impressa");
           }
         }
