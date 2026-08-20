@@ -730,7 +730,6 @@
     let unsubscribeRevendedor = null;
     let molduraBase64Otimizada = null;
 
-    // --- SISTEMA DE INDICADOR E SINCRONIZAÇÃO OFFLINE ---
     function atualizarStatusRede() {
       if (navigator.onLine) {
         networkDot.style.backgroundColor = "#00FF00";
@@ -759,9 +758,7 @@
           if (fotoSnap.exists() && fotoSnap.data().status !== acao.status) {
             await updateDoc(fotoRef, { status: acao.status });
           }
-        } catch (e) {
-          console.error("Erro ao sincronizar ação offline:", e);
-        }
+        } catch (e) {}
       }
       localStorage.removeItem(`digiart_acoes_offline_${currentEventId}`);
     }
@@ -900,7 +897,6 @@
       changePasswordScreen.classList.remove("active");
       setupScreen.classList.remove("active");
       dashboardContainer.classList.remove("active");
-
       telaElemento.classList.add("active");
     }
 
@@ -917,7 +913,6 @@
 
             if (docSnap.exists()) {
               const dados = docSnap.data();
-              
               await updateDoc(docRef, {
                 sessaoAtivaId: sessionIdUnico,
                 ultimoHeartbeat: Date.now()
@@ -1041,7 +1036,6 @@
         if (dados.token === tokenInformado || dados.primeiroAcesso !== false) {
           localStorage.setItem("digiart_temp_email", email);
           localStorage.setItem("digiart_expira_em", dados.expiraEm);
-
           mostrarTela(changePasswordScreen);
         } else {
           alert("Token ou senha incorretos!");
@@ -1080,9 +1074,7 @@
 
         localStorage.setItem("digiart_email_rev", email);
         localStorage.removeItem("digiart_temp_email");
-
         iniciarMonitoramentoRevendedor(email);
-
         mostrarTela(setupScreen);
       } catch (err) {
         alert("Erro ao salvar senha.");
@@ -1156,7 +1148,6 @@
         nomeEventoExibicao = nomeInput;
         currentEventId = gerarIdCurto();
         const emailSalvo = localStorage.getItem("digiart_email_rev");
-
         const tempoFimTimestamp = Date.now() + (horasInput * 3600 * 1000);
 
         if (navigator.onLine) {
@@ -1186,7 +1177,6 @@
         iniciarCronometroComSegundos(horasInput * 3600);
         monitorarFotos();
       } catch (erro) {
-        console.error("Erro ao iniciar evento:", erro);
         alert("Houve um pequeno atraso na resposta do Firebase. Por favor, clique em iniciar novamente.");
       } finally {
         btnStartEvent.innerText = "INICIAR NOVO EVENTO";
@@ -1210,11 +1200,7 @@
       if (emailSalvo && navigator.onLine) {
         try {
           const docRef = doc(db, "revendedores", emailSalvo);
-          await updateDoc(docRef, {
-            currentEventId: "",
-            currentEventName: "",
-            currentEventEndTime: 0
-          });
+          await updateDoc(docRef, { currentEventId: "", currentEventName: "", currentEventEndTime: 0 });
         } catch (e) {}
       }
 
@@ -1223,11 +1209,8 @@
           const fotosSnapshot = await getDocs(collection(db, "eventos", eventoParaApagar, "fotos"));
           const deletePromises = fotosSnapshot.docs.map(fotoDoc => deleteDoc(fotoDoc.ref));
           await Promise.all(deletePromises);
-
           await deleteDoc(doc(db, "eventos", eventoParaApagar));
-        } catch (err) {
-          console.error("Erro ao limpar dados do Firebase:", err);
-        }
+        } catch (err) {}
       }
 
       localStorage.removeItem("digiart_evento_ativo");
@@ -1255,7 +1238,6 @@
 
     function monitorarFotos() {
       if (unsubscribeSnapshot) unsubscribeSnapshot();
-      
       if (!navigator.onLine) {
         carregarFotosDoCacheLocal();
         return;
@@ -1615,7 +1597,7 @@
       docIframe.close();
     }
 
-    // IMPRESSÃO ATUALIZADA COM COMPENSAÇÃO DE DESVIO MECÂNICO DA IMPRESSORA - A6_2
+    // IMPRESSÃO COM MÁSCARA BRANCA SÓLIDA DE 10x15cm E POSICIONAMENTO ABSOLUTO EXATO
     function imprimirLoteA6_2(lote) {
       let imgTags = lote.map(f => `<div class="cell"><img src="${f.fotoUrl}"></div>`).join('');
       let iframe = document.getElementById("printFrame");
@@ -1633,13 +1615,20 @@
                 padding: 0; 
                 width: 100mm; 
                 height: 150mm; 
-                background-color: #ffffff; 
-                display: flex; 
-                flex-direction: column; 
-                gap: 1.2mm; 
-                justify-content: center; 
-                align-items: center; 
-                transform: translateY(-1.5mm); 
+                background-color: #ffffff; /* Máscara sólida cobrindo toda a folha 10x15cm */
+                position: relative; 
+                overflow: hidden; 
+              }
+              .sheet-mask {
+                position: absolute;
+                top: 2.5mm;   /* Margem superior calculada */
+                left: 3.5mm;  /* Margem lateral calculada */
+                width: 93mm;  /* Largura total exata */
+                height: 145mm; /* Altura total exata das duas fotos + 1mm de espaço */
+                display: flex;
+                flex-direction: column;
+                gap: 1mm;
+                background-color: #ffffff;
               }
               .cell { 
                 width: 93mm; 
@@ -1659,7 +1648,12 @@
               }
             </style>
           </head>
-          <body>${imgTags}<script>setTimeout(() => { window.print(); }, 400);<\/script></body>
+          <body>
+            <div class="sheet-mask">
+              ${imgTags}
+            </div>
+            <script>setTimeout(() => { window.print(); }, 400);<\/script>
+          </body>
         </html>
       `);
       docIframe.close();
