@@ -707,58 +707,6 @@
 
     const sessionIdUnico = Math.random().toString(36).substring(2);
 
-    // SISTEMA DE SINCRONIZAÇÃO OFFLINE (FILA DE REDUNDÂNCIA)
-    async function sincronizarFilaOffline() {
-      if (!navigator.onLine || !currentEventId) return;
-      const chaveOffline = `digiart_offline_prints_${currentEventId}`;
-      let pendentesLocal = [];
-      try {
-        pendentesLocal = JSON.parse(localStorage.getItem(chaveOffline) || "[]");
-      } catch (e) {
-        pendentesLocal = [];
-      }
-
-      if (pendentesLocal.length === 0) return;
-
-      const idsProcessados = [];
-      for (const idFoto of pendentesLocal) {
-        try {
-          await updateDoc(doc(db, "eventos", currentEventId, "fotos", idFoto), { status: "impressa" });
-          idsProcessados.push(idFoto);
-        } catch (err) {
-          // Se falhar de novo, mantém para tentar na próxima vez
-        }
-      }
-
-      if (idsProcessados.length > 0) {
-        const restantes = pendentesLocal.filter(id => !idsProcessados.includes(id));
-        localStorage.setItem(chaveOffline, JSON.stringify(restantes));
-      }
-    }
-
-    window.addEventListener('online', sincronizarFilaOffline);
-
-    function registrarImpressaoOffline(idsArray) {
-      if (!currentEventId) return;
-      const chaveOffline = `digiart_offline_prints_${currentEventId}`;
-      let pendentesLocal = [];
-      try {
-        pendentesLocal = JSON.parse(localStorage.getItem(chaveOffline) || "[]");
-      } catch (e) {
-        pendentesLocal = [];
-      }
-
-      for (const id of idsArray) {
-        if (!pendentesLocal.includes(id)) {
-          pendentesLocal.push(id);
-        }
-      }
-      localStorage.setItem(chaveOffline, JSON.stringify(pendentesLocal));
-      
-      // Tenta sincronizar imediatamente caso a internet esteja ativa
-      sincronizarFilaOffline();
-    }
-
     function iniciarMonitoramentoRevendedor(email) {
       if (unsubscribeRevendedor) unsubscribeRevendedor();
       const docRef = doc(db, "revendedores", email);
@@ -824,7 +772,6 @@
         try {
           const docRef = doc(db, "revendedores", emailLogado);
           await updateDoc(docRef, { ultimoHeartbeat: Date.now() });
-          sincronizarFilaOffline();
         } catch (e) {}
       }
     }, 15000);
@@ -1105,7 +1052,6 @@
       infoEventId.innerText = nomeEventoExibicao;
       gerarQRCodeCliente(currentEventId);
       monitorarFotos();
-      sincronizarFilaOffline();
 
       if (tempoFimSalvo) {
         const restanteSegundos = Math.max(0, Math.floor((parseInt(tempoFimSalvo) - Date.now()) / 1000));
@@ -1204,7 +1150,6 @@
       localStorage.removeItem("digiart_evento_ativo");
       localStorage.removeItem("digiart_nome_evento");
       localStorage.removeItem("digiart_tempo_fim");
-      localStorage.removeItem(`digiart_offline_prints_${eventoParaApagar}`);
       
       currentEventId = "";
       nomeEventoExibicao = "";
@@ -1372,13 +1317,8 @@
         totalImpressas += lote.length;
         countPrinted.innerText = totalImpressas;
 
-        const idsLote = lote.map(f => f.id);
-        registrarImpressaoOffline(idsLote);
-
         for (const foto of lote) {
-          try {
-            await updateDoc(doc(db, "eventos", currentEventId, "fotos", foto.id), { status: "impressa" });
-          } catch (e) {}
+          await updateDoc(doc(db, "eventos", currentEventId, "fotos", foto.id), { status: "impressa" });
         }
       } else {
         const fotoParaImprimir = fotoSelecionadaAtual;
@@ -1387,10 +1327,7 @@
         totalImpressas++;
         countPrinted.innerText = totalImpressas;
 
-        registrarImpressaoOffline([fotoParaImprimir.id]);
-        try {
-          await updateDoc(doc(db, "eventos", currentEventId, "fotos", fotoParaImprimir.id), { status: "impressa" });
-        } catch (e) {}
+        await updateDoc(doc(db, "eventos", currentEventId, "fotos", fotoParaImprimir.id), { status: "impressa" });
       }
     });
 
@@ -1671,4 +1608,4 @@
     });
   </script>
 </body>
-  </html>
+</html>
