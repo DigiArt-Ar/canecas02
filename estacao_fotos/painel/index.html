@@ -166,50 +166,6 @@
       color: #888;
     }
 
-    .connection-status-box {
-      background-color: #1a1a1a;
-      border: 1px solid #333;
-      padding: 6px 14px;
-      border-radius: 8px;
-      text-align: center;
-      display: flex;
-      align-items: center;
-      gap: 8px;
-    }
-
-    .connection-dot {
-      width: 10px;
-      height: 10px;
-      border-radius: 50%;
-      background-color: #00FF00;
-      box-shadow: 0 0 8px #00FF00;
-      transition: background 0.3s, box-shadow 0.3s;
-    }
-
-    .connection-status-box.offline .connection-dot {
-      background-color: #ff4d4d;
-      box-shadow: 0 0 8px #ff4d4d;
-    }
-
-    .connection-status-box span {
-      display: block;
-      font-size: 0.65rem;
-      color: #aaa;
-      text-transform: uppercase;
-      text-align: left;
-    }
-
-    .connection-status-box strong {
-      color: #00FF00;
-      font-size: 0.85rem;
-      display: block;
-      text-align: left;
-    }
-
-    .connection-status-box.offline strong {
-      color: #ff4d4d;
-    }
-
     .event-info-box {
       background-color: #1a1a1a;
       border: 1px solid #333;
@@ -517,8 +473,8 @@
     }
 
     .queue-thumb {
-      width: 70px;
-      height: 50px;
+      width: 50px;
+      height: 70px;
       object-fit: cover;
       border-radius: 4px;
       background-color: #000;
@@ -609,14 +565,6 @@
         <span>Estação de Fotos</span>
       </div>
 
-      <div class="connection-status-box" id="connectionStatusBox">
-        <div class="connection-dot" id="connectionDot"></div>
-        <div>
-          <span>Rede</span>
-          <strong id="connectionText">ONLINE</strong>
-        </div>
-      </div>
-
       <div class="event-info-box">
         <span>Evento Ativo</span>
         <strong id="infoEventId">---</strong>
@@ -672,9 +620,7 @@
             <select id="paperSizeSelect">
               <option value="A7">Papel A7 (7.4x10.5cm)</option>
               <option value="A6" selected>Papel A6 (10x15cm)</option>
-              <option value="A6_2_A7">Papel A6 Vertical (2 Fotos A7 Horizontais)</option>
               <option value="A4_4">Folha A4 (4 fotos - Grid 2x2)</option>
-              <option value="A4_6">Folha A4 (6 fotos - Paisagem 2x3)</option>
             </select>
           </div>
         </div>
@@ -739,9 +685,6 @@
     const btnActionDelete = document.getElementById("btnActionDelete");
     const paperSizeSelect = document.getElementById("paperSizeSelect");
 
-    const connectionStatusBox = document.getElementById("connectionStatusBox");
-    const connectionText = document.getElementById("connectionText");
-
     let currentEventId = "";
     let nomeEventoExibicao = "";
     let totalImpressas = 0;
@@ -751,27 +694,6 @@
     let listaFotosPendentes = [];
     let unsubscribeRevendedor = null;
     let molduraBase64Otimizada = null;
-
-    function atualizarStatusRedeVisual() {
-      if (navigator.onLine) {
-        connectionStatusBox.classList.remove("offline");
-        connectionText.innerText = "ONLINE";
-      } else {
-        connectionStatusBox.classList.add("offline");
-        connectionText.innerText = "OFFLINE";
-      }
-    }
-
-    window.addEventListener('online', () => {
-      atualizarStatusRedeVisual();
-      sincronizarFilaOffline();
-    });
-
-    window.addEventListener('offline', () => {
-      atualizarStatusRedeVisual();
-    });
-
-    atualizarStatusRedeVisual();
 
     function gerarIdCurto() {
       const caracteres = 'abcdefghijklmnopqrstuvwxyz0123456789';
@@ -783,51 +705,6 @@
     }
 
     const sessionIdUnico = Math.random().toString(36).substring(2);
-
-    async function sincronizarFilaOffline() {
-      if (!navigator.onLine || !currentEventId) return;
-      const chaveOffline = `digiart_offline_prints_${currentEventId}`;
-      let pendentesLocal = [];
-      try {
-        pendentesLocal = JSON.parse(localStorage.getItem(chaveOffline) || "[]");
-      } catch (e) {
-        pendentesLocal = [];
-      }
-
-      if (pendentesLocal.length === 0) return;
-
-      const idsProcessados = [];
-      for (const idFoto of pendentesLocal) {
-        try {
-          await updateDoc(doc(db, "eventos", currentEventId, "fotos", idFoto), { status: "impressa" });
-          idsProcessados.push(idFoto);
-        } catch (err) {}
-      }
-
-      if (idsProcessados.length > 0) {
-        const restantes = pendentesLocal.filter(id => !idsProcessados.includes(id));
-        localStorage.setItem(chaveOffline, JSON.stringify(restantes));
-      }
-    }
-
-    function registrarImpressaoOffline(idsArray) {
-      if (!currentEventId) return;
-      const chaveOffline = `digiart_offline_prints_${currentEventId}`;
-      let pendentesLocal = [];
-      try {
-        pendentesLocal = JSON.parse(localStorage.getItem(chaveOffline) || "[]");
-      } catch (e) {
-        pendentesLocal = [];
-      }
-
-      for (const id of idsArray) {
-        if (!pendentesLocal.includes(id)) {
-          pendentesLocal.push(id);
-        }
-      }
-      localStorage.setItem(chaveOffline, JSON.stringify(pendentesLocal));
-      sincronizarFilaOffline();
-    }
 
     function iniciarMonitoramentoRevendedor(email) {
       if (unsubscribeRevendedor) unsubscribeRevendedor();
@@ -889,13 +766,11 @@
     }
 
     setInterval(async () => {
-      atualizarStatusRedeVisual();
       const emailLogado = localStorage.getItem("digiart_email_rev");
       if (emailLogado) {
         try {
           const docRef = doc(db, "revendedores", emailLogado);
           await updateDoc(docRef, { ultimoHeartbeat: Date.now() });
-          sincronizarFilaOffline();
         } catch (e) {}
       }
     }, 15000);
@@ -1176,7 +1051,6 @@
       infoEventId.innerText = nomeEventoExibicao;
       gerarQRCodeCliente(currentEventId);
       monitorarFotos();
-      sincronizarFilaOffline();
 
       if (tempoFimSalvo) {
         const restanteSegundos = Math.max(0, Math.floor((parseInt(tempoFimSalvo) - Date.now()) / 1000));
@@ -1275,7 +1149,6 @@
       localStorage.removeItem("digiart_evento_ativo");
       localStorage.removeItem("digiart_nome_evento");
       localStorage.removeItem("digiart_tempo_fim");
-      localStorage.removeItem(`digiart_offline_prints_${eventoParaApagar}`);
       
       currentEventId = "";
       nomeEventoExibicao = "";
@@ -1328,8 +1201,6 @@
         const formatoAtual = paperSizeSelect.value;
         if (formatoAtual.startsWith("A4")) {
           atualizarVisualizacaoA4(formatoAtual);
-        } else if (formatoAtual === "A6_2_A7") {
-          atualizarVisualizacaoA6_2_A7();
         } else {
           if (listaFotosPendentes.length > 0) {
             if (!fotoSelecionadaAtual || !listaFotosPendentes.some(f => f.id === fotoSelecionadaAtual.id)) {
@@ -1346,8 +1217,6 @@
       const formato = paperSizeSelect.value;
       if (formato.startsWith("A4")) {
         atualizarVisualizacaoA4(formato);
-      } else if (formato === "A6_2_A7") {
-        atualizarVisualizacaoA6_2_A7();
       } else {
         if (listaFotosPendentes.length > 0) {
           selecionarFotoParaDestaque(listaFotosPendentes[0]);
@@ -1358,7 +1227,7 @@
     });
 
     function atualizarVisualizacaoA4(formato) {
-      const qtd = formato === "A4_6" ? 6 : 4;
+      const qtd = 4;
       const lote = listaFotosPendentes.slice(0, qtd);
 
       if (lote.length === 0) {
@@ -1368,30 +1237,23 @@
         return;
       }
 
-      let gridCols, gridRows, gapSize;
-      if (formato === "A4_6") {
-        gridCols = "repeat(2, 1fr)";
-        gridRows = "repeat(3, 1fr)";
-        gapSize = "10px";
-      } else {
-        gridCols = "repeat(2, 1fr)";
-        gridRows = "repeat(2, 1fr)";
-        gapSize = "15px";
-      }
+      let gridCols = "repeat(2, 1fr)";
+      let gridRows = "repeat(2, 1fr)";
+      let gapSize = "8px";
 
       let htmlImgs = lote.map((f, i) => `
-        <div style="position:relative; width:100%; height:100%; background:#000; border-radius:6px; overflow:hidden; display:flex; align-items:center; justify-content:center;">
-          <img src="${f.fotoUrl}" style="max-width:100%; max-height:100%; object-fit:contain;">
-          <button class="btn-delete-single" data-id="${f.id}" title="Excluir esta foto" style="position:absolute; top:6px; right:6px; background:rgba(255,0,0,0.85); color:#fff; border:none; border-radius:4px; width:28px; height:28px; font-weight:bold; cursor:pointer; display:flex; align-items:center; justify-content:center; font-size:0.9rem;">✕</button>
+        <div style="position:relative; background:#000; display:flex; align-items:center; justify-content:center; overflow:hidden; border-radius:6px; width:100%; height:100%;">
+          <img src="${f.fotoUrl}" style="width:100%; height:100%; object-fit:contain;">
+          <button class="btn-delete-single" data-id="${f.id}" title="Excluir esta foto" style="position:absolute; top:6px; right:6px; background:rgba(255,0,0,0.8); color:#fff; border:none; border-radius:4px; width:28px; height:28px; font-weight:bold; cursor:pointer; display:flex; align-items:center; justify-content:center; font-size:0.9rem;">✕</button>
         </div>
       `).join('');
       
       for (let i = lote.length; i < qtd; i++) {
-        htmlImgs += `<div style="background:#111; border:1px dashed #333; display:flex; align-items:center; justify-content:center; color:#555; font-size:0.75rem; border-radius:6px; width:100%; height:100%;">Aguardando foto...</div>`;
+        htmlImgs += `<div style="background:#111; border:1px dashed #333; display:flex; align-items:center; justify-content:center; color:#555; font-size:0.75rem; border-radius:6px;">Aguardando foto...</div>`;
       }
 
       highlightViewer.innerHTML = `
-        <div style="width:100%; height:100%; display:grid; grid-template-columns:${gridCols}; grid-template-rows:${gridRows}; gap:${gapSize}; background:#141414; padding: 10px; justify-content:center; align-content:center;">
+        <div style="width:100%; height:100%; display:grid; grid-template-columns:${gridCols}; grid-template-rows:${gridRows}; gap:${gapSize}; background:#141414;">
           ${htmlImgs}
         </div>
       `;
@@ -1407,54 +1269,12 @@
       });
 
       fotoSelecionadaAtual = { tipo: "A4", formato: formato, fotosLote: lote };
-      btnActionPrint.disabled = lote.length === 0;
-      btnActionDelete.disabled = true;
-    }
-
-    function atualizarVisualizacaoA6_2_A7() {
-      const lote = listaFotosPendentes.slice(0, 2);
-
-      if (lote.length === 0) {
-        highlightViewer.innerHTML = `<p style="color:#555;">Fila vazia para montar Papel A6 (2 fotos A7)...</p>`;
-        btnActionPrint.disabled = true;
-        btnActionDelete.disabled = true;
-        return;
-      }
-
-      let htmlImgs = lote.map((f, i) => `
-        <div style="position:relative; width:100%; height:100%; background:#000; border-radius:6px; overflow:hidden; display:flex; align-items:center; justify-content:center;">
-          <img src="${f.fotoUrl}" style="width:100%; height:100%; object-fit:contain;">
-          <button class="btn-delete-single" data-id="${f.id}" title="Excluir esta foto" style="position:absolute; top:6px; right:6px; background:rgba(255,0,0,0.85); color:#fff; border:none; border-radius:4px; width:28px; height:28px; font-weight:bold; cursor:pointer; display:flex; align-items:center; justify-content:center; font-size:0.9rem;">✕</button>
-        </div>
-      `).join('');
-
-      for (let i = lote.length; i < 2; i++) {
-        htmlImgs += `<div style="background:#111; border:1px dashed #333; display:flex; align-items:center; justify-content:center; color:#555; font-size:0.75rem; border-radius:6px; width:100%; height:100%;">Aguardando 2ª foto A7...</div>`;
-      }
-
-      highlightViewer.innerHTML = `
-        <div style="width:100%; height:100%; display:flex; flex-direction:column; gap: 1mm; background:#141414; padding: 10px; justify-content:center; align-items:center;">
-          ${htmlImgs}
-        </div>
-      `;
-
-      highlightViewer.querySelectorAll('.btn-delete-single').forEach(btn => {
-        btn.addEventListener("click", async (e) => {
-          e.stopPropagation();
-          const idParaExcluir = btn.getAttribute("data-id");
-          if (confirm("Deseja excluir esta foto específica do lote?")) {
-            await deleteDoc(doc(db, "eventos", currentEventId, "fotos", idParaExcluir));
-          }
-        });
-      });
-
-      fotoSelecionadaAtual = { tipo: "A6_2_A7", fotosLote: lote };
-      btnActionPrint.disabled = lote.length === 0;
+      btnActionPrint.disabled = lote.length < qtd;
       btnActionDelete.disabled = true;
     }
 
     function selecionarFotoParaDestaque(foto) {
-      if (paperSizeSelect.value.startsWith("A4") || paperSizeSelect.value === "A6_2_A7") return;
+      if (paperSizeSelect.value.startsWith("A4")) return;
       fotoSelecionadaAtual = foto;
       highlightViewer.innerHTML = `<img src="${foto.fotoUrl}" alt="Foto Destaque">`;
       btnActionPrint.disabled = false;
@@ -1464,10 +1284,6 @@
     function limparDestaque() {
       if (paperSizeSelect.value.startsWith("A4")) {
         atualizarVisualizacaoA4(paperSizeSelect.value);
-        return;
-      }
-      if (paperSizeSelect.value === "A6_2_A7") {
-        atualizarVisualizacaoA6_2_A7();
         return;
       }
       fotoSelecionadaAtual = null;
@@ -1482,41 +1298,16 @@
 
       if (formatoEscolhido.startsWith("A4")) {
         const lote = fotoSelecionadaAtual.fotosLote;
-        if (lote.length === 0) return;
+        const qtd = 4;
+        if (lote.length < qtd) return;
 
-        if (formatoEscolhido === "A4_6") {
-          imprimirLoteA4_6(lote);
-        } else {
-          imprimirLoteA4(lote, formatoEscolhido);
-        }
+        imprimirLoteA4(lote, formatoEscolhido);
 
         totalImpressas += lote.length;
         countPrinted.innerText = totalImpressas;
 
-        const idsLote = lote.map(f => f.id);
-        registrarImpressaoOffline(idsLote);
-
         for (const foto of lote) {
-          try {
-            await updateDoc(doc(db, "eventos", currentEventId, "fotos", foto.id), { status: "impressa" });
-          } catch (e) {}
-        }
-      } else if (formatoEscolhido === "A6_2_A7") {
-        const lote = fotoSelecionadaAtual.fotosLote;
-        if (lote.length === 0) return;
-
-        imprimirLoteA6_2_A7(lote);
-
-        totalImpressas += lote.length;
-        countPrinted.innerText = totalImpressas;
-
-        const idsLote = lote.map(f => f.id);
-        registrarImpressaoOffline(idsLote);
-
-        for (const foto of lote) {
-          try {
-            await updateDoc(doc(db, "eventos", currentEventId, "fotos", foto.id), { status: "impressa" });
-          } catch (e) {}
+          await updateDoc(doc(db, "eventos", currentEventId, "fotos", foto.id), { status: "impressa" });
         }
       } else {
         const fotoParaImprimir = fotoSelecionadaAtual;
@@ -1525,15 +1316,12 @@
         totalImpressas++;
         countPrinted.innerText = totalImpressas;
 
-        registrarImpressaoOffline([fotoParaImprimir.id]);
-        try {
-          await updateDoc(doc(db, "eventos", currentEventId, "fotos", fotoParaImprimir.id), { status: "impressa" });
-        } catch (e) {}
+        await updateDoc(doc(db, "eventos", currentEventId, "fotos", fotoParaImprimir.id), { status: "impressa" });
       }
     });
 
     btnActionDelete.addEventListener("click", async () => {
-      if (!fotoSelecionadaAtual || paperSizeSelect.value.startsWith("A4") || paperSizeSelect.value === "A6_2_A7") return;
+      if (!fotoSelecionadaAtual || paperSizeSelect.value.startsWith("A4")) return;
       if (confirm("Excluir esta foto?")) {
         await deleteDoc(doc(db, "eventos", currentEventId, "fotos", fotoSelecionadaAtual.id));
       }
@@ -1594,8 +1382,8 @@
       let tamanhoPage = "10cm 15cm";
       let larguraPapel = "10cm";
       let alturaPapel = "15cm";
-      let imgWidth = "10cm";  
-      let imgHeight = "7.5cm";
+      let imgWidth = "9.6cm";  
+      let imgHeight = "14.6cm";
 
       if (formato === "A7") {
         tamanhoPage = "7.4cm 10.5cm";
@@ -1653,78 +1441,7 @@
       docIframe.close();
     }
 
-    function imprimirLoteA6_2_A7(lote) {
-      let imgTags = lote.map(f => `
-        <div class="cell">
-          <img src="${f.fotoUrl}">
-        </div>
-      `).join('');
-
-      let iframe = document.getElementById("printFrame");
-      if (!iframe) {
-        iframe = document.createElement("iframe");
-        iframe.id = "printFrame";
-        iframe.style.display = "none";
-        document.body.appendChild(iframe);
-      }
-      const docIframe = iframe.contentWindow.document;
-      docIframe.open();
-      docIframe.write(`
-        <html>
-          <head>
-            <style>
-              @page {
-                size: 10cm 15cm;
-                margin: 0;
-              }
-              * {
-                box-sizing: border-box;
-                -webkit-print-color-adjust: exact;
-                print-color-adjust: exact;
-              }
-              body {
-                margin: 0;
-                padding: 0;
-                width: 10cm;
-                height: 15cm;
-                background-color: #ffffff;
-                display: flex;
-                flex-direction: column;
-                justify-content: center;
-                align-items: center;
-                gap: 1mm;
-              }
-              .cell {
-                width: 10cm;
-                height: 7cm;
-                display: flex;
-                justify-content: center;
-                align-items: center;
-                overflow: hidden;
-              }
-              img {
-                width: 10cm;
-                height: 7cm;
-                object-fit: contain;
-              }
-            </style>
-          </head>
-          <body>
-            ${imgTags}
-            <script>
-              setTimeout(() => { window.print(); }, 400);
-            <\/script>
-          </body>
-        </html>
-      `);
-      docIframe.close();
-    }
-
     function imprimirLoteA4(lote, formato) {
-      let gridCols = "repeat(2, 1fr)";
-      let gridRows = "repeat(2, 1fr)";
-      let gapSize = "10mm";
-
       let imgTags = lote.map(f => `<div class="cell"><img src="${f.fotoUrl}"></div>`).join('');
 
       let iframe = document.getElementById("printFrame");
@@ -1742,7 +1459,7 @@
             <style>
               @page {
                 size: 210mm 297mm;
-                margin: 10mm;
+                margin: 0;
               }
               * {
                 box-sizing: border-box;
@@ -1752,97 +1469,28 @@
               body {
                 margin: 0;
                 padding: 0;
-                width: 190mm;
-                height: 277mm;
-                background-color: #ffffff;
-                display: grid;
-                grid-template-columns: ${gridCols};
-                grid-template-rows: ${gridRows};
-                gap: ${gapSize};
-                justify-items: center;
-                align-items: center;
-              }
-              .cell {
-                width: 100%;
-                height: 100%;
-                display: flex;
-                justify-content: center;
-                align-items: center;
-                overflow: hidden;
-              }
-              img {
-                width: 95mm;
-                height: 135mm;
-                object-fit: cover;
-              }
-            </style>
-          </head>
-          <body>
-            ${imgTags}
-            <script>
-              setTimeout(() => { window.print(); }, 400);
-            <\/script>
-          </body>
-        </html>
-      `);
-      docIframe.close();
-    }
-
-    function imprimirLoteA4_6(lote) {
-      let imgTags = lote.map(f => `
-        <div class="cell">
-          <img src="${f.fotoUrl}">
-        </div>
-      `).join('');
-
-      let iframe = document.getElementById("printFrame");
-      if (!iframe) {
-        iframe = document.createElement("iframe");
-        iframe.id = "printFrame";
-        iframe.style.display = "none";
-        document.body.appendChild(iframe);
-      }
-      const docIframe = iframe.contentWindow.document;
-      docIframe.open();
-      docIframe.write(`
-        <html>
-          <head>
-            <style>
-              @page {
-                size: 210mm 297mm;
-                margin: 0;
-              }
-              * {
-                box-sizing: border-box;
-                -webkit-print-color-adjust: exact;
-                print-color-adjust: exact;
-              }
-              body {
-                margin: 0;
-                padding: 11mm 5mm;
                 width: 210mm;
                 height: 297mm;
                 background-color: #ffffff;
                 display: grid;
-                grid-template-columns: repeat(2, 10cm);
-                grid-template-rows: repeat(3, 7.5cm);
-                gap: 3mm 4mm;
+                grid-template-columns: 10cm 10cm;
+                grid-template-rows: 14cm 14cm;
+                gap: 1mm;
                 justify-content: center;
                 align-content: center;
               }
               .cell {
                 width: 10cm;
-                height: 7.5cm;
+                height: 14cm;
                 display: flex;
                 justify-content: center;
                 align-items: center;
                 overflow: hidden;
               }
               img {
-                width: 7.5cm;
-                height: 10cm;
+                width: 10cm;
+                height: 14cm;
                 object-fit: contain;
-                transform: rotate(90deg);
               }
             </style>
           </head>
