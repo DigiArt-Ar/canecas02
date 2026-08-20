@@ -166,51 +166,6 @@
       color: #888;
     }
 
-    /* Indicador Visual de Conexão */
-    .connection-status-box {
-      background-color: #1a1a1a;
-      border: 1px solid #333;
-      padding: 6px 14px;
-      border-radius: 8px;
-      text-align: center;
-      display: flex;
-      align-items: center;
-      gap: 8px;
-    }
-
-    .connection-dot {
-      width: 10px;
-      height: 10px;
-      border-radius: 50%;
-      background-color: #00FF00;
-      box-shadow: 0 0 8px #00FF00;
-      transition: background 0.3s, box-shadow 0.3s;
-    }
-
-    .connection-status-box.offline .connection-dot {
-      background-color: #ff4d4d;
-      box-shadow: 0 0 8px #ff4d4d;
-    }
-
-    .connection-status-box span {
-      display: block;
-      font-size: 0.65rem;
-      color: #aaa;
-      text-transform: uppercase;
-      text-align: left;
-    }
-
-    .connection-status-box strong {
-      color: #00FF00;
-      font-size: 0.85rem;
-      display: block;
-      text-align: left;
-    }
-
-    .connection-status-box.offline strong {
-      color: #ff4d4d;
-    }
-
     .event-info-box {
       background-color: #1a1a1a;
       border: 1px solid #333;
@@ -610,14 +565,6 @@
         <span>Estação de Fotos</span>
       </div>
 
-      <div class="connection-status-box" id="connectionStatusBox">
-        <div class="connection-dot" id="connectionDot"></div>
-        <div>
-          <span>Rede</span>
-          <strong id="connectionText">ONLINE</strong>
-        </div>
-      </div>
-
       <div class="event-info-box">
         <span>Evento Ativo</span>
         <strong id="infoEventId">---</strong>
@@ -739,10 +686,6 @@
     const btnActionDelete = document.getElementById("btnActionDelete");
     const paperSizeSelect = document.getElementById("paperSizeSelect");
 
-    // Elementos do Indicador de Conexão
-    const connectionStatusBox = document.getElementById("connectionStatusBox");
-    const connectionText = document.getElementById("connectionText");
-
     let currentEventId = "";
     let nomeEventoExibicao = "";
     let totalImpressas = 0;
@@ -752,29 +695,6 @@
     let listaFotosPendentes = [];
     let unsubscribeRevendedor = null;
     let molduraBase64Otimizada = null;
-
-    // Atualizador visual do status de rede
-    function atualizarStatusRedeVisual() {
-      if (navigator.onLine) {
-        connectionStatusBox.classList.remove("offline");
-        connectionText.innerText = "ONLINE";
-      } else {
-        connectionStatusBox.classList.add("offline");
-        connectionText.innerText = "OFFLINE";
-      }
-    }
-
-    window.addEventListener('online', () => {
-      atualizarStatusRedeVisual();
-      sincronizarFilaOffline();
-    });
-
-    window.addEventListener('offline', () => {
-      atualizarStatusRedeVisual();
-    });
-
-    // Executa ao carregar
-    atualizarStatusRedeVisual();
 
     function gerarIdCurto() {
       const caracteres = 'abcdefghijklmnopqrstuvwxyz0123456789';
@@ -815,6 +735,8 @@
         localStorage.setItem(chaveOffline, JSON.stringify(restantes));
       }
     }
+
+    window.addEventListener('online', sincronizarFilaOffline);
 
     function registrarImpressaoOffline(idsArray) {
       if (!currentEventId) return;
@@ -897,7 +819,6 @@
     }
 
     setInterval(async () => {
-      atualizarStatusRedeVisual();
       const emailLogado = localStorage.getItem("digiart_email_rev");
       if (emailLogado) {
         try {
@@ -1750,4 +1671,4 @@
     });
   </script>
 </body>
-        </html>
+  </html>
