@@ -230,6 +230,32 @@
       color: #00FF00;
     }
 
+    .network-indicator-box {
+      background-color: #1a1a1a;
+      border: 1px solid #333;
+      padding: 6px 14px;
+      border-radius: 8px;
+      display: flex;
+      align-items: center;
+      gap: 8px;
+    }
+
+    .network-dot {
+      width: 10px;
+      height: 10px;
+      border-radius: 50%;
+      background-color: #00FF00;
+      box-shadow: 0 0 8px #00FF00;
+      display: inline-block;
+    }
+
+    .network-text {
+      font-size: 0.75rem;
+      color: #fff;
+      font-weight: bold;
+      text-transform: uppercase;
+    }
+
     .header-actions {
       display: flex;
       gap: 10px;
@@ -586,6 +612,11 @@
         </div>
       </div>
 
+      <div class="network-indicator-box" id="networkIndicatorBox">
+        <span class="network-dot" id="networkDot"></span>
+        <span class="network-text" id="networkText">ONLINE</span>
+      </div>
+
       <div class="header-actions">
         <button class="btn-download-zip" id="btnDownloadZip">📦 BAIXAR TODAS (ZIP)</button>
         <button class="btn-finish" id="btnFinishEvent">FINALIZAR EVENTO</button>
@@ -685,6 +716,9 @@
     const btnActionDelete = document.getElementById("btnActionDelete");
     const paperSizeSelect = document.getElementById("paperSizeSelect");
 
+    const networkDot = document.getElementById("networkDot");
+    const networkText = document.getElementById("networkText");
+
     let currentEventId = "";
     let nomeEventoExibicao = "";
     let totalImpressas = 0;
@@ -694,6 +728,52 @@
     let listaFotosPendentes = [];
     let unsubscribeRevendedor = null;
     let molduraBase64Otimizada = null;
+
+    // --- SISTEMA DE INDICADOR E SINCRONIZAÇÃO OFFLINE ---
+    function atualizarStatusRede() {
+      if (navigator.onLine) {
+        networkDot.style.backgroundColor = "#00FF00";
+        networkDot.style.boxShadow = "0 0 8px #00FF00";
+        networkText.innerText = "ONLINE";
+        sincronizarAcoesOffline();
+      } else {
+        networkDot.style.backgroundColor = "#ff4d4d";
+        networkDot.style.boxShadow = "0 0 8px #ff4d4d";
+        networkText.innerText = "OFFLINE";
+      }
+    }
+
+    window.addEventListener('online', atualizarStatusRede);
+    window.addEventListener('offline', atualizarStatusRede);
+
+    async function sincronizarAcoesOffline() {
+      if (!currentEventId || !navigator.onLine) return;
+      const acoesSalvas = JSON.parse(localStorage.getItem(`digiart_acoes_offline_${currentEventId}`) || "[]");
+      if (acoesSalvas.length === 0) return;
+
+      for (const acao of acoesSalvas) {
+        try {
+          const fotoRef = doc(db, "eventos", currentEventId, "fotos", acao.id);
+          const fotoSnap = await getDoc(fotoRef);
+          if (fotoSnap.exists() && fotoSnap.data().status !== acao.status) {
+            await updateDoc(fotoRef, { status: acao.status });
+          }
+        } catch (e) {
+          console.error("Erro ao sincronizar ação offline:", e);
+        }
+      }
+      localStorage.removeItem(`digiart_acoes_offline_${currentEventId}`);
+    }
+
+    function registrarAcaoOffline(fotoId, novoStatus) {
+      if (!currentEventId) return;
+      let acoes = JSON.parse(localStorage.getItem(`digiart_acoes_offline_${currentEventId}`) || "[]");
+      // Evita duplicatas na fila offline
+      acoes = acoes.filter(a => a.id !== fotoId);
+      acoes.push({ id: fotoId, status: novoStatus, timestamp: Date.now() });
+      localStorage.setItem(`digiart_acoes_offline_${currentEventId}`, JSON.stringify(acoes));
+    }
+    // ----------------------------------------------------
 
     function gerarIdCurto() {
       const caracteres = 'abcdefghijklmnopqrstuvwxyz0123456789';
@@ -767,7 +847,7 @@
 
     setInterval(async () => {
       const emailLogado = localStorage.getItem("digiart_email_rev");
-      if (emailLogado) {
+      if (emailLogado && navigator.onLine) {
         try {
           const docRef = doc(db, "revendedores", emailLogado);
           await updateDoc(docRef, { ultimoHeartbeat: Date.now() });
@@ -826,44 +906,47 @@
     }
 
     async function verificarEstadoInicial() {
+      atualizarStatusRede();
       const emailSalvo = localStorage.getItem("digiart_email_rev");
       const expiraSalvo = localStorage.getItem("digiart_expira_em");
 
       if (emailSalvo && expiraSalvo && Date.now() < parseInt(expiraSalvo)) {
         try {
-          const docRef = doc(db, "revendedores", emailSalvo);
-          const docSnap = await getDoc(docRef);
+          if (navigator.onLine) {
+            const docRef = doc(db, "revendedores", emailSalvo);
+            const docSnap = await getDoc(docRef);
 
-          if (docSnap.exists()) {
-            const dados = docSnap.data();
-            
-            await updateDoc(docRef, {
-              sessaoAtivaId: sessionIdUnico,
-              ultimoHeartbeat: Date.now()
-            });
+            if (docSnap.exists()) {
+              const dados = docSnap.data();
+              
+              await updateDoc(docRef, {
+                sessaoAtivaId: sessionIdUnico,
+                ultimoHeartbeat: Date.now()
+              });
 
-            iniciarMonitoramentoRevendedor(emailSalvo);
+              iniciarMonitoramentoRevendedor(emailSalvo);
 
-            if (dados.currentEventId && dados.currentEventName) {
-              currentEventId = dados.currentEventId;
-              nomeEventoExibicao = dados.currentEventName;
+              if (dados.currentEventId && dados.currentEventName) {
+                currentEventId = dados.currentEventId;
+                nomeEventoExibicao = dados.currentEventName;
 
-              localStorage.setItem("digiart_evento_ativo", currentEventId);
-              localStorage.setItem("digiart_nome_evento", nomeEventoExibicao);
-              if (dados.currentEventEndTime) {
-                localStorage.setItem("digiart_tempo_fim", dados.currentEventEndTime);
+                localStorage.setItem("digiart_evento_ativo", currentEventId);
+                localStorage.setItem("digiart_nome_evento", nomeEventoExibicao);
+                if (dados.currentEventEndTime) {
+                  localStorage.setItem("digiart_tempo_fim", dados.currentEventEndTime);
+                }
+
+                mostrarTela(dashboardContainer);
+                infoEventId.innerText = nomeEventoExibicao;
+                gerarQRCodeCliente(currentEventId);
+                monitorarFotos();
+
+                if (dados.currentEventEndTime) {
+                  const restanteSegundos = Math.max(0, Math.floor((dados.currentEventEndTime - Date.now()) / 1000));
+                  iniciarCronometroComSegundos(restanteSegundos);
+                }
+                return;
               }
-
-              mostrarTela(dashboardContainer);
-              infoEventId.innerText = nomeEventoExibicao;
-              gerarQRCodeCliente(currentEventId);
-              monitorarFotos();
-
-              if (dados.currentEventEndTime) {
-                const restanteSegundos = Math.max(0, Math.floor((dados.currentEventEndTime - Date.now()) / 1000));
-                iniciarCronometroComSegundos(restanteSegundos);
-              }
-              return;
             }
           }
         } catch (e) {}
@@ -876,7 +959,7 @@
           currentEventId = eventoSalvo;
           nomeEventoExibicao = nomeSalvo;
 
-          iniciarMonitoramentoRevendedor(emailSalvo);
+          if (navigator.onLine) iniciarMonitoramentoRevendedor(emailSalvo);
           mostrarTela(dashboardContainer);
           infoEventId.innerText = nomeEventoExibicao;
           gerarQRCodeCliente(currentEventId);
@@ -887,7 +970,7 @@
             iniciarCronometroComSegundos(restanteSegundos);
           }
         } else {
-          iniciarMonitoramentoRevendedor(emailSalvo);
+          if (navigator.onLine) iniciarMonitoramentoRevendedor(emailSalvo);
           mostrarTela(setupScreen);
         }
       } else {
@@ -1016,7 +1099,7 @@
       let nomeSalvo = localStorage.getItem("digiart_nome_evento");
       let tempoFimSalvo = localStorage.getItem("digiart_tempo_fim");
 
-      if (!eventoSalvo && emailSalvo) {
+      if (!eventoSalvo && emailSalvo && navigator.onLine) {
         try {
           const docRef = doc(db, "revendedores", emailSalvo);
           const docSnap = await getDoc(docRef);
@@ -1036,7 +1119,7 @@
       currentEventId = eventoSalvo;
       nomeEventoExibicao = nomeSalvo;
 
-      if (emailSalvo) {
+      if (emailSalvo && navigator.onLine) {
         try {
           const docRef = doc(db, "revendedores", emailSalvo);
           await updateDoc(docRef, {
@@ -1077,19 +1160,21 @@
 
         const tempoFimTimestamp = Date.now() + (horasInput * 3600 * 1000);
 
-        await setDoc(doc(db, "eventos", currentEventId), {
-          nome: nomeEventoExibicao,
-          molduraUrl: molduraBase64Otimizada,
-          criadoEm: new Date()
-        });
-
-        if (emailSalvo) {
-          const docRef = doc(db, "revendedores", emailSalvo);
-          await updateDoc(docRef, {
-            currentEventId: currentEventId,
-            currentEventName: nomeEventoExibicao,
-            currentEventEndTime: tempoFimTimestamp
+        if (navigator.onLine) {
+          await setDoc(doc(db, "eventos", currentEventId), {
+            nome: nomeEventoExibicao,
+            molduraUrl: molduraBase64Otimizada,
+            criadoEm: new Date()
           });
+
+          if (emailSalvo) {
+            const docRef = doc(db, "revendedores", emailSalvo);
+            await updateDoc(docRef, {
+              currentEventId: currentEventId,
+              currentEventName: nomeEventoExibicao,
+              currentEventEndTime: tempoFimTimestamp
+            });
+          }
         }
 
         localStorage.setItem("digiart_evento_ativo", currentEventId);
@@ -1123,7 +1208,7 @@
       const eventoParaApagar = currentEventId;
       const emailSalvo = localStorage.getItem("digiart_email_rev");
 
-      if (emailSalvo) {
+      if (emailSalvo && navigator.onLine) {
         try {
           const docRef = doc(db, "revendedores", emailSalvo);
           await updateDoc(docRef, {
@@ -1134,7 +1219,7 @@
         } catch (e) {}
       }
 
-      if (eventoParaApagar) {
+      if (eventoParaApagar && navigator.onLine) {
         try {
           const fotosSnapshot = await getDocs(collection(db, "eventos", eventoParaApagar, "fotos"));
           const deletePromises = fotosSnapshot.docs.map(fotoDoc => deleteDoc(fotoDoc.ref));
@@ -1149,6 +1234,8 @@
       localStorage.removeItem("digiart_evento_ativo");
       localStorage.removeItem("digiart_nome_evento");
       localStorage.removeItem("digiart_tempo_fim");
+      localStorage.removeItem(`digiart_acoes_offline_${eventoParaApagar}`);
+      localStorage.removeItem(`digiart_queue_cache_${eventoParaApagar}`);
       
       currentEventId = "";
       nomeEventoExibicao = "";
@@ -1169,48 +1256,73 @@
 
     function monitorarFotos() {
       if (unsubscribeSnapshot) unsubscribeSnapshot();
+      
+      if (!navigator.onLine) {
+        carregarFotosDoCacheLocal();
+        return;
+      }
+
       const fotosRef = collection(db, "eventos", currentEventId, "fotos");
       const q = query(fotosRef, orderBy("criadoEm", "asc"));
 
       unsubscribeSnapshot = onSnapshot(q, (snapshot) => {
-        queueList.innerHTML = "";
-        listaFotosPendentes = [];
-
+        const dadosCache = [];
         snapshot.forEach((docSnap) => {
           const foto = docSnap.data();
           foto.id = docSnap.id;
-          if (foto.status === "pendente") listaFotosPendentes.push(foto);
+          dadosCache.push(foto);
         });
 
-        countQueue.innerText = listaFotosPendentes.length;
-
-        listaFotosPendentes.forEach((foto, idx) => {
-          const item = document.createElement("div");
-          item.className = `queue-item ${fotoSelecionadaAtual && fotoSelecionadaAtual.id === foto.id ? 'selected' : ''}`;
-          item.innerHTML = `
-            <img src="${foto.fotoUrl}" class="queue-thumb" alt="Miniatura">
-            <div class="queue-info">
-              <p>Foto #${idx + 1}</p>
-              <span>Aguardando impressão</span>
-            </div>
-          `;
-          item.addEventListener("click", () => selecionarFotoParaDestaque(foto));
-          queueList.appendChild(item);
-        });
-
-        const formatoAtual = paperSizeSelect.value;
-        if (formatoAtual.startsWith("A4")) {
-          atualizarVisualizacaoA4(formatoAtual);
-        } else {
-          if (listaFotosPendentes.length > 0) {
-            if (!fotoSelecionadaAtual || !listaFotosPendentes.some(f => f.id === fotoSelecionadaAtual.id)) {
-              selecionarFotoParaDestaque(listaFotosPendentes[0]);
-            }
-          } else {
-            limparDestaque();
-          }
-        }
+        // Salva cache local para uso offline futuro
+        localStorage.setItem(`digiart_queue_cache_${currentEventId}`, JSON.stringify(dadosCache));
+        processarListaFotos(dadosCache);
+      }, (error) => {
+        // Se cair a conexão durante o monitoramento, recorre ao cache local
+        carregarFotosDoCacheLocal();
       });
+    }
+
+    function carregarFotosDoCacheLocal() {
+      const cache = JSON.parse(localStorage.getItem(`digiart_queue_cache_${currentEventId}`) || "[]");
+      processarListaFotos(cache);
+    }
+
+    function processarListaFotos(fotosArray) {
+      queueList.innerHTML = "";
+      listaFotosPendentes = [];
+
+      fotosArray.forEach((foto) => {
+        if (foto.status === "pendente") listaFotosPendentes.push(foto);
+      });
+
+      countQueue.innerText = listaFotosPendentes.length;
+
+      listaFotosPendentes.forEach((foto, idx) => {
+        const item = document.createElement("div");
+        item.className = `queue-item ${fotoSelecionadaAtual && fotoSelecionadaAtual.id === foto.id ? 'selected' : ''}`;
+        item.innerHTML = `
+          <img src="${foto.fotoUrl}" class="queue-thumb" alt="Miniatura">
+          <div class="queue-info">
+            <p>Foto #${idx + 1}</p>
+            <span>Aguardando impressão</span>
+          </div>
+        `;
+        item.addEventListener("click", () => selecionarFotoParaDestaque(foto));
+        queueList.appendChild(item);
+      });
+
+      const formatoAtual = paperSizeSelect.value;
+      if (formatoAtual.startsWith("A4")) {
+        atualizarVisualizacaoA4(formatoAtual);
+      } else {
+        if (listaFotosPendentes.length > 0) {
+          if (!fotoSelecionadaAtual || !listaFotosPendentes.some(f => f.id === fotoSelecionadaAtual.id)) {
+            selecionarFotoParaDestaque(listaFotosPendentes[0]);
+          }
+        } else {
+          limparDestaque();
+        }
+      }
     }
 
     paperSizeSelect.addEventListener("change", () => {
@@ -1263,7 +1375,11 @@
           e.stopPropagation();
           const idParaExcluir = btn.getAttribute("data-id");
           if (confirm("Deseja excluir esta foto específica do lote?")) {
-            await deleteDoc(doc(db, "eventos", currentEventId, "fotos", idParaExcluir));
+            if (navigator.onLine) {
+              await deleteDoc(doc(db, "eventos", currentEventId, "fotos", idParaExcluir));
+            } else {
+              alert("Exclusão individual indisponível offline. Conecte-se à internet para excluir.");
+            }
           }
         });
       });
@@ -1307,7 +1423,13 @@
         countPrinted.innerText = totalImpressas;
 
         for (const foto of lote) {
-          await updateDoc(doc(db, "eventos", currentEventId, "fotos", foto.id), { status: "impressa" });
+          if (navigator.onLine) {
+            await updateDoc(doc(db, "eventos", currentEventId, "fotos", foto.id), { status: "impressa" });
+          } else {
+            registrarAcaoOffline(foto.id, "impressa");
+            // Atualiza localmente o status no cache para sumir da fila pendente imediatamente
+            atualizarStatusCacheLocal(foto.id, "impressa");
+          }
         }
       } else {
         const fotoParaImprimir = fotoSelecionadaAtual;
@@ -1316,19 +1438,39 @@
         totalImpressas++;
         countPrinted.innerText = totalImpressas;
 
-        await updateDoc(doc(db, "eventos", currentEventId, "fotos", fotoParaImprimir.id), { status: "impressa" });
+        if (navigator.onLine) {
+          await updateDoc(doc(db, "eventos", currentEventId, "fotos", fotoParaImprimir.id), { status: "impressa" });
+        } else {
+          registrarAcaoOffline(fotoParaImprimir.id, "impressa");
+          atualizarStatusCacheLocal(fotoParaImprimir.id, "impressa");
+        }
       }
     });
+
+    function atualizarStatusCacheLocal(fotoId, novoStatus) {
+      const cache = JSON.parse(localStorage.getItem(`digiart_queue_cache_${currentEventId}`) || "[]");
+      const atualizado = cache.map(f => f.id === fotoId ? { ...f, status: novoStatus } : f);
+      localStorage.setItem(`digiart_queue_cache_${currentEventId}`, JSON.stringify(atualizado));
+      processarListaFotos(atualizado);
+    }
 
     btnActionDelete.addEventListener("click", async () => {
       if (!fotoSelecionadaAtual || paperSizeSelect.value.startsWith("A4")) return;
       if (confirm("Excluir esta foto?")) {
-        await deleteDoc(doc(db, "eventos", currentEventId, "fotos", fotoSelecionadaAtual.id));
+        if (navigator.onLine) {
+          await deleteDoc(doc(db, "eventos", currentEventId, "fotos", fotoSelecionadaAtual.id));
+        } else {
+          alert("Exclusão indisponível offline.");
+        }
       }
     });
 
     btnDownloadZip.addEventListener("click", async () => {
       if (!currentEventId) return;
+      if (!navigator.onLine) {
+        alert("O download do ZIP requer conexão com a internet para buscar todas as fotos do servidor.");
+        return;
+      }
       btnDownloadZip.innerText = "⏳ GERANDO...";
       btnDownloadZip.disabled = true;
 
