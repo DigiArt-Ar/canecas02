@@ -651,6 +651,7 @@
             <select id="paperSizeSelect">
               <option value="A7">Papel A7 (7.4x10.5cm)</option>
               <option value="A6" selected>Papel A6 (10x15cm)</option>
+              <option value="A6_2">Papel A6 - 2 Fotos (93x72mm)</option>
               <option value="A4_4">Folha A4 (4 fotos - Grid 2x2)</option>
             </select>
           </div>
@@ -768,12 +769,10 @@
     function registrarAcaoOffline(fotoId, novoStatus) {
       if (!currentEventId) return;
       let acoes = JSON.parse(localStorage.getItem(`digiart_acoes_offline_${currentEventId}`) || "[]");
-      // Evita duplicatas na fila offline
       acoes = acoes.filter(a => a.id !== fotoId);
       acoes.push({ id: fotoId, status: novoStatus, timestamp: Date.now() });
       localStorage.setItem(`digiart_acoes_offline_${currentEventId}`, JSON.stringify(acoes));
     }
-    // ----------------------------------------------------
 
     function gerarIdCurto() {
       const caracteres = 'abcdefghijklmnopqrstuvwxyz0123456789';
@@ -1273,11 +1272,9 @@
           dadosCache.push(foto);
         });
 
-        // Salva cache local para uso offline futuro
         localStorage.setItem(`digiart_queue_cache_${currentEventId}`, JSON.stringify(dadosCache));
         processarListaFotos(dadosCache);
       }, (error) => {
-        // Se cair a conexão durante o monitoramento, recorre ao cache local
         carregarFotosDoCacheLocal();
       });
     }
@@ -1314,6 +1311,8 @@
       const formatoAtual = paperSizeSelect.value;
       if (formatoAtual.startsWith("A4")) {
         atualizarVisualizacaoA4(formatoAtual);
+      } else if (formatoAtual === "A6_2") {
+        atualizarVisualizacaoA6_2();
       } else {
         if (listaFotosPendentes.length > 0) {
           if (!fotoSelecionadaAtual || !listaFotosPendentes.some(f => f.id === fotoSelecionadaAtual.id)) {
@@ -1329,6 +1328,8 @@
       const formato = paperSizeSelect.value;
       if (formato.startsWith("A4")) {
         atualizarVisualizacaoA4(formato);
+      } else if (formato === "A6_2") {
+        atualizarVisualizacaoA6_2();
       } else {
         if (listaFotosPendentes.length > 0) {
           selecionarFotoParaDestaque(listaFotosPendentes[0]);
@@ -1349,10 +1350,6 @@
         return;
       }
 
-      let gridCols = "repeat(2, 1fr)";
-      let gridRows = "repeat(2, 1fr)";
-      let gapSize = "8px";
-
       let htmlImgs = lote.map((f, i) => `
         <div style="position:relative; background:#000; display:flex; align-items:center; justify-content:center; overflow:hidden; border-radius:6px; width:100%; height:100%;">
           <img src="${f.fotoUrl}" style="width:100%; height:100%; object-fit:contain;">
@@ -1365,33 +1362,71 @@
       }
 
       highlightViewer.innerHTML = `
-        <div style="width:100%; height:100%; display:grid; grid-template-columns:${gridCols}; grid-template-rows:${gridRows}; gap:${gapSize}; background:#141414;">
+        <div style="width:100%; height:100%; display:grid; grid-template-columns:repeat(2, 1fr); grid-template-rows:repeat(2, 1fr); gap:8px; background:#141414;">
           ${htmlImgs}
         </div>
       `;
 
-      highlightViewer.querySelectorAll('.btn-delete-single').forEach(btn => {
-        btn.addEventListener("click", async (e) => {
-          e.stopPropagation();
-          const idParaExcluir = btn.getAttribute("data-id");
-          if (confirm("Deseja excluir esta foto específica do lote?")) {
-            if (navigator.onLine) {
-              await deleteDoc(doc(db, "eventos", currentEventId, "fotos", idParaExcluir));
-            } else {
-              alert("Exclusão individual indisponível offline. Conecte-se à internet para excluir.");
-            }
-          }
-        });
-      });
+      adicionarEventosExclusao(highlightViewer);
 
       fotoSelecionadaAtual = { tipo: "A4", formato: formato, fotosLote: lote };
-      // ALTERAÇÃO REALIZADA: Botão liberado se houver pelo menos 1 foto
       btnActionPrint.disabled = lote.length === 0;
       btnActionDelete.disabled = true;
     }
 
+    function atualizarVisualizacaoA6_2() {
+      const qtd = 2;
+      const lote = listaFotosPendentes.slice(0, qtd);
+
+      if (lote.length === 0) {
+        highlightViewer.innerHTML = `<p style="color:#555;">Fila vazia para montar A6 (2 fotos)...</p>`;
+        btnActionPrint.disabled = true;
+        btnActionDelete.disabled = true;
+        return;
+      }
+
+      let htmlImgs = lote.map((f, i) => `
+        <div style="position:relative; background:#000; display:flex; align-items:center; justify-content:center; overflow:hidden; border-radius:6px; width:93mm; height:72mm;">
+          <img src="${f.fotoUrl}" style="width:72mm; height:93mm; object-fit:cover; transform: rotate(90deg);">
+          <button class="btn-delete-single" data-id="${f.id}" title="Excluir" style="position:absolute; top:4px; right:4px; background:rgba(255,0,0,0.8); color:#fff; border:none; border-radius:4px; width:24px; height:24px; font-weight:bold; cursor:pointer; display:flex; align-items:center; justify-content:center; font-size:0.8rem; z-index:10;">✕</button>
+        </div>
+      `).join('');
+      
+      for (let i = lote.length; i < qtd; i++) {
+        htmlImgs += `<div style="background:#111; border:1px dashed #333; display:flex; align-items:center; justify-content:center; color:#555; font-size:0.75rem; border-radius:6px; width:93mm; height:72mm;">Aguardando 2ª foto...</div>`;
+      }
+
+      highlightViewer.innerHTML = `
+        <div style="width:100%; height:100%; display:flex; flex-direction:column; gap:1.2mm; background:#141414; justify-content:center; align-items:center;">
+          ${htmlImgs}
+        </div>
+      `;
+
+      adicionarEventosExclusao(highlightViewer);
+
+      fotoSelecionadaAtual = { tipo: "A6_2", fotosLote: lote };
+      btnActionPrint.disabled = lote.length === 0;
+      btnActionDelete.disabled = true;
+    }
+
+    function adicionarEventosExclusao(container) {
+      container.querySelectorAll('.btn-delete-single').forEach(btn => {
+        btn.addEventListener("click", async (e) => {
+          e.stopPropagation();
+          const idParaExcluir = btn.getAttribute("data-id");
+          if (confirm("Excluir esta foto do lote?")) {
+            if (navigator.onLine) {
+              await deleteDoc(doc(db, "eventos", currentEventId, "fotos", idParaExcluir));
+            } else {
+              alert("Exclusão offline indisponível.");
+            }
+          }
+        });
+      });
+    }
+
     function selecionarFotoParaDestaque(foto) {
-      if (paperSizeSelect.value.startsWith("A4")) return;
+      if (paperSizeSelect.value.startsWith("A4") || paperSizeSelect.value === "A6_2") return;
       fotoSelecionadaAtual = foto;
       highlightViewer.innerHTML = `<img src="${foto.fotoUrl}" alt="Foto Destaque">`;
       btnActionPrint.disabled = false;
@@ -1399,14 +1434,17 @@
     }
 
     function limparDestaque() {
-      if (paperSizeSelect.value.startsWith("A4")) {
-        atualizarVisualizacaoA4(paperSizeSelect.value);
-        return;
+      const formato = paperSizeSelect.value;
+      if (formato.startsWith("A4")) {
+        atualizarVisualizacaoA4(formato);
+      } else if (formato === "A6_2") {
+        atualizarVisualizacaoA6_2();
+      } else {
+        fotoSelecionadaAtual = null;
+        highlightViewer.innerHTML = `<p style="color:#555;">Aguardando fotos dos convidados...</p>`;
+        btnActionPrint.disabled = true;
+        btnActionDelete.disabled = true;
       }
-      fotoSelecionadaAtual = null;
-      highlightViewer.innerHTML = `<p style="color:#555;">Aguardando fotos dos convidados...</p>`;
-      btnActionPrint.disabled = true;
-      btnActionDelete.disabled = true;
     }
 
     btnActionPrint.addEventListener("click", async () => {
@@ -1415,30 +1453,19 @@
 
       if (formatoEscolhido.startsWith("A4")) {
         const lote = fotoSelecionadaAtual.fotosLote;
-        // ALTERAÇÃO REALIZADA: Removida a obrigatoriedade de 4 fotos
         if (lote.length === 0) return;
-
-        imprimirLoteA4(lote, formatoEscolhido);
-
-        totalImpressas += lote.length;
-        countPrinted.innerText = totalImpressas;
-
-        for (const foto of lote) {
-          if (navigator.onLine) {
-            await updateDoc(doc(db, "eventos", currentEventId, "fotos", foto.id), { status: "impressa" });
-          } else {
-            registrarAcaoOffline(foto.id, "impressa");
-            // Atualiza localmente o status no cache para sumir da fila pendente imediatamente
-            atualizarStatusCacheLocal(foto.id, "impressa");
-          }
-        }
+        imprimirLoteA4(lote);
+        atualizarStatusImpressao(lote);
+      } else if (formatoEscolhido === "A6_2") {
+        const lote = fotoSelecionadaAtual.fotosLote;
+        if (lote.length === 0) return;
+        imprimirLoteA6_2(lote);
+        atualizarStatusImpressao(lote);
       } else {
         const fotoParaImprimir = fotoSelecionadaAtual;
         imprimirDireto(fotoParaImprimir.fotoUrl, formatoEscolhido);
-
         totalImpressas++;
         countPrinted.innerText = totalImpressas;
-
         if (navigator.onLine) {
           await updateDoc(doc(db, "eventos", currentEventId, "fotos", fotoParaImprimir.id), { status: "impressa" });
         } else {
@@ -1448,6 +1475,19 @@
       }
     });
 
+    async function atualizarStatusImpressao(lote) {
+      totalImpressas += lote.length;
+      countPrinted.innerText = totalImpressas;
+      for (const foto of lote) {
+        if (navigator.onLine) {
+          await updateDoc(doc(db, "eventos", currentEventId, "fotos", foto.id), { status: "impressa" });
+        } else {
+          registrarAcaoOffline(foto.id, "impressa");
+          atualizarStatusCacheLocal(foto.id, "impressa");
+        }
+      }
+    }
+
     function atualizarStatusCacheLocal(fotoId, novoStatus) {
       const cache = JSON.parse(localStorage.getItem(`digiart_queue_cache_${currentEventId}`) || "[]");
       const atualizado = cache.map(f => f.id === fotoId ? { ...f, status: novoStatus } : f);
@@ -1456,7 +1496,7 @@
     }
 
     btnActionDelete.addEventListener("click", async () => {
-      if (!fotoSelecionadaAtual || paperSizeSelect.value.startsWith("A4")) return;
+      if (!fotoSelecionadaAtual || paperSizeSelect.value.startsWith("A4") || paperSizeSelect.value === "A6_2") return;
       if (confirm("Excluir esta foto?")) {
         if (navigator.onLine) {
           await deleteDoc(doc(db, "eventos", currentEventId, "fotos", fotoSelecionadaAtual.id));
@@ -1469,7 +1509,7 @@
     btnDownloadZip.addEventListener("click", async () => {
       if (!currentEventId) return;
       if (!navigator.onLine) {
-        alert("O download do ZIP requer conexão com a internet para buscar todas as fotos do servidor.");
+        alert("O download do ZIP requer conexão com a internet.");
         return;
       }
       btnDownloadZip.innerText = "⏳ GERANDO...";
@@ -1478,33 +1518,22 @@
       try {
         const snapshot = await getDocs(query(collection(db, "eventos", currentEventId, "fotos"), orderBy("criadoEm", "asc")));
         const zip = new JSZip();
-        
         const pastaComMoldura = zip.folder("com_moldura");
         const pastaSemMoldura = zip.folder("sem_moldura");
-        
         let contador = 1;
-        
-        const nomeEventoSlug = (nomeEventoExibicao || "evento")
-          .toLowerCase()
-          .normalize("NFD")
-          .replace(/[\u0300-\u036f]/g, "")
-          .replace(/[^a-z0-9]/g, "_")
-          .replace(/_+/g, "_");
+        const nomeEventoSlug = (nomeEventoExibicao || "evento").toLowerCase().normalize("NFD").replace(/[\u0300-\u036f]/g, "").replace(/[^a-z0-9]/g, "_").replace(/_+/g, "_");
 
         snapshot.forEach((docSnap) => {
           const foto = docSnap.data();
           const numeroFormatado = String(contador).padStart(3, '0');
-
           if (foto.fotoUrl) {
             const base64ComMoldura = foto.fotoUrl.replace(/^data:image\/(png|jpeg|jpg);base64,/, "");
             pastaComMoldura.file(`${nomeEventoSlug}_com_moldura_${numeroFormatado}.jpg`, base64ComMoldura, { base64: true });
           }
-
           if (foto.fotoOriginalUrl) {
             const base64SemMoldura = foto.fotoOriginalUrl.replace(/^data:image\/(png|jpeg|jpg);base64,/, "");
             pastaSemMoldura.file(`${nomeEventoSlug}_sem_moldura_${numeroFormatado}.jpg`, base64SemMoldura, { base64: true });
           }
-
           contador++;
         });
 
@@ -1549,31 +1578,10 @@
         <html>
           <head>
             <style>
-              @page {
-                size: ${tamanhoPage};
-                margin: 0;
-              }
-              * {
-                box-sizing: border-box;
-                -webkit-print-color-adjust: exact;
-                print-color-adjust: exact;
-              }
-              body {
-                margin: 0;
-                padding: 0;
-                width: ${larguraPapel};
-                height: ${alturaPapel};
-                display: flex;
-                justify-content: center;
-                align-items: center;
-                background-color: #ffffff;
-                overflow: hidden;
-              }
-              img {
-                width: ${imgWidth};
-                height: ${imgHeight};
-                object-fit: contain;
-              }
+              @page { size: ${tamanhoPage}; margin: 0; }
+              * { box-sizing: border-box; -webkit-print-color-adjust: exact; print-color-adjust: exact; }
+              body { margin: 0; padding: 0; width: ${larguraPapel}; height: ${alturaPapel}; display: flex; justify-content: center; align-items: center; background-color: #ffffff; overflow: hidden; }
+              img { width: ${imgWidth}; height: ${imgHeight}; object-fit: contain; }
             </style>
           </head>
           <body>
@@ -1584,65 +1592,74 @@
       docIframe.close();
     }
 
-    function imprimirLoteA4(lote, formato) {
+    function imprimirLoteA4(lote) {
       let imgTags = lote.map(f => `<div class="cell"><img src="${f.fotoUrl}"></div>`).join('');
-
       let iframe = document.getElementById("printFrame");
-      if (!iframe) {
-        iframe = document.createElement("iframe");
-        iframe.id = "printFrame";
-        iframe.style.display = "none";
-        document.body.appendChild(iframe);
-      }
+      if (!iframe) { iframe = document.createElement("iframe"); iframe.id = "printFrame"; iframe.style.display = "none"; document.body.appendChild(iframe); }
       const docIframe = iframe.contentWindow.document;
       docIframe.open();
       docIframe.write(`
         <html>
           <head>
             <style>
-              @page {
-                size: 210mm 297mm;
-                margin: 0;
+              @page { size: 210mm 297mm; margin: 0; }
+              * { box-sizing: border-box; -webkit-print-color-adjust: exact; print-color-adjust: exact; }
+              body { margin: 0; padding: 0; width: 210mm; height: 297mm; background-color: #ffffff; display: grid; grid-template-columns: 10cm 10cm; grid-template-rows: 14cm 14cm; gap: 1mm; justify-content: center; align-content: center; }
+              .cell { width: 10cm; height: 14cm; display: flex; justify-content: center; align-items: center; overflow: hidden; }
+              img { width: 10cm; height: 14cm; object-fit: contain; }
+            </style>
+          </head>
+          <body>${imgTags}<script>setTimeout(() => { window.print(); }, 400);<\/script></body>
+        </html>
+      `);
+      docIframe.close();
+    }
+
+    // IMPRESSÃO ATUALIZADA COM COMPENSAÇÃO DE DESVIO MECÂNICO DA IMPRESSORA - A6_2
+    function imprimirLoteA6_2(lote) {
+      let imgTags = lote.map(f => `<div class="cell"><img src="${f.fotoUrl}"></div>`).join('');
+      let iframe = document.getElementById("printFrame");
+      if (!iframe) { iframe = document.createElement("iframe"); iframe.id = "printFrame"; iframe.style.display = "none"; document.body.appendChild(iframe); }
+      const docIframe = iframe.contentWindow.document;
+      docIframe.open();
+      docIframe.write(`
+        <html>
+          <head>
+            <style>
+              @page { size: 100mm 150mm; margin: 0; }
+              * { box-sizing: border-box; -webkit-print-color-adjust: exact; print-color-adjust: exact; }
+              body { 
+                margin: 0; 
+                padding: 0; 
+                width: 100mm; 
+                height: 150mm; 
+                background-color: #ffffff; 
+                display: flex; 
+                flex-direction: column; 
+                gap: 1.2mm; 
+                justify-content: center; 
+                align-items: center; 
+                transform: translateY(-1.5mm); 
               }
-              * {
-                box-sizing: border-box;
-                -webkit-print-color-adjust: exact;
-                print-color-adjust: exact;
+              .cell { 
+                width: 93mm; 
+                height: 72mm; 
+                display: flex; 
+                justify-content: center; 
+                align-items: center; 
+                overflow: hidden; 
+                background: #000; 
               }
-              body {
-                margin: 0;
-                padding: 0;
-                width: 210mm;
-                height: 297mm;
-                background-color: #ffffff;
-                display: grid;
-                grid-template-columns: 10cm 10cm;
-                grid-template-rows: 14cm 14cm;
-                gap: 1mm;
-                justify-content: center;
-                align-content: center;
-              }
-              .cell {
-                width: 10cm;
-                height: 14cm;
-                display: flex;
-                justify-content: center;
-                align-items: center;
-                overflow: hidden;
-              }
-              img {
-                width: 10cm;
-                height: 14cm;
-                object-fit: contain;
+              img { 
+                width: 72mm; 
+                height: 93mm; 
+                object-fit: cover; 
+                transform: rotate(90deg); 
+                display: block; 
               }
             </style>
           </head>
-          <body>
-            ${imgTags}
-            <script>
-              setTimeout(() => { window.print(); }, 400);
-            <\/script>
-          </body>
+          <body>${imgTags}<script>setTimeout(() => { window.print(); }, 400);<\/script></body>
         </html>
       `);
       docIframe.close();
